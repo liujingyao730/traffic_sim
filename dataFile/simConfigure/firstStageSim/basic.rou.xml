@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 07/21/18 15:06:23 by SUMO duarouter Version 0.31.0
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/duarouterConfiguration.xsd">
+
+    <input>
+        <net-file value="basic.net.xml"/>
+        <route-files value="flowchange/basic1200.flows.xml"/>
+    </input>
+
+    <output>
+        <output-file value="rouchange/basic1200.flows.xml"/>
+    </output>
+
+    <random_number>
+        <random value="true"/>
+    </random_number>
+
+</configuration>
+-->
+
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+    <vType id="car" length="5.00" minGap="2.50" maxSpeed="50.00" accel="3" decel="6" sigma="0.5" speedFactor="0.8" speedDev="0.2"/>
+	<!-- 这个是变化车流量的图整体情况如下
+		   +
+		  +++ +
+		 +++++++ ++
+		++++++++++++
+		横向每一个字符代表10分钟，纵向每一行为一个基准流量，单车道基准流量为0.1v/s，双车道与三车道为0.2v/s，四到六车道为0.3v/s
+		大流量的实现是通过基准流量的叠加实现
+	-->
+	
+	<!--基准的车流量-->
+	<flow id="1to-gneE27" begin="0" end="7200" probability="0.05" type="car" departSpeed="random" departLane="random" arrivalPos="10">
+		<route edges="1 -gneE27"/>
+	</flow>
+	<flow id="2to-gneE19" begin="0" end="7200" probability="0.1" type="car" departSpeed="random" departLane="random" arrivalPos="10">
+		<route edges="2 -gneE19"/>
+	</flow>
+	<flow id="3to-gneE30" begin="0" end="7200" probability="0.15" type="car" departSpeed="random" departLane="random" arrivalPos="10">
+		<route edges="3 -gneE30"/>
+	</flow>
+	<flow id="4togneE25" begin="0" end="7200" probability="0.2" type="car" departSpeed="random" departLane="random" arrivalPos="10">
+		<route edges="4 gneE25"/>
+	</flow>
+	<flow id="5to-gneE34" begin="0" end="7200" probability="0.25" type="car" departSpeed="random" departLane="random" arrivalPos="10">
+		<route edges="5 -gneE34"/>
+	</flow>
+	<flow id="6togneE36" begin="0" end="7200" probability="0.3" type="car" departSpeed="random" departLane="random" arrivalPos="10">
+		<route edges="6 gneE36"/>
+	</flow>
+	
+	<!--中等流量-->
+	<flow id="1to-gneE271" begin="300" end="4800" probability="0.05" type="car" departSpeed="random" departLane="random" arrivalPos="10">
+		<route edges="1 -gneE27"/>
+	</flow>
+	<flow id="2to-gneE191" begin="300" end="4800" probability="0.1" type="car" departSpeed="random" departLane="random" arrivalPos="10">
+		<route edges="2 -gneE19"/>
+	</flow>
+	<flow id="3to-gneE301" begin="300" end="4800" probability="0.15" type="car" departSpeed="random" departLane="random" arrivalPos="10">
+		<route edges="3 -gneE30"/>
+	</flow>
+	<flow id="4togneE251" begin="300" end="4800" probability="0.2" type="car" departSpeed="random" departLane="random" arrivalPos="10">
+		<route edges="4 gneE25"/>
+	</flow>
+	<flow id="5to-gneE341" begin="300" end="4800" probability="0.25" type="car" departSpeed="random" departLane="random" arrivalPos="10">
+		<route edges="5 -gneE34"/>
+	</flow>
+	<flow id="6togneE361" begin="300" end="4800" probability="0.3" type="car" departSpeed="random" departLane="random" arrivalPos="10">
+		<route edges="6 gneE36"/>
+	</flow>
+	
+	<!--高流量-->
+	<flow id="1to-gneE273" begin="1200" end="3000" probability="0.05" type="car" departSpeed="random" departLane="random" arrivalPos="10">
+		<route edges="1 -gneE27"/>
+	</flow>
+	<flow id="2to-gneE193" begin="1200" end="3000" probability="0.1" type="car" departSpeed="random" departLane="random" arrivalPos="10">
+		<route edges="2 -gneE19"/>
+	</flow>
+	<flow id="3to-gneE303" begin="1200" end="3000" probability="0.15" type="car" departSpeed="random" departLane="random" arrivalPos="10">
+		<route edges="3 -gneE30"/>
+	</flow>
+	<flow id="4togneE253" begin="1200" end="3000" probability="0.2" type="car" departSpeed="random" departLane="random" arrivalPos="10">
+		<route edges="4 gneE25"/>
+	</flow>
+	<flow id="5to-gneE343" begin="1200" end="3000" probability="0.25" type="car" departSpeed="random" departLane="random" arrivalPos="10">
+		<route edges="5 -gneE34"/>
+	</flow>
+	<flow id="6togneE363" begin="1200" end="3000" probability="0.3" type="car" departSpeed="random" departLane="random" arrivalPos="10">
+		<route edges="6 gneE36"/>
+	</flow>
+	
+	<!--峰值流量-->
+	<flow id="1to-gneE275" begin="1800" end="2400" probability="0.05" type="car" departSpeed="random" departLane="random" arrivalPos="10">
+		<route edges="1 -gneE27"/>
+	</flow>
+	<flow id="2to-gneE195" begin="1800" end="2400" probability="0.1" type="car" departSpeed="random" departLane="random" arrivalPos="10">
+		<route edges="2 -gneE19"/>
+	</flow>
+	<flow id="3to-gneE305" begin="1800" end="2400" probability="0.15" type="car" departSpeed="random" departLane="random" arrivalPos="10">
+		<route edges="3 -gneE30"/>
+	</flow>
+	<flow id="4togneE255" begin="1800" end="2400" probability="0.2" type="car" departSpeed="random" departLane="random" arrivalPos="10">
+		<route edges="4 gneE25"/>
+	</flow>
+	<flow id="5to-gneE345" begin="1800" end="2400" probability="0.25" type="car" departSpeed="random" departLane="random" arrivalPos="10">
+		<route edges="5 -gneE34"/>
+	</flow>
+	<flow id="6togneE365" begin="1800" end="2400" probability="0.3" type="car" departSpeed="random" departLane="random" arrivalPos="10">
+		<route edges="6 gneE36"/>
+	</flow>
+	
+	<!--第二峰-->
+	<flow id="1to-gneE274" begin="3600" end="4200" probability="0.05" type="car" departSpeed="random" departLane="random" arrivalPos="10">
+		<route edges="1 -gneE27"/>
+	</flow>
+	<flow id="2to-gneE194" begin="3600" end="4200" probability="0.1" type="car" departSpeed="random" departLane="random" arrivalPos="10">
+		<route edges="2 -gneE19"/>
+	</flow>
+	<flow id="3to-gneE304" begin="3600" end="4200" probability="0.15" type="car" departSpeed="random" departLane="random" arrivalPos="10">
+		<route edges="3 -gneE30"/>
+	</flow>
+	<flow id="4togneE254" begin="3600" end="4200" probability="0.2" type="car" departSpeed="random" departLane="random" arrivalPos="10">
+		<route edges="4 gneE25"/>
+	</flow>
+	<flow id="5to-gneE344" begin="3600" end="4200" probability="0.25" type="car" departSpeed="random" departLane="random" arrivalPos="10">
+		<route edges="5 -gneE34"/>
+	</flow>
+	<flow id="6togneE364" begin="3600" end="4200" probability="0.3" type="car" departSpeed="random" departLane="random" arrivalPos="10">
+		<route edges="6 gneE36"/>
+	</flow>
+	
+	<!--第三峰-->
+	<flow id="1to-gneE272" begin="5400" end="6600" probability="0.05" type="car" departSpeed="random" departLane="random" arrivalPos="10">
+		<route edges="1 -gneE27"/>
+	</flow>
+	<flow id="2to-gneE192" begin="5400" end="6600" probability="0.1" type="car" departSpeed="random" departLane="random" arrivalPos="10">
+		<route edges="2 -gneE19"/>
+	</flow>
+	<flow id="3to-gneE302" begin="5400" end="6600" probability="0.15" type="car" departSpeed="random" departLane="random" arrivalPos="10">
+		<route edges="3 -gneE30"/>
+	</flow>
+	<flow id="4togneE252" begin="5400" end="6600" probability="0.2" type="car" departSpeed="random" departLane="random" arrivalPos="10">
+		<route edges="4 gneE25"/>
+	</flow>
+	<flow id="5to-gneE342" begin="5400" end="6600" probability="0.25" type="car" departSpeed="random" departLane="random" arrivalPos="10">
+		<route edges="5 -gneE34"/>
+	</flow>
+	<flow id="6togneE362" begin="5400" end="6600" probability="0.3" type="car" departSpeed="random" departLane="random" arrivalPos="10">
+		<route edges="6 gneE36"/>
+	</flow>
+	
+	
+	
+</routes>
