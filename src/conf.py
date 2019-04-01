@@ -4,32 +4,32 @@ import os
 curPath = os.path.abspath(os.path.dirname(__file__))
 rootPath = os.path.dirname(curPath)
 
-dataPath = rootPath + "\\dataFile"
-fcdOutputPath = dataPath + "\\fcdOutput"
-simConfigurePath = dataPath + "\\simConfigure"
-midDataPath = dataPath + "\\midData"
-modelPath = dataPath + "\\model"
-picsPath = dataPath + "\\pics"
+dataPath = rootPath + "/dataFile"
+fcdOutputPath = dataPath + "/fcdOutput"
+simConfigurePath = dataPath + "/simConfigure"
+midDataPath = dataPath + "/midData"
+modelPath = dataPath + "/model"
+picsPath = dataPath + "/pics"
 
-firstStageSim = simConfigurePath + "\\firstStageSim"
-firstStageFcd = fcdOutputPath + "\\firstStage"
+firstStageSim = simConfigurePath + "/firstStageSim"
+firstStageFcd = fcdOutputPath + "/firstStage"
 
 # debug文件
-fcdDebug = fcdOutputPath + "\\debug.xml"
-netDebug = firstStageSim + "\\basic.net.xml"
-carInDebug = midDataPath + "\\debugCarIn.csv"
-carOutDebug = midDataPath + "\\debugCarOut.csv"
-numberDebug = midDataPath + "\\debugNumber.csv"
-laneNumberDebug = midDataPath + "\\debugLaneNumber.csv"
-modelDebug = modelPath + "\\debugModel.pkl"
+fcdDebug = fcdOutputPath + "/debug.xml"
+netDebug = firstStageSim + "/basic.net.xml"
+carInDebug = midDataPath + "/debugCarIn.csv"
+carOutDebug = midDataPath + "/debugCarOut.csv"
+numberDebug = midDataPath + "/debugNumber.csv"
+laneNumberDebug = midDataPath + "/debugLaneNumber.csv"
+modelDebug = modelPath + "/debugModel.pth"
 
 # 一些固定输出的文件，会覆盖，注意及时保存
-fcdDefualt = firstStageFcd + "\\0.5_0.5_7200.xml"
-carInDefualt = midDataPath + "\\defualtCarIn.csv"
-carOutDefualt = midDataPath + "\\defualtCarOut.csv"
-numberDefualt = midDataPath + "\\defualtNumber.csv"
-laneNumberDefualt = midDataPath + "\\defualtLaneNumeber.csv"
-modelDefualt = modelPath + "defualtModel.pkl"
+fcdDefualt = firstStageFcd + "/0.5_0.5_7200.xml"
+carInDefualt = midDataPath + "/defualtCarIn.csv"
+carOutDefualt = midDataPath + "/defualtCarOut.csv"
+numberDefualt = midDataPath + "/defualtNumber.csv"
+laneNumberDefualt = midDataPath + "/defualtLaneNumeber.csv"
+modelDefualt = modelPath + "/defualtModel.pth"
 
 # 关心的路段
 edges = ["1", "2", "3", "4", "5", "6"]

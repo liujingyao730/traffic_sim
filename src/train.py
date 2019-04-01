@@ -51,14 +51,14 @@ def train(args=conf.args):
             if (1+i) % args["plotEvery"] == 0:
                 print("loss ", lossMeter.value()[0])
 
-    torch.save(model.state_dict(), conf.modelPath+"\\"+dataFilePrefix+".pth")
+    torch.save(model.state_dict(), conf.modelPath+"/"+dataFilePrefix+".pth")
 
 def test(args=conf.args):
 
     dataFilePrefix = args["prefix"]
     testFilePrefix = args["testFilePrefix"]
     model = BasicLSTM(args)
-    state_dict = torch.load(conf.modelPath+"\\"+dataFilePrefix+".pth") 
+    state_dict = torch.load(conf.modelPath+"/"+dataFilePrefix+".pth") 
     model.load_state_dict(state_dict)
     model.eval()
     testData = batchGenerator(testFilePrefix, simTimeStep=args["testSimStep"])
@@ -89,7 +89,7 @@ def test(args=conf.args):
     scatter = pe.Scatter(title=title)
     scatter.add("baseline", target, target)
     scatter.add("model", target, result)
-    picturePath = conf.picsPath + "\\" + args["version"] + "total.png"
+    picturePath = conf.picsPath + "/" + args["version"] + "total.png"
     scatter.render(path=picturePath)
     print("picture saved as ",picturePath)
 
@@ -101,7 +101,7 @@ def testLane(lane, model=None, testData=None, args = conf.args):
         dataFilePrefix = args["prefix"]
         testFilePrefix = args["testFilePrefix"]
         model = BasicLSTM(args)
-        state_dict = torch.load(conf.modelPath+"\\"+dataFilePrefix+".pth") 
+        state_dict = torch.load(conf.modelPath+"/"+dataFilePrefix+".pth") 
         model.load_state_dict(state_dict)
         model.eval()
         testData = batchGenerator(testFilePrefix)
@@ -133,7 +133,7 @@ def testLane(lane, model=None, testData=None, args = conf.args):
     scatter = pe.Scatter(title=title)
     scatter.add("baseline", target, target)
     scatter.add("model", target, result)
-    picturePath = conf.picsPath + "\\" + args["version"] + "_" + str(lane) + ".png"
+    picturePath = conf.picsPath + "/" + args["version"] + "_" + str(lane) + ".png"
     scatter.render(path=picturePath)
     print("picture saved as ",picturePath)
 

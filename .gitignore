@@ -113,7 +113,7 @@ venv.bak/
 dmypy.json
 
 # Pyre type checker
-*.pyre/
+.pyre/
 
 # some datafile may be too big to push to origin 
 *.csv

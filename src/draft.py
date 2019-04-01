@@ -18,7 +18,7 @@ import train
 
 #dp.edgeRecord(conf.netDebug, conf.fcdDefualt)
 #dp.laneNumber(conf.netDebug)
-
+'''
 train.train(conf.args)
 train.test(conf.args)
 
@@ -27,10 +27,10 @@ for i in [2,3,4,5,6]:
     train.testLane(i, model, testData)
 
 '''
-fcd = conf.firstStageFcd + "\\0.5_0.5_7200_0.1.xml"
-carIn = conf.midDataPath + "\\dataCarIn.csv"
-carOut = conf.midDataPath + "\\dataCarOut.csv"
-number = conf.midDataPath + "\\dataNumber.csv"
+fcd = conf.firstStageFcd + "/0.5_0.5_7200_0.1.xml"
+carIn = conf.midDataPath + "/dataCarIn.csv"
+carOut = conf.midDataPath + "/dataCarOut.csv"
+number = conf.midDataPath + "/dataNumber.csv"
 dp.edgeRecord(conf.netDebug, fcd, carIn, carOut, number)
-'''
+
 

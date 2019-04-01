@@ -157,16 +157,16 @@ class batchGenerator(object):
         
 
     def CarInFile(self):
-        return conf.midDataPath + "\\" + self.prefix + "CarIn.csv"
+        return conf.midDataPath + "/" + self.prefix + "CarIn.csv"
     
     def CarOutFile(self):
-        return conf.midDataPath + "\\" + self.prefix + "CarOut.csv"
+        return conf.midDataPath + "/" + self.prefix + "CarOut.csv"
 
     def NumberFile(self):
-        return conf.midDataPath + "\\" + self.prefix + "Number.csv"
+        return conf.midDataPath + "/" + self.prefix + "Number.csv"
 
     def LaneNumberFile(self):
-        return conf.midDataPath + "\\" + self.prefix + "LaneNumber.csv"
+        return conf.midDataPath + "/" + self.prefix + "LaneNumber.csv"
 
 
     
