@@ -37,7 +37,7 @@ edges = ["1", "2", "3", "4", "5", "6"]
 # 数据相关变量
 deltaT = 5
 sequenceLength = 20
-batchSize = 5
+batchSize = 100
 simTimeStep = 1
 cycle = 120
 greenPass = 57
