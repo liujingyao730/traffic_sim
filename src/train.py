@@ -46,7 +46,7 @@ def train(args=conf.args):
             loss.backward()
             optimizer.step()
 
-            lossMeter.add(loss.data[0])
+            lossMeter.add(loss.item())
 
             if (1+i) % args["plotEvery"] == 0:
                 print("loss ", lossMeter.value()[0])
