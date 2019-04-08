@@ -5,12 +5,11 @@ from torch.autograd import Variable
 
 class BasicLSTM(nn.Module):
 
-    def __init__(self, args, infer=False):
+    def __init__(self, args):
 
         super().__init__()
 
         self.args = args
-        self.infer = infer
 
         self.seqLength = args["seqLength"]
 
@@ -20,6 +19,9 @@ class BasicLSTM(nn.Module):
         self.outputSize = args["outputSize"]
         self.gru = args["gru"]
         self.args = args
+
+        self.embeddingFC1 = nn.Linear(self.inputSize, args["inputFC1"])
+        self.embeddingFC2 = nn.Linear(args["inputFC1"], self.embeddingSize)
 
         self.RNNlayer = nn.LSTM(self.embeddingSize, self.hiddenSize, batch_first=True)
         if self.gru:
@@ -54,8 +56,12 @@ class BasicLSTM(nn.Module):
         laneControler = self.laneGate2(laneControler)
 
         inputData = laneControler * inputData 
-        embedds = self.embeddings(inputData)
-        output, hidden = self.RNNlayer(embedds, (h_0, c_0))
+        inputData = self.embeddingFC1(inputData)
+        inputData = self.relu(inputData)
+        inputData = self.embeddingFC2(inputData)
+        inputData = self.relu(inputData)
+
+        output, hidden = self.RNNlayer(inputData, (h_0, c_0))
 
         output = self.outputLayer(hidden[0].view(batchSize, -1))
         output = self.relu(output)
@@ -77,3 +83,12 @@ class BasicLSTM(nn.Module):
 
         return input
 
+class stackedLSTM(nn.Module):
+
+    def __init__(self, args):
+
+        self.args = args
+
+        self.inHiddenSize = args["stackedHiddenSize"]
+        self.seqLength = args["seqLength"]
+        self.inputSize = args["inputSize"]

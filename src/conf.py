@@ -37,7 +37,7 @@ edges = ["1", "2", "3", "4", "5", "6"]
 # 数据相关变量
 deltaT = 5
 sequenceLength = 20
-batchSize = 100
+batchSize = 50
 simTimeStep = 1
 cycle = 120
 greenPass = 57
@@ -49,14 +49,16 @@ args = {}
 args["useCuda"] = True
 args["seqLength"] = 20
 args["hiddenSize"] = 64
-args["embeddingSize"] = 3
+args["embeddingSize"] = 18
 args["inputSize"] = 3
 args["outputSize"] = 16
 args["fc1"] = 32
 args["fc2"] = 16
+args["inputFC1"] = 8
+
 args["gru"] = False
 args["dropOut"] = 0.4
-args["batchNum"] = 100
+args["batchNum"] = 1000
 args["epoch"] = 50
 args["plotEvery"] = 5
 args["prefix"] = "data"
@@ -64,4 +66,5 @@ args["trainSimStep"] = 0.1
 args["testFilePrefix"] = "defualt"
 args["testSimStep"] = 1
 args["testBatch"] = 100
-args["version"] = "0327"
+
+args["version"] = "0408"

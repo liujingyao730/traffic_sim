@@ -104,7 +104,7 @@ def testLane(lane, model=None, testData=None, args = conf.args):
         state_dict = torch.load(conf.modelPath+"/"+dataFilePrefix+".pth") 
         model.load_state_dict(state_dict)
         model.eval()
-        testData = batchGenerator(testFilePrefix)
+        testData = batchGenerator(testFilePrefix, simTimeStep=args["testSimStep"])
     
     target = np.array([])
     result = np.array([])
