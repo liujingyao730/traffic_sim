@@ -44,18 +44,24 @@ greenPass = 57
 yellowPass = 60
 
 
-# 训练参数
+# 网络参数
+'''    不区分进入lstm层的     '''
 args = {}
 args["useCuda"] = True
 args["seqLength"] = 20
 args["hiddenSize"] = 64
-args["embeddingSize"] = 18
+args["embeddingSize"] = 32
 args["inputSize"] = 3
 args["outputSize"] = 16
 args["fc1"] = 32
 args["fc2"] = 16
 args["inputFC1"] = 8
+args["laneGateFC"] = 4
+'''     分别进入三个lstm的     '''
+args["sHiddenSize"] = 8
+args["sEmbeddingSize"] = 4
 
+# 训练参数
 args["gru"] = False
 args["dropOut"] = 0.4
 args["batchNum"] = 1000
@@ -65,6 +71,13 @@ args["prefix"] = "data"
 args["trainSimStep"] = 0.1
 args["testFilePrefix"] = "defualt"
 args["testSimStep"] = 1
-args["testBatch"] = 100
+args["testBatch"] = 1000
 
-args["version"] = "0408"
+args["version"] = "0410"
+
+# 文件名的生成
+def modelName(prefix):
+    return modelPath + "/" + prefix + "_" + args["version"] + ".pth"
+
+def picsName(prefix):
+    return picsPath + "/" + prefix + "_" + args["version"] + ".png"

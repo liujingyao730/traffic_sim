@@ -9,6 +9,7 @@ import torch.nn as nn
 import conf
 from utils import batchGenerator
 from model import BasicLSTM
+from model import stackedLSTM
 import dataProcess as dp 
 import train
 
@@ -19,9 +20,17 @@ import train
 #dp.edgeRecord(conf.netDebug, conf.fcdDefualt)
 #dp.laneNumber(conf.netDebug)
 
-train.train(conf.args)
-train.test(conf.args)
 
+bg = batchGenerator(conf.args["prefix"])
+bg.generateBatch()
+inputs = Variable(torch.Tensor(bg.CurrentSequences))
+lane = Variable(torch.Tensor([bg.CurrentLane]))
+model = stackedLSTM(conf.args)
+output, hidden = model(lane, inputs)
+
+
+#train.train(conf.args)
+#train.test(conf.args)
 #model, testData = train.testLane(1)
 #for i in [2,3,4,5,6]:
 #    train.testLane(i, model, testData)
