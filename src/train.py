@@ -217,13 +217,13 @@ def stackedLSTMtest(args=conf.args):
     scatter = pe.Scatter(title=title)
     scatter.add("baseline", target, target)
     scatter.add("model", target, result)
-    picturePath = conf.picslName("stacked_total")
+    picturePath = conf.picsName("stacked_total")
     scatter.render(path=picturePath)
     print("picture saved as ",picturePath)
 
     return
 
-def basicLSTMtestLane(lane, model=None, testData=None, args = conf.args):
+def stackedLSTMtestLane(lane, model=None, testData=None, args = conf.args):
 
     if model == None:
         dataFilePrefix = args["prefix"]
