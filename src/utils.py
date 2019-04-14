@@ -17,8 +17,8 @@ class batchGenerator(object):
 
         self.prefix = prefix
         self.batchSize = batchSize
-        self.seqLength = seqLength
         self.simTimeStep = simTimeStep
+        self.seqLength = seqLength
         self.infer = infer
         self.generate = generate
 
@@ -99,11 +99,13 @@ class batchGenerator(object):
         self.CurrentOutputs.clear()
         self.CurrentSequences.clear()
         self.CurrentLane = lane
-        self.CurrentTime = random.randint(50, 100)
-
-        for edge in self.LaneNumber.columns:
+   
+        for i in range(len(self.LaneNumber.columns)):
+            edge = self.LaneNumber.columns[i]
             if self.LaneNumber.loc["laneNumber", edge] == lane:
+                self.CurrentEdgePoint = i
                 break
+
         for i in range(self.batchSize):
             while True:
                 self.CurrentTime = self.CarIn.index[random.randint(0, self.indexNumber)]

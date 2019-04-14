@@ -121,7 +121,7 @@ def basicLSTMtestLane(lane, model=None, testData=None, args = conf.args):
             Lane = Lane.cuda()
             inputData = inputData.cuda()
             model.cuda()
-            
+
         output, _ = model(Lane, inputData)
         output = output.view(batchSize, -1).data.cpu().numpy()
         result = np.append(result, output)
