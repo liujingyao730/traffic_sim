@@ -105,12 +105,11 @@ class batchGenerator(object):
             if self.LaneNumber.loc["laneNumber", edge] == lane:
                 break
         for i in range(self.batchSize):
-            while not self.isTimePassable():
-                self.CurrentTime += self.simTimeStep
-            if self.isTimeOutBoundary():
-                self.CurrentTime = 0
+            while True:
+                self.CurrentTime = self.CarIn.index[random.randint(0, self.indexNumber)]
+                if self.isTimeIdeal():
+                        break
             self.generateNewSequence()
-            self.CurrentTime += self.simTimeStep
 
 
     def isTimeIdeal(self):

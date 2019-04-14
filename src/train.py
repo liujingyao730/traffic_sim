@@ -90,7 +90,7 @@ def basicLSTMtest(args=conf.args):
     scatter = pe.Scatter(title=title)
     scatter.add("baseline", target, target)
     scatter.add("model", target, result)
-    picturePath = conf.picslName("basic_total")
+    picturePath = conf.picsName("basic_total")
     scatter.render(path=picturePath)
     print("picture saved as ",picturePath)
 
@@ -185,7 +185,7 @@ def stackedLSTMtest(args=conf.args):
 
     dataFilePrefix = args["prefix"]
     testFilePrefix = args["testFilePrefix"]
-    model = BasicLSTM(args)
+    model = stackedLSTM(args)
     state_dict = torch.load(conf.modelName(dataFilePrefix + "_stackedLSTM")) 
     model.load_state_dict(state_dict)
     model.eval()
@@ -228,7 +228,7 @@ def stackedLSTMtestLane(lane, model=None, testData=None, args = conf.args):
     if model == None:
         dataFilePrefix = args["prefix"]
         testFilePrefix = args["testFilePrefix"]
-        model = BasicLSTM(args)
+        model = stackedLSTM(args)
         state_dict = torch.load(conf.modelName(dataFilePrefix + "_stackedLSTM")) 
         model.load_state_dict(state_dict)
         model.eval()

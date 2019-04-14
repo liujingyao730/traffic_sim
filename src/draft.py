@@ -29,13 +29,13 @@ model = stackedLSTM(conf.args)
 output, hidden = model(lane, inputs)
 '''
 
-train.basicLSTMtrain(conf.args)
+#train.basicLSTMtrain(conf.args)
 train.basicLSTMtest(conf.args)
 model, testData = train.basicLSTMtestLane(1)
 for i in [2,3,4,5,6]:
     train.basicLSTMtestLane(i, model, testData)
 
-train.stackedLSTMtrain(conf.args)
+#train.stackedLSTMtrain(conf.args)
 train.stackedLSTMtest(conf.args)
 model, testData = train.stackedLSTMtestLane(1)
 for i in [2,3,4,5,6]:

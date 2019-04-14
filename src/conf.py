@@ -64,7 +64,7 @@ args["sEmbeddingSize"] = 4
 # 训练参数
 args["gru"] = False
 args["dropOut"] = 0.4
-args["batchNum"] = 1000
+args["batchNum"] = 300
 args["epoch"] = 50
 args["plotEvery"] = 5
 args["prefix"] = "data"
