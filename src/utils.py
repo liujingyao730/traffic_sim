@@ -36,6 +36,7 @@ class batchGenerator(object):
         self.CurrentTime = 0
         self.TimeBoundary = self.CarIn.index[-1]
         self.indexNumber = len(self.CarIn.index) - 1
+        self.cycleNumber = int(self.indexNumber * self.simTimeStep / conf.cycle) 
         self.columnNumber = len(conf.edges) - 1
     
         self.CurrentSequences = []
@@ -75,7 +76,7 @@ class batchGenerator(object):
             self.CurrentLane = self.LaneNumber.loc["laneNumber", edge]
             for i in range(self.batchSize):
                 while True:
-                    self.CurrentTime = self.CarIn.index[random.randint(0, self.indexNumber)]
+                    self.generateRandomTime()
                     if self.isTimeIdeal():
                         break
                 self.generateNewSequence()
@@ -108,7 +109,7 @@ class batchGenerator(object):
 
         for i in range(self.batchSize):
             while True:
-                self.CurrentTime = self.CarIn.index[random.randint(0, self.indexNumber)]
+                self.generateRandomTime()
                 if self.isTimeIdeal():
                         break
             self.generateNewSequence()
@@ -129,6 +130,15 @@ class batchGenerator(object):
             return False
 
         return True
+
+    def generateRandomTime(self):
+
+        cycleIndex = random.randint(2, self.cycleNumber - 1)
+        timeIndex = random.randint(0, (conf.greenPass - self.deltaT) / self.simTimeStep)
+        self.CurrentTime = cycleIndex * conf.cycle + timeIndex * self.simTimeStep - self.deltaT * self.seqLength
+        self.CurrentTime = round(self.CurrentTime, 3)
+        return 
+
 
     def isTimeOutBoundary(self):
         

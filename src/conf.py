@@ -10,6 +10,7 @@ simConfigurePath = dataPath + "/simConfigure"
 midDataPath = dataPath + "/midData"
 modelPath = dataPath + "/model"
 picsPath = dataPath + "/pics"
+resultPath = dataPath + "/result"
 
 firstStageSim = simConfigurePath + "/firstStageSim"
 firstStageFcd = fcdOutputPath + "/firstStage"
@@ -35,7 +36,7 @@ modelDefualt = modelPath + "/defualtModel.pth"
 edges = ["1", "2", "3", "4", "5", "6"]
 
 # 数据相关变量
-deltaT = 5
+deltaT = 10
 sequenceLength = 20
 batchSize = 50
 simTimeStep = 1
@@ -73,7 +74,7 @@ args["testFilePrefix"] = "defualt"
 args["testSimStep"] = 1
 args["testBatch"] = 1000
 
-args["version"] = "0410"
+args["version"] = "0423"
 
 # 文件名的生成
 def modelName(prefix):
@@ -81,3 +82,6 @@ def modelName(prefix):
 
 def picsName(prefix):
     return picsPath + "/" + prefix + "_" + args["version"] + ".png"
+
+def csvName(prefix):
+    return resultPath + "/" + prefix + "_" + args["version"] + ".csv"

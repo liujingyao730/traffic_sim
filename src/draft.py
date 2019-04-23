@@ -29,17 +29,17 @@ model = stackedLSTM(conf.args)
 output, hidden = model(lane, inputs)
 '''
 
-#train.basicLSTMtrain(conf.args)
-#train.basicLSTMtest(conf.args)
-model, testData = train.basicLSTMtestLane(1)
-for i in [2,3,4,5,6]:
-    train.basicLSTMtestLane(i, model, testData)
+train.basicLSTMtrain(conf.args, [1,2,3,4,5])
+train.basicLSTMtest(conf.args, [1,2,3,4,5])
+#model, testData = train.basicLSTMtestLane(1)
+#for i in [2,3,4,5,6]:
+#    train.basicLSTMtestLane(i, model, testData)
 
 #train.stackedLSTMtrain(conf.args)
 #train.stackedLSTMtest(conf.args)
-model, testData = train.stackedLSTMtestLane(1)
-for i in [2,3,4,5,6]:
-    train.stackedLSTMtestLane(i, model, testData)
+#model, testData = train.stackedLSTMtestLane(1)
+#for i in [2,3,4,5,6]:
+#    train.stackedLSTMtestLane(i, model, testData)
 
 '''
 fcd = conf.firstStageFcd + "/0.5_0.5_7200_0.1.xml"
