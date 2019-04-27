@@ -74,7 +74,7 @@ args["testFilePrefix"] = "defualt"
 args["testSimStep"] = 1
 args["testBatch"] = 1000
 
-args["version"] = "0423"
+args["version"] = "0427"
 
 # 文件名的生成
 def modelName(prefix):
