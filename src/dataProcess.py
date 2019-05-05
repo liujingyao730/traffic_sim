@@ -1,5 +1,6 @@
 import pandas as pd 
 import xml.etree.cElementTree as ET 
+import pyecharts as pe
 
 import conf
 '''
@@ -130,6 +131,32 @@ def dataCheck(carInFile, carOutFile, numberFile):
             OK = carIn.loc[time, edge]-carOut.loc[time, edge]+number.loc[time-1, edge] - number.loc[time, edge] == 0
             if not OK:
                 print(carIn.loc[time, edge]-carOut.loc[time, edge]+number.loc[time-1, edge], number.loc[time, edge])
+
+
+
+def resultBoxplot(prefix):
+
+    fileName = conf.csvName(prefix)
+    try:
+        data = pd.read_csv(fileName, index_col=0)
+        data = data.T
+    except:
+        print("there is no such file as ", fileName)
+        return
+
+    target = set(list(data["target"]))
+    x = list(target)
+    y = []
+
+    for number in  target:
+        l = list(data["result"][data["target"]==number])
+        y.append(l)
+
+    boxplot = pe.Boxplot(prefix)
+    boxplot.add("box", x, boxplot.prepare_data(y))
+
+    boxplot.render(conf.picsName(prefix))
+    return 
 
 
 # edgeRecord(conf.netDebug, conf.fcdDebug, conf.carInDebug, conf.carOutDebug, conf.numberDebug)

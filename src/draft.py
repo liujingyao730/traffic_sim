@@ -19,6 +19,7 @@ import train
 
 #dp.edgeRecord(conf.netDebug, conf.fcdDefualt)
 #dp.laneNumber(conf.netDebug)
+dp.resultBoxplot("mixBasicLSTM_mix123456")
 
 '''
 bg = batchGenerator(conf.args["prefix"])
@@ -29,8 +30,8 @@ model = stackedLSTM(conf.args)
 output, hidden = model(lane, inputs)
 '''
 
-train.train(conf.args, [1,2,3,4,5], "mixBasicLSTM")
-train.test(conf.args, [1,2,3,4,5], "mixBasicLSTM")
+#train.train(conf.args, [1,2,3,4,5], "mixBasicLSTM")
+#train.test(conf.args, [1,2,3,4,5], "mixBasicLSTM")
 #model, testData = train.basicLSTMtestLane(1)
 #for i in [2,3,4,5,6]:
 #    train.basicLSTMtestLane(i, model, testData)
