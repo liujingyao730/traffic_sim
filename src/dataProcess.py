@@ -1,6 +1,8 @@
 import pandas as pd 
 import xml.etree.cElementTree as ET 
 import pyecharts as pe
+import numpy as np
+from sklearn import metrics
 
 import conf
 '''
@@ -144,7 +146,12 @@ def resultBoxplot(prefix):
         print("there is no such file as ", fileName)
         return
 
-    target = set(list(data["target"]))
+    target = np.array(data["target"])
+    result = np.array(data["result"])
+    r2 = "r2_sroce : " + str(metrics.r2_score(target, result))
+    absv = "mean_absolute_error : " + str(metrics.mean_absolute_error(target, result))
+
+    target = set(list(target))
     x = list(target)
     y = []
 
@@ -152,10 +159,15 @@ def resultBoxplot(prefix):
         l = list(data["result"][data["target"]==number])
         y.append(l)
 
-    boxplot = pe.Boxplot(prefix)
-    boxplot.add("box", x, boxplot.prepare_data(y))
+    boxplot = pe.Boxplot(prefix+"\n"+r2+"\n"+absv)
+    boxplot.add("", x, boxplot.prepare_data(y))
+    baseline = pe.Scatter("baseline")
+    baseline.add("", x, x)
+    overlap = pe.Overlap()
+    overlap.add(boxplot)
+    overlap.add(baseline)
 
-    boxplot.render(conf.picsName(prefix))
+    overlap.render(conf.picsName(prefix))
     return 
 
 
