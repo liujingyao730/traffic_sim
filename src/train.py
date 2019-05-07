@@ -77,11 +77,13 @@ def train(args=conf.args, lane=None, modelType="basicLSTM"):
             prefix = prefix + str(l)
     torch.save(model.state_dict(), conf.modelName(prefix))
 
-def test(args=conf.args, lane=None, modelType="basicLSTM"):
+    return prefix
+
+def test(modelprefix, args=conf.args, lane=None, modelType="basicLSTM"):
 
     dataFilePrefix = args["prefix"]
     testFilePrefix = args["testFilePrefix"]
-    prefix = dataFilePrefix + "_" + modelType
+    modelfile = conf.modelName(modelprefix)
 
     if modelType == "basicLSTM":
         model = BasicLSTM(args)
@@ -93,12 +95,7 @@ def test(args=conf.args, lane=None, modelType="basicLSTM"):
         print("there is no such type as ", modelType)
         return
 
-    if lane:
-        prefix = prefix + "_"
-        for l in lane:
-            prefix = prefix + str(l)
-
-    state_dict = torch.load(conf.modelName(prefix)) 
+    state_dict = torch.load(modelfile) 
     model.load_state_dict(state_dict)
     model.eval()
     testData = batchGenerator(testFilePrefix, simTimeStep=args["testSimStep"])
@@ -132,7 +129,7 @@ def test(args=conf.args, lane=None, modelType="basicLSTM"):
     print("r2_sroce : ", metrics.r2_score(target, result))
     print("mean_absolute_error : ", metrics.mean_absolute_error(target, result))
 
-    prefix = modelType + "_mix"
+    prefix = modelprefix + "_to_mix"
     for l in lane:
         prefix = prefix + str(l)
     csvPath = conf.csvName(prefix)
@@ -141,4 +138,4 @@ def test(args=conf.args, lane=None, modelType="basicLSTM"):
     df.to_csv(csvPath)
     print("result saved as ", csvPath)
 
-    return csvPath
+    return prefix

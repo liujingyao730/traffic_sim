@@ -19,7 +19,7 @@ import train
 
 #dp.edgeRecord(conf.netDebug, conf.fcdDefualt)
 #dp.laneNumber(conf.netDebug)
-dp.resultBoxplot("mixBasicLSTM_mix123456")
+#dp.resultBoxplot("mixBasicLSTM_mix123456")
 
 '''
 bg = batchGenerator(conf.args["prefix"])
@@ -32,15 +32,23 @@ output, hidden = model(lane, inputs)
 
 #train.train(conf.args, [1,2,3,4,5], "mixBasicLSTM")
 #train.test(conf.args, [1,2,3,4,5], "mixBasicLSTM")
-#model, testData = train.basicLSTMtestLane(1)
-#for i in [2,3,4,5,6]:
-#    train.basicLSTMtestLane(i, model, testData)
+conf.args["version"] = "0423"
+train.test("data_basicLSTM_123456", conf.args, [1])
+train.test("data_basicLSTM_123456", conf.args, [2])
+train.test("data_basicLSTM_123456", conf.args, [3])
+train.test("data_basicLSTM_123456", conf.args, [4])
+train.test("data_basicLSTM_123456", conf.args, [5])
+train.test("data_basicLSTM_123456", conf.args, [6])
+train.test("data_basicLSTM_123456", conf.args, [1,2,3,4,5])
+train.test("data_basicLSTM_123456", conf.args, [1,2,3,4,5,6])
 
-#train.stackedLSTMtrain(conf.args)
-#train.stackedLSTMtest(conf.args)
-#model, testData = train.stackedLSTMtestLane(1)
-#for i in [2,3,4,5,6]:
-#    train.stackedLSTMtestLane(i, model, testData)
+train.test("data_basicLSTM_12345", conf.args, [6])
+train.test("data_basicLSTM_12345", conf.args, [5])
+train.test("data_basicLSTM_12345", conf.args, [4])
+train.test("data_basicLSTM_12345", conf.args, [3])
+train.test("data_basicLSTM_12345", conf.args, [2])
+train.test("data_basicLSTM_12345", conf.args, [1])
+train.test("data_basicLSTM_12345", conf.args, [1,2,3,4,5])
 
 '''
 fcd = conf.firstStageFcd + "/0.5_0.5_7200_0.1.xml"
