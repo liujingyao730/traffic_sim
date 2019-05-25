@@ -16,10 +16,12 @@ from model import stackedLSTM
 from model import mixBasicLSTM
 import conf
 
-def train(args=conf.args, lane=None, modelType="basicLSTM"):
+def train(args=conf.args, lane=[1, 2, 3, 4, 5, 6], modelType="basicLSTM"):
 
     dataFilePrefix = args["prefix"]
-    datagenerator = batchGenerator(dataFilePrefix, simTimeStep=args["trainSimStep"])
+    modelFilePrefix = args["modelFilePrefix"]
+    datagenerator = batchGenerator(dataFilePrefix, 
+            batchSize=args["batchSize"] * len(args["gpu_id"]), simTimeStep=args["trainSimStep"])
 
     if modelType == "basicLSTM":
         model = BasicLSTM(args)
@@ -36,22 +38,18 @@ def train(args=conf.args, lane=None, modelType="basicLSTM"):
     if args["useCuda"]:
         model.cuda()
         criterion.cuda()
+        if len(args["gpu_id"]) > 1:
+            model = torch.nn.DataParallel(model, device_ids=args["gpi_id"])
     lossMeter = meter.AverageValueMeter()
 
-    if lane:
-        j = 0
-        laneNumber = len(lane)
+    laneNumber = len(lane)
+    i = 0
 
     for epoch in range(args["epoch"]):
         lossMeter.reset()
-        for i in range(args["batchNum"]):
-            if lane:
-                datagenerator.generateBatchLane(lane[j])
-                j = (j + 1) % laneNumber
-            else:
-                datagenerator.generateBatch()
+        while datagenerator.generateBatch(lane):
             data = Variable(torch.Tensor(datagenerator.CurrentSequences))
-            laneT = Variable(torch.Tensor([datagenerator.CurrentLane]))
+            laneT = Variable(torch.Tensor(datagenerator.CurrentLane))
             target = Variable(torch.Tensor(datagenerator.CurrentOutputs))
             if args["useCuda"]: 
                 data = data.cuda()
@@ -67,10 +65,11 @@ def train(args=conf.args, lane=None, modelType="basicLSTM"):
 
             lossMeter.add(loss.item())
 
-            if (1+i) % args["plotEvery"] == 0:
+            if i % args["plotEvery"] == 0:
                 print("epoch: ", epoch, "  batch:  ", i, "  loss  ", lossMeter.value()[0])
+            i += 1
 
-    prefix = dataFilePrefix + "_" + modelType
+    prefix = modelFilePrefix + "_" + modelType
     if lane:
         prefix = prefix + "_"
         for l in lane:
@@ -79,7 +78,7 @@ def train(args=conf.args, lane=None, modelType="basicLSTM"):
 
     return prefix
 
-def test(modelprefix, args=conf.args, lane=None, modelType="basicLSTM"):
+def test(modelprefix, args=conf.args, lane=[1,2,3,4,5,6], modelType="basicLSTM"):
 
     dataFilePrefix = args["prefix"]
     testFilePrefix = args["testFilePrefix"]
@@ -102,17 +101,12 @@ def test(modelprefix, args=conf.args, lane=None, modelType="basicLSTM"):
     target = np.array([])
     result = np.array([])
 
-    if lane:
-        j = 0
-        laneNumber = len(lane)
+    j = 0
+    laneNumber = len(lane)
 
     for i in range(args["testBatch"]):
 
-        if lane:
-            testData.generateBatchLane(lane[j])
-            j = (j + 1) % laneNumber
-        else:
-            testData.generateBatch()
+        testData.generateBatch()
         laneT = Variable(torch.Tensor([testData.CurrentLane]))
         inputData = Variable(torch.Tensor(testData.CurrentSequences))
         [batchSize, seqLength, embeddingSize] = inputData.size()

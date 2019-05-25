@@ -13,26 +13,35 @@ from model import stackedLSTM
 import dataProcess as dp 
 import train
 
-# dp.edgeRecord(conf.netDebug, conf.fcdDebug, conf.carInDebug, conf.carOutDebug, conf.numberDebug)
+'''
+length = "300_1"
+fcd = conf.fcd(length, "varibleLength")
+carIn = conf.midDataName(length)
+carOut = conf.midDataName(length, "carOut")
+number = conf.midDataName(length, "number")
+dp.edgeRecord(conf.netDebug, fcd, carIn, carOut, number)
+'''
+
 # dataCheck(conf.carInDebug, conf.carOutDebug, conf.numberDebug)
 # dp.laneNumber(conf.netDebug, conf.laneNumberDebug)
 
 #dp.edgeRecord(conf.netDebug, conf.fcdDefualt)
 #dp.laneNumber(conf.netDebug)
-conf.args["version"] = "0423"
-dp.resultBoxplot("data_basicLSTM_3_to_mix1")
+#conf.args["version"] = "0423"
+#dp.resultBoxplot("data_basicLSTM_3_to_mix1")
 
 '''
 bg = batchGenerator(conf.args["prefix"])
+model = BasicLSTM(conf.args)
 bg.generateBatch()
-inputs = Variable(torch.Tensor(bg.CurrentSequences))
-lane = Variable(torch.Tensor([bg.CurrentLane]))
-model = stackedLSTM(conf.args)
-output, hidden = model(lane, inputs)
+data = Variable(torch.Tensor(bg.CurrentSequences))
+laneT = Variable(torch.Tensor(bg.CurrentLane))
+output, hidden = model(laneT, data)
+print(output)    
 '''
 
-#train.train(conf.args, [1,2,3,4,5], "mixBasicLSTM")
-#train.test(conf.args, [1,2,3,4,5], "mixBasicLSTM")
+train.train(conf.args, [1,2,3,4,5], "mixBasicLSTM")
+train.test("800_mixBasicLSTM", conf.args, [1,2,3,4,5], "mixBasicLSTM")
 
 
 

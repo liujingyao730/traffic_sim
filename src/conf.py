@@ -37,12 +37,12 @@ edges = ["1", "2", "3", "4", "5", "6"]
 
 # 数据相关变量
 deltaT = 10
-sequenceLength = 20
+sequenceLength = 40
 batchSize = 50
 simTimeStep = 1
-cycle = 120
-greenPass = 57
-yellowPass = 60
+cycle = 90
+greenPass = 42
+yellowPass = 45
 
 
 # 网络参数
@@ -51,6 +51,7 @@ args = {}
 args["useCuda"] = True
 args["seqLength"] = 20
 args["hiddenSize"] = 64
+args["batchSize"] = batchSize
 args["embeddingSize"] = 32
 args["inputSize"] = 3
 args["outputSize"] = 16
@@ -61,18 +62,20 @@ args["laneGateFC"] = 4
 '''     分别进入三个lstm的     '''
 args["sHiddenSize"] = 8
 args["sEmbeddingSize"] = 4
+args["modelFilePrefix"] = "800"
 
 # 训练参数
 args["gru"] = False
 args["dropOut"] = 0.4
 args["batchNum"] = 300
-args["epoch"] = 50
+args["epoch"] = 10
 args["plotEvery"] = 5
-args["prefix"] = "data"
+args["prefix"] = ["800_1", "800_2", "800_3"]
 args["trainSimStep"] = 0.1
 args["testFilePrefix"] = "defualt"
 args["testSimStep"] = 1
 args["testBatch"] = 1000
+args["gpu_id"] = [0]
 
 args["version"] = "0427"
 
@@ -85,3 +88,9 @@ def picsName(prefix):
 
 def csvName(prefix):
     return resultPath + "/" + prefix + "_" + args["version"] + ".csv"
+
+def fcd(prefix, fold="fristStage"):
+    return fcdOutputPath + "/" + fold + "/" + prefix + ".xml"
+
+def midDataName(prefix, filetype="carIn"):
+    return midDataPath + "/" + prefix + filetype + ".csv"

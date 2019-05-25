@@ -12,6 +12,7 @@ class BasicLSTM(nn.Module):
         self.args = args
 
         self.seqLength = args["seqLength"]
+        self.batchSize = args["batchSize"]
 
         self.hiddenSize = args["hiddenSize"]
         self.embeddingSize = args["embeddingSize"]
@@ -58,8 +59,9 @@ class BasicLSTM(nn.Module):
         laneControler = self.relu(laneControler)
         laneControler = self.laneGate2(laneControler)
         laneControler = self.sigma(laneControler)
+        laneControler = laneControler.view(-1, 1, 1)
 
-        inputData = laneControler * inputData 
+        inputData = inputData * laneControler
         inputData = self.embeddingFC1(inputData)
         inputData = self.relu(inputData)
         inputData = self.embeddingFC2(inputData)

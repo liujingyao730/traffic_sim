@@ -104,8 +104,8 @@ def edgeRecord(netXml, fcdXml, carInFile=conf.carInDefualt, carOutFile=conf.carO
             if edge in carIn.columns:
                 carOut.loc[time, edge] += 1
 
-        formStep = nowStep
-        nowStep = {}
+        formStep = nowStep.copy()
+        nowStep.clear()
 
     carIn.to_csv(carInFile)
     carOut.to_csv(carOutFile)

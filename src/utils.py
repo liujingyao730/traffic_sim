@@ -11,26 +11,31 @@ import conf
 
 class batchGenerator(object):
 
-    def __init__(self, prefix="defualt", simTimeStep = conf.simTimeStep, deltaT=conf.deltaT, batchSize=conf.batchSize, seqLength=conf.sequenceLength, infer=False, generate=False):
+    def __init__(self, prefix=["defualt"], laneNumberPrefix="", simTimeStep = conf.simTimeStep, 
+                deltaT=conf.deltaT, batchSize=conf.batchSize, seqLength=conf.sequenceLength, 
+                cycle = conf.cycle, Pass=conf.greenPass):
 
         self.deltaT = deltaT 
-
-        self.prefix = prefix
+        self.filePrefixList = prefix
+        self.prefixPoint = 0
+        self.prefix = self.filePrefixList[0]
+        self.fileNumber = len(prefix) - 1
         self.batchSize = batchSize
         self.simTimeStep = simTimeStep
         self.seqLength = seqLength
-        self.infer = infer
-        self.generate = generate
+        self.cycle = cycle
+        self.Pass = Pass
+        self.laneNumberPrefix = laneNumberPrefix
 
-        self.CarInFile = self.CarInFile()
-        self.CarOutFile = self.CarOutFile()
-        self.NumberFile = self.NumberFile()
-        self.LaneNumberFile = self.LaneNumberFile()
+        self.CarInFileName = self.CarInFile()
+        self.CarOutFileName = self.CarOutFile()
+        self.NumberFileName = self.NumberFile()
+        self.LaneNumberFileName = self.LaneNumberFile()
 
-        self.CarIn = pd.read_csv(self.CarInFile, index_col=0)
-        self.CarOut = pd.read_csv(self.CarOutFile, index_col=0)
-        self.Number = pd.read_csv(self.NumberFile, index_col=0)
-        self.LaneNumber = pd.read_csv(self.LaneNumberFile, index_col=0)
+        self.CarIn = pd.read_csv(self.CarInFileName, index_col=0)
+        self.CarOut = pd.read_csv(self.CarOutFileName, index_col=0)
+        self.Number = pd.read_csv(self.NumberFileName, index_col=0)
+        self.LaneNumber = pd.read_csv(self.LaneNumberFileName, index_col=0)
                 
         self.CurrentEdgePoint = 0
         self.CurrentTime = 0
@@ -38,9 +43,11 @@ class batchGenerator(object):
         self.indexNumber = len(self.CarIn.index) - 1
         self.cycleNumber = int(self.indexNumber * self.simTimeStep / conf.cycle) 
         self.columnNumber = len(conf.edges) - 1
-    
+        while not self.isTimePassable():
+            self.CurrentTime += self.simTimeStep
+        self.CurrentTime = round(self.CurrentTime, 3)
         self.CurrentSequences = []
-        self.CurrentLane = 0
+        self.CurrentLane = []
         self.CurrentOutputs = []
 
 
@@ -61,38 +68,61 @@ class batchGenerator(object):
 
         self.CurrentSequences.append(seq)
         self.CurrentOutputs.append(self.deltaTAccumulate(edge, time)[0])
+        self.CurrentLane.append([self.LaneNumber.loc["laneNumber", edge]])
 
         return True
 
 
-    def generateBatch(self, isRandom=True):
+    def generateBatch(self, laneNumber=[1,2,3,4,5,6]):
 
         self.CurrentSequences.clear()
         self.CurrentOutputs.clear()
-
-        if isRandom:
-            self.CurrentEdgePoint = random.randint(0, self.columnNumber)
-            edge = conf.edges[self.CurrentEdgePoint]
-            self.CurrentLane = self.LaneNumber.loc["laneNumber", edge]
-            for i in range(self.batchSize):
-                while True:
-                    self.generateRandomTime()
-                    if self.isTimeIdeal():
-                        break
-                self.generateNewSequence()
-        else:
-            edge = conf.edges[self.CurrentEdgePoint]
-            self.CurrentLane = self.LaneNumber.loc["laneNumber", edge]
-            for i in range(self.batchSize):
-                while not self.isTimePassable():
-                    self.CurrentTime += self.simTimeStep
-                
-                if self.isTimeOutBoundary():
+        self.CurrentLane.clear()
+        
+        edges = []
+        l = 0
+        numberEdge = len(laneNumber)
+        for lane in laneNumber:
+            for i in range(len(self.LaneNumber.columns)):
+                edge = self.LaneNumber.columns[i]
+                if self.LaneNumber.loc["laneNumber", edge] == lane:
+                    edges.append(i)
+                    break
+            
+        for i in range(self.batchSize):
+            self.CurrentEdgePoint = edges[l]
+            l += 1
+            if l >= numberEdge:
+                l = 0
+            
+            if self.isTimeOutBoundary():
+                if self.prefixPoint == self.fileNumber:
+                    return False
+                else:
+                    self.prefixPoint += 1
+                    self.prefix = self.filePrefixList[self.prefixPoint]
+                    self.CarInFileName = self.CarInFile()
+                    self.CarOutFileName = self.CarOutFile()
+                    self.NumberFileName = self.NumberFile()
+                    self.CarIn = pd.read_csv(self.CarInFileName, index_col=0)
+                    self.CarOut = pd.read_csv(self.CarOutFileName, index_col=0)
+                    self.Number = pd.read_csv(self.NumberFileName, index_col=0)
+                    self.CurrentEdgePoint = 0
                     self.CurrentTime = 0
-
-                self.generateNewSequence()
-                self.CurrentTime += self.simTimeStep
-            self.CurrentEdgePoint = (self.CurrentEdgePoint + 1) % self.columnNumber
+                    while not self.isTimePassable():
+                        self.CurrentTime += self.simTimeStep
+                    self.CurrentTime = round(self.CurrentTime, 3)
+                    self.TimeBoundary = self.CarIn.index[-1]
+                    self.indexNumber = len(self.CarIn.index) - 1
+                    self.cycleNumber = int(self.indexNumber * self.simTimeStep / conf.cycle) 
+            if not self.isTimePassable():
+                self.CurrentTime += self.cycle - self.Pass - self.simTimeStep
+                self.CurrentTime = round(self.CurrentTime, 3)
+            self.generateNewSequence()
+            self.CurrentTime += self.simTimeStep
+            self.CurrentTime = round(self.CurrentTime, 3)
+        return True
+            
 
 
     def generateBatchLane(self, lane):
@@ -123,10 +153,10 @@ class batchGenerator(object):
         if outEndTime > self.TimeBoundary:
             return False
 
-        if outStartTime % conf.cycle > conf.greenPass:
+        if outStartTime % self.cycle > self.Pass:
             return False
 
-        if outEndTime % conf.cycle > conf.greenPass:
+        if outEndTime % self.cycle > self.Pass:
             return False
 
         return True
@@ -177,7 +207,7 @@ class batchGenerator(object):
         return conf.midDataPath + "/" + self.prefix + "Number.csv"
 
     def LaneNumberFile(self):
-        return conf.midDataPath + "/" + self.prefix + "LaneNumber.csv"
+        return conf.midDataPath + "/" + self.laneNumberPrefix + "LaneNumber.csv"
 
 
     
