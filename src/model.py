@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 from torch.autograd import Variable
+from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
 class BasicLSTM(nn.Module):
 
@@ -124,6 +125,7 @@ class mixBasicLSTM(nn.Module):
     def forward(self, lane, inputData, hidden=None):
             
         [batchSize, seqLength, embeddingSize] = inputData.size()
+        
         if hidden == None:
             h_0 = inputData.data.new(1, batchSize, self.hiddenSize).fill_(0).float()
             c_0 = inputData.data.new(1, batchSize, self.hiddenSize).fill_(0).float()
@@ -138,6 +140,8 @@ class mixBasicLSTM(nn.Module):
         inputData = self.embeddingFC2(inputData)
         inputData = self.relu(inputData)
 
+        input_lengths = [seqLength for i in range(batchSize)]
+        inputData = pack_padded_sequence(inputData, input_lengths, batch_first=True)
         output, hidden = self.RNNlayer(inputData, (h_0, c_0))
 
         output = self.outputLayer(hidden[0].view(batchSize, -1))

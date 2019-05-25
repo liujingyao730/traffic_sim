@@ -39,7 +39,7 @@ def train(args=conf.args, lane=[1, 2, 3, 4, 5, 6], modelType="basicLSTM"):
         model.cuda()
         criterion.cuda()
         if len(args["gpu_id"]) > 1:
-            model = torch.nn.DataParallel(model, device_ids=args["gpi_id"])
+            model = torch.nn.DataParallel(model, device_ids=args["gpu_id"])
     lossMeter = meter.AverageValueMeter()
 
     laneNumber = len(lane)

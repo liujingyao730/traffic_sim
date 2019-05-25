@@ -92,5 +92,5 @@ def csvName(prefix):
 def fcd(prefix, fold="fristStage"):
     return fcdOutputPath + "/" + fold + "/" + prefix + ".xml"
 
-def midDataName(prefix, filetype="carIn"):
+def midDataName(prefix, filetype="CarIn"):
     return midDataPath + "/" + prefix + filetype + ".csv"
