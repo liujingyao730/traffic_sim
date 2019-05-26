@@ -47,6 +47,7 @@ def train(args=conf.args, lane=[1, 2, 3, 4, 5, 6], modelType="basicLSTM"):
 
     for epoch in range(args["epoch"]):
         lossMeter.reset()
+        datagenerator.setFilePoint(0)
         while datagenerator.generateBatch(lane):
             data = Variable(torch.Tensor(datagenerator.CurrentSequences))
             laneT = Variable(torch.Tensor(datagenerator.CurrentLane))

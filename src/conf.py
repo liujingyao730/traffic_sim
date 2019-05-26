@@ -77,7 +77,7 @@ args["testSimStep"] = 1
 args["testBatch"] = 1000
 args["gpu_id"] = [0]
 
-args["version"] = "0427"
+args["version"] = "0520"
 
 # 文件名的生成
 def modelName(prefix):

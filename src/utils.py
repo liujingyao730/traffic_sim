@@ -94,36 +94,41 @@ class batchGenerator(object):
             l += 1
             if l >= numberEdge:
                 l = 0
+                self.CurrentTime += self.simTimeStep
+                self.CurrentTime = round(self.CurrentTime, 3)
             
             if self.isTimeOutBoundary():
                 if self.prefixPoint == self.fileNumber:
                     return False
                 else:
-                    self.prefixPoint += 1
-                    self.prefix = self.filePrefixList[self.prefixPoint]
-                    self.CarInFileName = self.CarInFile()
-                    self.CarOutFileName = self.CarOutFile()
-                    self.NumberFileName = self.NumberFile()
-                    self.CarIn = pd.read_csv(self.CarInFileName, index_col=0)
-                    self.CarOut = pd.read_csv(self.CarOutFileName, index_col=0)
-                    self.Number = pd.read_csv(self.NumberFileName, index_col=0)
-                    self.CurrentEdgePoint = 0
-                    self.CurrentTime = 0
-                    while not self.isTimePassable():
-                        self.CurrentTime += self.simTimeStep
-                    self.CurrentTime = round(self.CurrentTime, 3)
-                    self.TimeBoundary = self.CarIn.index[-1]
-                    self.indexNumber = len(self.CarIn.index) - 1
-                    self.cycleNumber = int(self.indexNumber * self.simTimeStep / conf.cycle) 
+                    self.setFilePoint(self.prefixPoint+1)
             if not self.isTimePassable():
-                self.CurrentTime += self.cycle - self.Pass - self.simTimeStep
+                self.CurrentTime += self.cycle - self.Pass - self.simTimeStep + self.deltaT
                 self.CurrentTime = round(self.CurrentTime, 3)
             self.generateNewSequence()
-            self.CurrentTime += self.simTimeStep
-            self.CurrentTime = round(self.CurrentTime, 3)
+            
         return True
             
 
+    def setFilePoint(self, point):
+
+        self.prefixPoint = point
+        self.prefix = self.filePrefixList[self.prefixPoint]
+        self.CarInFileName = self.CarInFile()
+        self.CarOutFileName = self.CarOutFile()
+        self.NumberFileName = self.NumberFile()
+        self.CarIn = pd.read_csv(self.CarInFileName, index_col=0)
+        self.CarOut = pd.read_csv(self.CarOutFileName, index_col=0)
+        self.Number = pd.read_csv(self.NumberFileName, index_col=0)
+        self.CurrentEdgePoint = 0
+        self.CurrentTime = 0
+        while not self.isTimePassable():
+            self.CurrentTime += self.simTimeStep
+        self.CurrentTime = round(self.CurrentTime, 3)
+        self.TimeBoundary = self.CarIn.index[-1]
+        self.indexNumber = len(self.CarIn.index) - 1
+        self.cycleNumber = int(self.indexNumber * self.simTimeStep / conf.cycle)
+ 
 
     def generateBatchLane(self, lane):
 
@@ -178,7 +183,15 @@ class batchGenerator(object):
 
         outStartTime = self.CurrentTime + self.seqLength * self.deltaT
         outEndTime = self.CurrentTime + (self.seqLength + 1) * self.deltaT
-        return outStartTime % conf.cycle <= conf.greenPass and outEndTime % conf.cycle <= conf.greenPass
+        return outStartTime % self.cycle <= self.Pass and outEndTime % self.cycle <= self.Pass
+
+    def isTimeStartBeforeGreen(self):
+
+        return (self.CurrentTime + self.seqLength * self.deltaT) % self.cycle > self.Pass
+
+    def isTimeEndAfterGreen(self):
+
+        return (self.CurrentTime + (self.seqLength + 1) * self.deltaT) % self.cycle > self.Pass
 
     def deltaTAccumulate(self, edge, time):
 
