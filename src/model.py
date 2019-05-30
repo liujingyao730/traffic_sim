@@ -140,8 +140,8 @@ class mixBasicLSTM(nn.Module):
         inputData = self.embeddingFC2(inputData)
         inputData = self.relu(inputData)
 
-        input_lengths = [seqLength for i in range(batchSize)]
-        inputData = pack_padded_sequence(inputData, input_lengths, batch_first=True)
+        #input_lengths = [seqLength for i in range(batchSize)]
+        #inputData = pack_padded_sequence(inputData, input_lengths, batch_first=True)
         output, hidden = self.RNNlayer(inputData, (h_0, c_0))
 
         output = self.outputLayer(hidden[0].view(batchSize, -1))

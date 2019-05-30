@@ -40,8 +40,8 @@ output, hidden = model(laneT, data)
 print(output)    
 '''
 
-prefix = train.train(conf.args, [1,2,3,4,5,6], "mixBasicLSTM")
-train.test(prefix, conf.args, [1,2,3,4,5,6], "mixBasicLSTM")
+prefix = train.train(conf.args, [1,2,3,4,5,6], "basicLSTM")
+train.test(prefix, conf.args, [1,2,3,4,5,6], "basicLSTM")
 
 
 
