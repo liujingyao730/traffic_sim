@@ -49,7 +49,7 @@ yellowPass = 45
 '''    不区分进入lstm层的     '''
 args = {}
 args["useCuda"] = True
-args["seqLength"] = 5
+args["seqLength"] = 20
 args["hiddenSize"] = 64
 args["batchSize"] = batchSize
 args["embeddingSize"] = 32
@@ -68,12 +68,12 @@ args["modelFilePrefix"] = "800"
 args["gru"] = False
 args["dropOut"] = 0.4
 args["batchNum"] = 300
-args["epoch"] = 1
+args["epoch"] = 50
 args["plotEvery"] = 5
-args["prefix"] = ["debug", "debug"]
-args["trainSimStep"] = 1
-args["testFilePrefix"] = "defualt"
-args["testSimStep"] = 1
+args["prefix"] = ["300_1", "300_2"]
+args["trainSimStep"] = 0.1
+args["testFilePrefix"] = ["300_3"]
+args["testSimStep"] = 0.1
 args["testBatch"] = 1000
 args["gpu_id"] = [0]
 
