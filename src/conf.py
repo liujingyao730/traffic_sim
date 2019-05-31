@@ -62,19 +62,19 @@ args["laneGateFC"] = 4
 '''     分别进入三个lstm的     '''
 args["sHiddenSize"] = 8
 args["sEmbeddingSize"] = 4
-args["modelFilePrefix"] = "800"
+args["modelFilePrefix"] = "300"
 
 # 训练参数
 args["gru"] = False
 args["dropOut"] = 0.4
 args["batchNum"] = 300
-args["epoch"] = 50
+args["epoch"] = 10
 args["plotEvery"] = 5
 args["prefix"] = ["300_1", "300_2"]
 args["trainSimStep"] = 0.1
 args["testFilePrefix"] = ["300_3"]
 args["testSimStep"] = 0.1
-args["testBatch"] = 1000
+args["testBatch"] = 100
 args["gpu_id"] = [0]
 
 args["version"] = "0520"

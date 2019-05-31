@@ -26,6 +26,7 @@ class batchGenerator(object):
         self.cycle = cycle
         self.Pass = Pass
         self.laneNumberPrefix = laneNumberPrefix
+        
 
         self.CarInFileName = self.CarInFile()
         self.CarOutFileName = self.CarOutFile()
@@ -41,7 +42,8 @@ class batchGenerator(object):
         self.CurrentTime = 0
         self.TimeBoundary = self.CarIn.index[-1]
         self.indexNumber = len(self.CarIn.index) - 1
-        self.cycleNumber = int(self.indexNumber * self.simTimeStep / conf.cycle) 
+        self.cycleNumber = int(self.indexNumber * self.simTimeStep / conf.cycle)
+        self.disableCycle = int(self.deltaT * self.seqLength / self.cycle) + 1 
         self.columnNumber = len(conf.edges) - 1
         while not self.isTimePassable():
             self.CurrentTime += self.simTimeStep
@@ -53,9 +55,6 @@ class batchGenerator(object):
 
     def generateNewSequence(self):
         
-        if self.CurrentTime + (self.seqLength + 1) * self.deltaT > self.TimeBoundary:
-            return False
-
         edge = conf.edges[self.CurrentEdgePoint]
         seq = []
         time = self.CurrentTime
@@ -130,24 +129,22 @@ class batchGenerator(object):
         self.cycleNumber = int(self.indexNumber * self.simTimeStep / conf.cycle)
  
 
-    def generateBatchLane(self, lane):
+    def generateBatchRandom(self, laneNumber=[1,2,3,4,5,6]):
 
         self.CurrentOutputs.clear()
         self.CurrentSequences.clear()
-        self.CurrentLane = lane
-   
-        for i in range(len(self.LaneNumber.columns)):
-            edge = self.LaneNumber.columns[i]
-            if self.LaneNumber.loc["laneNumber", edge] == lane:
-                self.CurrentEdgePoint = i
-                break
+        self.CurrentLane.clear()
+        number = len(laneNumber) - 1
 
         for i in range(self.batchSize):
-            while True:
-                self.generateRandomTime()
-                if self.isTimeIdeal():
-                        break
+            self.setFilePoint(random.randint(0, self.fileNumber))
+            self.generateRandomTime()
+            if self.CurrentTime < 0:
+                a = 1
+            self.CurrentEdgePoint = random.randint(0, number)
             self.generateNewSequence()
+   
+        
 
 
     def isTimeIdeal(self):
@@ -168,7 +165,7 @@ class batchGenerator(object):
 
     def generateRandomTime(self):
 
-        cycleIndex = random.randint(2, self.cycleNumber - 1)
+        cycleIndex = random.randint(self.disableCycle, self.cycleNumber - 1)
         timeIndex = random.randint(0, (conf.greenPass - self.deltaT) / self.simTimeStep)
         self.CurrentTime = cycleIndex * conf.cycle + timeIndex * self.simTimeStep - self.deltaT * self.seqLength
         self.CurrentTime = round(self.CurrentTime, 3)

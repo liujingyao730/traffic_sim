@@ -107,7 +107,7 @@ def test(modelprefix, args=conf.args, lane=[1,2,3,4,5,6], modelType="basicLSTM")
 
     for i in range(args["testBatch"]):
 
-        testData.generateBatch()
+        testData.generateBatchRandom()
         laneT = Variable(torch.Tensor([testData.CurrentLane]))
         inputData = Variable(torch.Tensor(testData.CurrentSequences))
         [batchSize, seqLength, embeddingSize] = inputData.size()

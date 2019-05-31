@@ -81,6 +81,7 @@ class BasicLSTM(nn.Module):
 
 
         output = self.fc3(output)
+        laneControler = laneControler.view(-1, 1)
         output = output / laneControler
 
         return output,hidden[0]

@@ -14,6 +14,7 @@ from model import mixBasicLSTM
 import dataProcess as dp 
 import train
 
+conf.args["seqLength"] = 40
 
 prefix = train.train(conf.args, [1,2,3,4,5,6], "mixBasicLSTM")
 train.test(prefix, conf.args, [1,2,3,4,5,6], "mixBasicLSTM")
