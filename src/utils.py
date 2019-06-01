@@ -96,14 +96,14 @@ class batchGenerator(object):
                 self.CurrentTime += self.simTimeStep
                 self.CurrentTime = round(self.CurrentTime, 3)
             
+            if not self.isTimePassable():
+                self.CurrentTime += self.cycle - self.Pass - self.simTimeStep + self.deltaT
+                self.CurrentTime = round(self.CurrentTime, 3)
             if self.isTimeOutBoundary():
                 if self.prefixPoint == self.fileNumber:
                     return False
                 else:
                     self.setFilePoint(self.prefixPoint+1)
-            if not self.isTimePassable():
-                self.CurrentTime += self.cycle - self.Pass - self.simTimeStep + self.deltaT
-                self.CurrentTime = round(self.CurrentTime, 3)
             self.generateNewSequence()
             
         return True
