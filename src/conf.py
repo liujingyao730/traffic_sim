@@ -35,9 +35,12 @@ modelDefualt = modelPath + "/defualtModel.pth"
 # 关心的路段
 edges = ["1", "2", "3", "4", "5", "6"]
 
+# 路段裁剪量
+cut = 25
+
 # 数据相关变量
 deltaT = 10
-sequenceLength = 40
+sequenceLength = 20
 batchSize = 50
 simTimeStep = 1
 cycle = 90
@@ -59,6 +62,9 @@ args["fc1"] = 32
 args["fc2"] = 16
 args["inputFC1"] = 8
 args["laneGateFC"] = 4
+args["embeddingLayer"] = 8
+args["outputFC1"] = 16
+args["outputFC2"] = 8 
 '''     分别进入三个lstm的     '''
 args["sHiddenSize"] = 8
 args["sEmbeddingSize"] = 4

@@ -117,6 +117,93 @@ def edgeRecord(netXml, fcdXml, carInFile=conf.carInDefualt, carOutFile=conf.carO
     return 
 
 
+def bucketId(pos, length):
+    
+
+    pos -= conf.cut
+    length -= conf.cut
+    bucketNumber = int(length / 50)
+
+    if pos >= bucketNumber * 50:
+        return False
+
+    for i in range(bucketNumber):
+        if pos < (i+1)*50:
+            return i+1
+
+
+def bucketRecord(netXml, fcdXml, length, carInFile=conf.carInDefualt, carOutFile=conf.carOutDefualt, numberFile=conf.numberDefualt):
+    '''这里还是采用和基于路段的中间数据的格式
+    但不同的是这里是基于每个小bucket的流入流出，所以需要按照bucket进行存储
+    每个bucket的命名规则是三位数字，百位代表车道数，十位与各位代表编号，从小到大
+    每个bucket长50米
+    '''
+    LaneEdge = laneEdge(netXml)
+    laneNumbers = laneNumber(netXml)
+    fcdFile = ET.parse(fcdXml)
+    fcdRoot = fcdFile.getroot()
+    formStep = {}
+    nowStep = {}
+    carIn = pd.DataFrame(columns=["label"])
+    carOut = pd.DataFrame(columns=["label"])
+    number = pd.DataFrame(columns=["label"])
+
+    for timeStep in fcdRoot:
+        time = float(timeStep.attrib['time'])
+        carIn.loc[time] = 0
+        carOut.loc[time] = 0
+        number.loc[time] = 0
+
+        for vehicleEle in timeStep:
+            vehicle = vehicleEle.attrib['id']
+            lane = vehicleEle.attrib['lane']
+            edge = LaneEdge[lane]
+            if edge in conf.edges:
+                pos = float(vehicleEle.attrib["pos"])
+                lanes = laneNumbers.loc["laneNumber", edge]
+                bucket = bucketId(pos, length)
+                if time == 24 and vehicle == '3to-gneE30.0':
+                    a = 1
+                if bucket is False:
+                    continue
+                nowStep[vehicle] = lanes*100 + bucket
+                if nowStep[vehicle] not in number.columns:
+                    number[nowStep[vehicle]] = 0
+                    carIn[nowStep[vehicle]] = 0
+                    carOut[nowStep[vehicle]] = 0
+                number.loc[time, nowStep[vehicle]] += 1
+
+        for vehicle in nowStep.keys():
+            if vehicle not in formStep.keys():
+                carIn.loc[time, nowStep[vehicle]] += 1
+            else:
+                if formStep[vehicle] != nowStep[vehicle]:
+                    for bucket in range(formStep[vehicle], nowStep[vehicle]+1, 1):
+                        carOut.loc[time, bucket] += 1
+                        carIn.loc[time, bucket] += 1
+                    carOut.loc[time, nowStep[vehicle]] -= 1
+                    carIn.loc[time, formStep[vehicle]] -= 1
+                formStep.pop(vehicle)
+
+        for vehicle in formStep.keys():
+            carOut.loc[time, formStep[vehicle]] += 1
+
+        formStep = nowStep.copy()
+        nowStep.clear()
+
+    carIn.drop("label", axis=1, inplace=True)
+    carOut.drop("label", axis=1, inplace=True)
+    number.drop("label", axis=1, inplace=True)
+    carIn.to_csv(carInFile)
+    carOut.to_csv(carOutFile)
+    number.to_csv(numberFile)
+    print("carIn information have been saved as ", carInFile)
+    print("carOut information have been saved as ", carOutFile)
+    print("number information have been saved as ", numberFile)
+
+    return 
+
+
 def dataCheck(carInFile, carOutFile, numberFile):
     '''
     检查我们提取的数据满不满足 carIn_t + number_t-1 - carOut_t = number_t
@@ -126,13 +213,13 @@ def dataCheck(carInFile, carOutFile, numberFile):
     carOut = pd.read_csv(carOutFile, index_col=0)
     number = pd.read_csv(numberFile, index_col=0)
 
-    for edge in conf.edges:
+    for bucket in carIn.columns:
         for time in carIn.index:
             if time-1 not in carIn.index:
                 continue
-            OK = carIn.loc[time, edge]-carOut.loc[time, edge]+number.loc[time-1, edge] - number.loc[time, edge] == 0
+            OK = carIn.loc[time, bucket]-carOut.loc[time, bucket]+number.loc[time-1, bucket] - number.loc[time, bucket] == 0
             if not OK:
-                print(carIn.loc[time, edge]-carOut.loc[time, edge]+number.loc[time-1, edge], number.loc[time, edge])
+                print(time, bucket, carIn.loc[time, bucket]-carOut.loc[time, bucket]+number.loc[time-1, bucket], number.loc[time, bucket])
 
 
 

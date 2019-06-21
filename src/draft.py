@@ -11,29 +11,13 @@ from utils import batchGenerator
 from model import BasicLSTM
 from model import stackedLSTM
 from model import mixBasicLSTM
+from model import mdLSTM
 import dataProcess as dp 
 import train
 
 
-prefix = train.train(conf.args, [1,2,3,4,5,6], "mixBasicLSTM")
-train.test(prefix, conf.args, [1,2,3,4,5,6], "mixBasicLSTM")
+inputdata = torch.rand(2,10,5,3)
+lane = torch.Tensor([1,1])
+model = mdLSTM(conf.args)
 
-conf.args["modelFilePrefix"] = "500"
-conf.args["prefix"] = ["500_1", "500_2"]
-conf.args["testFilePrefix"] = ["500_3"]
-prefix = train.train(conf.args, [1,2,3,4,5,6], "mixBasicLSTM")
-train.test(prefix, conf.args, [1,2,3,4,5,6], "mixBasicLSTM")
-
-conf.args["modelFilePrefix"] = "1000"
-conf.args["prefix"] = ["1000_1", "1000_2"]
-conf.args["testFilePrefix"] = ["1000_3"]
-prefix = train.train(conf.args, [1,2,3,4,5,6], "mixBasicLSTM")
-train.test(prefix, conf.args, [1,2,3,4,5,6], "mixBasicLSTM")
-
-conf.args["modelFilePrefix"] = "1500"
-conf.args["prefix"] = ["1500_1", "1500_2"]
-conf.args["testFilePrefix"] = ["1500_3"]
-prefix = train.train(conf.args, [1,2,3,4,5,6], "mixBasicLSTM")
-train.test(prefix, conf.args, [1,2,3,4,5,6], "mixBasicLSTM")
-
-
+print(model(inputdata, lane))

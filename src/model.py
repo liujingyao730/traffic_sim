@@ -23,7 +23,6 @@ class BasicLSTM(nn.Module):
         self.laneGateFC = args["laneGateFC"]
         self.fc1Size = args["fc1"]
         self.fc2Size = args["fc2"]
-        self.args = args
 
         self.embeddingFC1 = nn.Linear(self.inputSize, args["inputFC1"])
         self.embeddingFC2 = nn.Linear(args["inputFC1"], self.embeddingSize)
@@ -105,7 +104,6 @@ class mixBasicLSTM(nn.Module):
         self.laneGateFC = args["laneGateFC"]
         self.fc1Size = args["fc1"]
         self.fc2Size = args["fc2"]
-        self.args = args
 
         self.embeddingFC1 = nn.Linear(self.inputSize, args["inputFC1"])
         self.embeddingFC2 = nn.Linear(args["inputFC1"], self.embeddingSize)
@@ -165,8 +163,6 @@ class stackedLSTM(nn.Module):
     def __init__(self, args):
 
         super().__init__()
-
-        self.args = args
 
         self.sHiddenSize = args["sHiddenSize"]
         self.seqLength = args["seqLength"]
@@ -267,3 +263,95 @@ class stackedLSTM(nn.Module):
         output = output / laneControler
 
         return output, hidden[0]
+
+
+class mdLSTM(nn.Module):
+
+    def __init__(self, args):
+
+        super().__init__()
+
+        self.args = args
+        
+        #相关参数
+        self.seqLength = args["seqLength"]
+        self.batchSize = args["batchSize"]
+        self.hiddenSize = args["hiddenSize"]
+        self.embeddingHiddenSize = args["embeddingLayer"]
+        self.embeddingSize = args["embeddingSize"]
+        self.inputSize = args["inputSize"]
+        self.outputSize = args["outputSize"]
+        self.gru = args["gru"]
+        self.laneGateFCSize = args["laneGateFC"]
+        self.outputFC1Size = args["outputFC1"]
+        self.outputFC2Size = args["outputFC2"]
+
+        #编码层
+        self.embeddingFC1 = nn.Linear(self.inputSize, self.embeddingHiddenSize)
+        self.embeddingFC2 = nn.Linear(self.embeddingHiddenSize, self.embeddingSize)
+        
+        #车道控制层
+        self.laneGateFC1 = nn.Linear(1, self.laneGateFCSize)
+        self.laneGateFC2 = nn.Linear(self.laneGateFCSize, 1)
+
+        self.cell = torch.nn.LSTMCell(self.embeddingSize, self.hiddenSize)
+        if self.gru:
+            self.cell = torch.nn.GRUCell(self.embeddingSize, self.hiddenSize)
+
+        self.outputLayer = nn.Linear(self.hiddenSize, self.outputSize)
+
+        #这一阶段的输出
+        self.fc1 = nn.Linear(self.outputSize, self.outputFC1Size)
+        self.fc2 = nn.Linear(self.outputFC1Size, self.outputFC2Size)
+        self.fc3 = nn.Linear(self.outputFC2Size, 1)
+
+        #激活函数
+        self.relu = nn.ReLU()
+        self.sigma = nn.Sigmoid()
+        self.maxpool = nn.MaxPool1d(3, stride=1, padding=1)
+
+    def forward(self, inputData, lane, hidden=None):
+
+        [batchSize, temporalLength, SpatialLength, inputSize] = inputData.size()
+        if hidden == None:
+            h_0 = inputData.data.new(batchSize, self.hiddenSize, SpatialLength).fill_(0).float()
+            c_0 = inputData.data.new(batchSize, self.hiddenSize, SpatialLength).fill_(0).float()
+            h_0 = Variable(h_0)
+            c_0 = Variable(c_0)
+        else:
+            h_0 = hidden[0]
+            c_0 = hidden[1]
+
+        lane = lane.view(batchSize, -1)
+        laneControler = self.laneGateFC1(lane)
+        laneControler = self.relu(laneControler)
+        laneControler = self.laneGateFC2(laneControler)
+        laneControler = self.sigma(laneControler)
+        laneControler = laneControler.view(batchSize, 1, 1, 1)
+
+        inputData = inputData * laneControler
+        inputData = self.embeddingFC1(inputData)
+        inputData = self.relu(inputData)
+        inputData = self.embeddingFC2(inputData)
+        inputData = self.relu(inputData)
+
+        for time in range(temporalLength):
+            
+            for bucket in range(SpatialLength):
+                step = inputData[:, time, bucket, :].view(batchSize, -1)
+                step_h_0 = h_0[:, :, bucket].view(batchSize, -1)
+                step_c_0 = c_0[:, :, bucket].view(batchSize, -1)
+                h_0[:, :, bucket], c_0[:, :, bucket] = self.cell(step, (step_h_0, step_c_0))
+                
+            h_0 = self.maxpool(h_0)
+            c_0 = self.maxpool(c_0)
+
+        output = self.outputLayer(h_0.transpose(1, 2).reshape(batchSize*SpatialLength, -1))
+        output = self.fc1(output)
+        output = self.relu(output)
+        output = self.fc2(output)
+        output = self.relu(output)
+        output = self.fc3(output)
+        output = output.reshape(batchSize, SpatialLength)
+
+        return output, [h_0, c_0]
