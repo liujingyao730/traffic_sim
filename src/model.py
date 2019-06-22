@@ -312,10 +312,10 @@ class mdLSTM(nn.Module):
 
     def forward(self, inputData, lane, hidden=None):
 
-        [batchSize, temporalLength, SpatialLength, inputSize] = inputData.size()
+        [batchSize, SpatialLength, temporalLength, inputSize] = inputData.size()
         if hidden == None:
-            h_0 = inputData.data.new(batchSize, self.hiddenSize, SpatialLength).fill_(0).float()
-            c_0 = inputData.data.new(batchSize, self.hiddenSize, SpatialLength).fill_(0).float()
+            h_0 = inputData.data.new(batchSize, self.hiddenSize, SpatialLength, temporalLength+1).fill_(0).float()
+            c_0 = inputData.data.new(batchSize, self.hiddenSize, SpatialLength, temporalLength+1).fill_(0).float()
             h_0 = Variable(h_0)
             c_0 = Variable(c_0)
         else:
@@ -338,15 +338,15 @@ class mdLSTM(nn.Module):
         for time in range(temporalLength):
             
             for bucket in range(SpatialLength):
-                step = inputData[:, time, bucket, :].view(batchSize, -1)
-                step_h_0 = h_0[:, :, bucket].view(batchSize, -1)
-                step_c_0 = c_0[:, :, bucket].view(batchSize, -1)
-                h_0[:, :, bucket], c_0[:, :, bucket] = self.cell(step, (step_h_0, step_c_0))
+                step = inputData[:, bucket, time, :].view(batchSize, -1)
+                step_h_0 = h_0[:, :, bucket, time].view(batchSize, -1)
+                step_c_0 = c_0[:, :, bucket, time].view(batchSize, -1)
+                h_0[:, :, bucket, time+1], c_0[:, :, bucket, time+1] = self.cell(step, (step_h_0, step_c_0))
                 
-            h_0 = self.maxpool(h_0)
-            c_0 = self.maxpool(c_0)
+            h_0[:, :, :, time+1] = self.maxpool(h_0[:, :, :, time+1])
+            c_0[:, :, :, time+1] = self.maxpool(c_0[:, :, :, time+1])
 
-        output = self.outputLayer(h_0.transpose(1, 2).reshape(batchSize*SpatialLength, -1))
+        output = self.outputLayer(h_0[:, :, :, temporalLength].transpose(1, 2).reshape(batchSize*SpatialLength, -1))
         output = self.fc1(output)
         output = self.relu(output)
         output = self.fc2(output)
