@@ -11,9 +11,9 @@ import conf
 
 class batchGenerator(object):
 
-    def __init__(self, prefix=["defualt"], laneNumberPrefix="", simTimeStep = conf.simTimeStep, 
-                deltaT=conf.deltaT, batchSize=conf.batchSize, seqLength=conf.sequenceLength, 
-                cycle = conf.cycle, Pass=conf.greenPass):
+    def __init__(self, prefix=["defualt"], laneNumberPrefix="", simTimeStep = conf.args["trainSimStep"], 
+                deltaT=conf.args["deltaT"], batchSize=conf.args["batchSize"], seqLength=conf.args["seqLength"], 
+                cycle = conf.args["cycle"], Pass=conf.args["greenPass"]):
 
         self.deltaT = deltaT 
         self.filePrefixList = prefix
@@ -44,7 +44,7 @@ class batchGenerator(object):
              
         self.TimeBoundary = self.CarIn[self.prefixPoint].index[-1]
         self.indexNumber = len(self.CarIn[self.prefixPoint].index) - 1
-        self.cycleNumber = int(self.indexNumber * self.simTimeStep / conf.cycle)
+        self.cycleNumber = int(self.indexNumber * self.simTimeStep / self.cycle)
         self.disableCycle = int(self.deltaT * self.seqLength / self.cycle) + 1 
         self.columnNumber = len(conf.edges) - 1
         self.CurrentTime = 0
@@ -156,20 +156,14 @@ class batchGenerator(object):
         self.CurrentOutputs = []
         self.CurrentLane = []
         
-        l = 0
+
         numberEdge = len(laneNumber)
         tmplanes = np.array([])
         tmpInput = np.array([])
         tmpOutput = np.array([])
             
         for i in range(self.batchSize):
-            edge = str(laneNumber[l]) #这个地方不搞复杂的转换了……
-            self.CurrentEdgePoint = l
-            l += 1
-            if l >= numberEdge:
-                l = 0
-                self.CurrentTime += self.simTimeStep
-                self.CurrentTime = round(self.CurrentTime, 3)
+            edge = str(laneNumber[self.CurrentEdgePoint]) #这个地方不搞复杂的转换了.....
             
             if not self.isTimePassable():
                 self.CurrentTime += self.cycle - self.Pass - self.simTimeStep + self.deltaT
@@ -189,6 +183,12 @@ class batchGenerator(object):
                 tmpOutput = np.concatenate((np.array([self.CurrentOutputs]), tmpOutput))
                 tmpInput =  np.concatenate((np.array([self.CurrentSequences]), tmpInput))
                 tmplanes =  np.concatenate((np.array([self.CurrentLane[0]]), tmplanes))
+
+            self.CurrentEdgePoint += 1
+            if self.CurrentEdgePoint >= numberEdge:
+                self.CurrentEdgePoint = 0
+                self.CurrentTime += self.simTimeStep
+                self.CurrentTime = round(self.CurrentTime, 3)
 
         self.CurrentSequences = tmpInput
         self.CurrentOutputs = tmpOutput
@@ -231,7 +231,7 @@ class batchGenerator(object):
         self.prefix = self.filePrefixList[self.prefixPoint]
         self.TimeBoundary = self.CarIn[self.prefixPoint].index[-1]
         self.indexNumber = len(self.CarIn[self.prefixPoint].index) - 1
-        self.cycleNumber = int(self.indexNumber * self.simTimeStep / conf.cycle)
+        self.cycleNumber = int(self.indexNumber * self.simTimeStep / self.cycle)
         
         self.CurrentEdgePoint = 0
         self.CurrentTime = 0
@@ -259,8 +259,8 @@ class batchGenerator(object):
     def generateRandomTime(self):
 
         cycleIndex = random.randint(self.disableCycle, self.cycleNumber - 1)
-        timeIndex = random.randint(0, (conf.greenPass - self.deltaT) / self.simTimeStep)
-        self.CurrentTime = cycleIndex * conf.cycle + timeIndex * self.simTimeStep - self.deltaT * self.seqLength
+        timeIndex = random.randint(0, (self.Pass - self.deltaT) / self.simTimeStep)
+        self.CurrentTime = cycleIndex * self.cycle + timeIndex * self.simTimeStep - self.deltaT * self.seqLength
         self.CurrentTime = round(self.CurrentTime, 3)
         return 
 

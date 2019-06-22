@@ -312,22 +312,24 @@ class mdLSTM(nn.Module):
 
     def forward(self, inputData, lane, hidden=None):
 
-        [batchSize, SpatialLength, temporalLength, inputSize] = inputData.size()
+        [SpatialLength, temporalLength, inputSize] = inputData.size()
         if hidden == None:
-            h_0 = inputData.data.new(batchSize, self.hiddenSize, SpatialLength, temporalLength+1).fill_(0).float()
-            c_0 = inputData.data.new(batchSize, self.hiddenSize, SpatialLength, temporalLength+1).fill_(0).float()
+            h_0 = inputData.data.new(SpatialLength, self.hiddenSize).fill_(0).float()
+            c_0 = inputData.data.new(SpatialLength, self.hiddenSize).fill_(0).float()
             h_0 = Variable(h_0)
             c_0 = Variable(c_0)
         else:
             h_0 = hidden[0]
             c_0 = hidden[1]
 
-        lane = lane.view(batchSize, -1)
+        H = torch.zeros([SpatialLength, self.hiddenSize, temporalLength])
+        C = torch.zeros([SpatialLength, self.hiddenSize, temporalLength])
+
         laneControler = self.laneGateFC1(lane)
         laneControler = self.relu(laneControler)
         laneControler = self.laneGateFC2(laneControler)
         laneControler = self.sigma(laneControler)
-        laneControler = laneControler.view(batchSize, 1, 1, 1)
+        laneControler = laneControler.view(1, 1, 1)
 
         inputData = inputData * laneControler
         inputData = self.embeddingFC1(inputData)
@@ -336,22 +338,19 @@ class mdLSTM(nn.Module):
         inputData = self.relu(inputData)
 
         for time in range(temporalLength):
-            
-            for bucket in range(SpatialLength):
-                step = inputData[:, bucket, time, :].view(batchSize, -1)
-                step_h_0 = h_0[:, :, bucket, time].view(batchSize, -1)
-                step_c_0 = c_0[:, :, bucket, time].view(batchSize, -1)
-                h_0[:, :, bucket, time+1], c_0[:, :, bucket, time+1] = self.cell(step, (step_h_0, step_c_0))
-                
-            h_0[:, :, :, time+1] = self.maxpool(h_0[:, :, :, time+1])
-            c_0[:, :, :, time+1] = self.maxpool(c_0[:, :, :, time+1])
+            h_0, c_0 = self.cell(inputData[:, time, :], (h_0, c_0))
+            h_0 = self.maxpool(h_0.unsqueeze(0).transpose(1, 2)).transpose(1, 2).squeeze(0)
+            H[:, :, time] = h_0
+            C[:, :, time] = c_0
 
-        output = self.outputLayer(h_0[:, :, :, temporalLength].transpose(1, 2).reshape(batchSize*SpatialLength, -1))
+        output = self.outputLayer(h_0)
         output = self.fc1(output)
         output = self.relu(output)
         output = self.fc2(output)
         output = self.relu(output)
         output = self.fc3(output)
-        output = output.reshape(batchSize, SpatialLength)
+        laneControler = laneControler.view(-1, 1)
+        output = output / laneControler
+        
 
         return output, [h_0, c_0]

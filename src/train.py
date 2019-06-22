@@ -165,13 +165,16 @@ def trainmd(args=conf.args, lane=[1, 2, 3, 4, 5, 6]):
             data = Variable(torch.Tensor(datagenerator.CurrentSequences))
             laneT = Variable(torch.Tensor(datagenerator.CurrentLane))
             target = Variable(torch.Tensor(datagenerator.CurrentOutputs))
+            data.squeeze_(0)
+            laneT.squeeze_(0)
+            target.squeeze_(0)
             if args["useCuda"]: 
                 data = data.cuda()
                 laneT = laneT.cuda()
                 target = target.cuda()
             optimizer.zero_grad()
 
-            output, _ = model(laneT, data)
+            output, _ = model(data, laneT)
             output.squeeze_(1)
             loss = criterion(output, target)
             loss.backward()

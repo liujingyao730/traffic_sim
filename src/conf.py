@@ -38,23 +38,19 @@ edges = ["1", "2", "3", "4", "5", "6"]
 # 路段裁剪量
 cut = 25
 
-# 数据相关变量
-deltaT = 10
-sequenceLength = 20
-batchSize = 50
-simTimeStep = 1
-cycle = 90
-greenPass = 42
-yellowPass = 45
-
-
 # 网络参数
 '''    不区分进入lstm层的     '''
 args = {}
+# 数据相关变量
+args["deltaT"] = 10
+args["cycle"] = 90
+args["greenPass"] = 42
+args["yellowPass"] = 45
+
 args["useCuda"] = True
 args["seqLength"] = 20
 args["hiddenSize"] = 64
-args["batchSize"] = batchSize
+args["batchSize"] = 50
 args["embeddingSize"] = 32
 args["inputSize"] = 3
 args["outputSize"] = 16

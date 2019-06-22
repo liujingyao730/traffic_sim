@@ -16,15 +16,12 @@ from model import mdLSTM
 import dataProcess as dp 
 import train
 
-bg = batchGenerator(["300_1", "300_2", "300_3"], simTimeStep=conf.args["testSimStep"], batchSize=3)
-model = mdLSTM(conf.args)
-result = pd.DataFrame(columns=[1,2,3,4,5])
-traget = pd.DataFrame(columns=[1,2,3,4,5])
+conf.args["seqLength"] = 30
+conf.args["batchSize"] = 1
+conf.args["prefix"] = ["300_1", "300_2", "500_1", "500_2", "800_1", "800_2"]
+conf.args["testFilePrefix"] = ["300_3", "500_3", "800_3"]
+conf.args["testBatch"] = 1000
+conf.args["modelFilePrefix"] = "multi_Dimension_LSTM"
 
-for i in range(30):
-    bg.generateBatchRandomForBucket()
-    inputs = Variable(torch.tensor(bg.CurrentSequences)).float()
-    laneT = Variable(torch.tensor(bg.CurrentLane)).float()
-    output,_ = model(inputs, laneT)
-    traget = traget.append(pd.DataFrame(bg.CurrentOutputs, columns=[1,2,3,4,5]), ignore_index=True)
-    result = result.append(pd.DataFrame(output.detach().numpy(), columns=[1,2,3,4,5]), ignore_index=True)
+prefix = train.trainmd()
+train.testmd(prefix)
