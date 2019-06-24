@@ -124,7 +124,7 @@ def bucketId(pos, length):
     length -= conf.cut
     bucketNumber = int(length / 50)
 
-    if pos >= bucketNumber * 50:
+    if pos >= bucketNumber * 50 or pos < 0:
         return False
 
     for i in range(bucketNumber):
@@ -162,8 +162,6 @@ def bucketRecord(netXml, fcdXml, length, carInFile=conf.carInDefualt, carOutFile
                 pos = float(vehicleEle.attrib["pos"])
                 lanes = laneNumbers.loc["laneNumber", edge]
                 bucket = bucketId(pos, length)
-                if time == 24 and vehicle == '3to-gneE30.0':
-                    a = 1
                 if bucket is False:
                     continue
                 nowStep[vehicle] = lanes*100 + bucket
@@ -172,8 +170,6 @@ def bucketRecord(netXml, fcdXml, length, carInFile=conf.carInDefualt, carOutFile
                     carIn[nowStep[vehicle]] = 0
                     carOut[nowStep[vehicle]] = 0
                 number.loc[time, nowStep[vehicle]] += 1
-            else:
-                a = 1
 
         for vehicle in nowStep.keys():
             if vehicle not in formStep.keys():

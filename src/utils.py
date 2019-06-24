@@ -283,6 +283,9 @@ class batchGenerator(object):
             In += self.CarIn[self.prefixPoint].loc[time, column]
             time = round(time + self.simTimeStep, 3)
 
+        if Out > 10:
+            a = 1
+
         return [Out, In]
         
 
