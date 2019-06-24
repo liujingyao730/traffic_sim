@@ -329,7 +329,7 @@ class mdLSTM(nn.Module):
         laneControler = self.relu(laneControler)
         laneControler = self.laneGateFC2(laneControler)
         laneControler = self.sigma(laneControler)
-        laneControler = laneControler.view(1, 1, 1)
+        laneControler = laneControler.view(-1, 1, 1)
 
         inputData = inputData * laneControler
         inputData = self.embeddingFC1(inputData)

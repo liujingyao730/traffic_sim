@@ -172,6 +172,8 @@ def bucketRecord(netXml, fcdXml, length, carInFile=conf.carInDefualt, carOutFile
                     carIn[nowStep[vehicle]] = 0
                     carOut[nowStep[vehicle]] = 0
                 number.loc[time, nowStep[vehicle]] += 1
+            else:
+                a = 1
 
         for vehicle in nowStep.keys():
             if vehicle not in formStep.keys():

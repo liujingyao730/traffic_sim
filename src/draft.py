@@ -16,6 +16,7 @@ from model import mdLSTM
 import dataProcess as dp 
 import train
 
+
 conf.args["seqLength"] = 30
 conf.args["batchSize"] = 1
 conf.args["prefix"] = ["300_1", "300_2", "500_1", "500_2", "800_1", "800_2"]
@@ -23,5 +24,6 @@ conf.args["testFilePrefix"] = ["300_3", "500_3", "800_3"]
 conf.args["testBatch"] = 1000
 conf.args["modelFilePrefix"] = "multi_Dimension_LSTM"
 
-prefix = train.trainmd()
-train.testmd(prefix)
+prefix = train.train()
+train.test(prefix)
+

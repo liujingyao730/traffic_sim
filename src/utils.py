@@ -66,6 +66,8 @@ class batchGenerator(object):
         time = self.CurrentTime
 
         for i in range(self.seqLength):
+            if time > 10 and float(column) > 400:
+                a = 1
             timeSlice = self.deltaTAccumulate(column, time)
             timeSlice.append(self.Number[self.prefixPoint].loc[time, column])
             seq.append(timeSlice)
@@ -101,25 +103,16 @@ class batchGenerator(object):
 
     def generateBatch(self, laneNumber=[1,2,3,4,5,6]):
 
+        #这里edge的车道数就是edge名，不高复杂的转换了……
         self.CurrentSequences.clear()
         self.CurrentOutputs.clear()
         self.CurrentLane.clear()
-        
-        edges = []
-        l = 0
         numberEdge = len(laneNumber)
-        for lane in laneNumber:
-            for i in range(len(self.LaneNumber.columns)):
-                edge = self.LaneNumber.columns[i]
-                if self.LaneNumber.loc["laneNumber", edge] == lane:
-                    edges.append(i)
-                    break
-            
+
         for i in range(self.batchSize):
-            self.CurrentEdgePoint = edges[l]
-            l += 1
-            if l >= numberEdge:
-                l = 0
+
+            if self.CurrentEdgePoint >= numberEdge:
+                self.CurrentEdgePoint = 0
                 self.CurrentTime += self.simTimeStep
                 self.CurrentTime = round(self.CurrentTime, 3)
             
@@ -175,14 +168,9 @@ class batchGenerator(object):
                     self.setFilePoint(self.prefixPoint+1)
 
             self.generateNewMatrix()
-            if tmpInput.size == 0:
-                tmpInput = np.array([self.CurrentSequences])
-                tmpOutput = np.array([self.CurrentOutputs])
-                tmplanes = np.array([self.CurrentLane[0]])
-            else:
-                tmpOutput = np.concatenate((np.array([self.CurrentOutputs]), tmpOutput))
-                tmpInput =  np.concatenate((np.array([self.CurrentSequences]), tmpInput))
-                tmplanes =  np.concatenate((np.array([self.CurrentLane[0]]), tmplanes))
+            self.CurrentOutputs = np.array(self.CurrentOutputs)
+            self.CurrentSequences = np.array(self.CurrentSequences)
+            self.CurrentLane = np.array(self.CurrentLane)
 
             self.CurrentEdgePoint += 1
             if self.CurrentEdgePoint >= numberEdge:
@@ -190,9 +178,7 @@ class batchGenerator(object):
                 self.CurrentTime += self.simTimeStep
                 self.CurrentTime = round(self.CurrentTime, 3)
 
-        self.CurrentSequences = tmpInput
-        self.CurrentOutputs = tmpOutput
-        self.CurrentLane = tmplanes
+
 
         return True
 
