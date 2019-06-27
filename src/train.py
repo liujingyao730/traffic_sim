@@ -205,25 +205,29 @@ def testmd(modelprefix, args=conf.args, lane=[1,2,3,4,5,6]):
     state_dict = torch.load(modelfile) 
     model.load_state_dict(state_dict)
     model.eval()
-    testData = batchGenerator(testFilePrefix, simTimeStep=args["testSimStep"])
-    target = np.array([])
-    result = np.array([])
+    testData = batchGenerator(testFilePrefix, simTimeStep=args["testSimStep"], batchSize=args["batchSize"])
+    target = pd.DataFrame([])
+    result = pd.DataFrame([])
 
     for i in range(args["testBatch"]):
 
         testData.generateBatchRandomForBucket()
         laneT = Variable(torch.Tensor(testData.CurrentLane))
         inputData = Variable(torch.Tensor(testData.CurrentSequences))
-        [batchSize, SpatialLength, temporalLength, inputSize] = inputData.size()
+        [SpatialLength, temporalLength, inputSize] = inputData.size()
         
         if args["useCuda"]:
             laneT = laneT.cuda()
             inputData = inputData.cuda()
             model.cuda()
             
-        output, _ = model(laneT, inputData)
-        traget = traget.append(pd.DataFrame(bg.CurrentOutputs, columns=[1,2,3,4,5]), ignore_index=True)
-        result = result.append(pd.DataFrame(output.detach().numpy(), columns=[1,2,3,4,5]), ignore_index=True)
+        output, _ = model(inputData, laneT)
+        if args["useCuda"]:
+            output = output.cpu()
+        
+        output = output.view(SpatialLength, 1)
+        target = pd.concat([target, pd.DataFrame(testData.CurrentOutputs).T], ignore_index=True)
+        result = pd.concat([result, pd.DataFrame(output.detach().numpy()).T], ignore_index=True)
 
     prefix = modelprefix + "_to_mix"
     for l in lane:

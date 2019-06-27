@@ -155,30 +155,27 @@ class batchGenerator(object):
         tmpInput = np.array([])
         tmpOutput = np.array([])
             
-        for i in range(self.batchSize):
-            edge = str(laneNumber[self.CurrentEdgePoint]) #这个地方不搞复杂的转换了.....
+        edge = str(laneNumber[self.CurrentEdgePoint]) #这个地方不搞复杂的转换了.....
             
-            if not self.isTimePassable():
-                self.CurrentTime += self.cycle - self.Pass - self.simTimeStep + self.deltaT
-                self.CurrentTime = round(self.CurrentTime, 3)
-            if self.isTimeOutBoundary():
-                if self.prefixPoint == self.fileNumber:
-                    return False
-                else:
-                    self.setFilePoint(self.prefixPoint+1)
+        if not self.isTimePassable():
+            self.CurrentTime += self.cycle - self.Pass - self.simTimeStep + self.deltaT
+            self.CurrentTime = round(self.CurrentTime, 3)
+        if self.isTimeOutBoundary():
+            if self.prefixPoint == self.fileNumber:
+                return False
+            else:
+                self.setFilePoint(self.prefixPoint+1)
 
-            self.generateNewMatrix()
-            self.CurrentOutputs = np.array(self.CurrentOutputs)
-            self.CurrentSequences = np.array(self.CurrentSequences)
-            self.CurrentLane = np.array(self.CurrentLane)
+        self.generateNewMatrix()
+        self.CurrentOutputs = np.array(self.CurrentOutputs)
+        self.CurrentSequences = np.array(self.CurrentSequences)
+        self.CurrentLane = np.array(self.CurrentLane)
 
-            self.CurrentEdgePoint += 1
-            if self.CurrentEdgePoint >= numberEdge:
-                self.CurrentEdgePoint = 0
-                self.CurrentTime += self.simTimeStep
-                self.CurrentTime = round(self.CurrentTime, 3)
-
-
+        self.CurrentEdgePoint += 1
+        if self.CurrentEdgePoint >= numberEdge:
+            self.CurrentEdgePoint = 0
+            self.CurrentTime += self.simTimeStep
+            self.CurrentTime = round(self.CurrentTime, 3)
 
         return True
 
@@ -192,23 +189,11 @@ class batchGenerator(object):
         tmpInput = np.array([])
         tmpOutput = np.array([])
 
-        for i in range(self.batchSize):
-            self.setFilePoint(random.randint(0, self.fileNumber))
-            self.generateRandomTime()
-            self.CurrentEdgePoint = random.randint(0, number)
-            self.generateNewMatrix()
-            if tmpInput.size == 0:
-                tmpInput = np.array([self.CurrentSequences])
-                tmpOutput = np.array([self.CurrentOutputs])
-                tmplanes = np.array([self.CurrentLane[0]])
-            else:
-                tmpOutput = np.concatenate((np.array([self.CurrentOutputs]), tmpOutput))
-                tmpInput =  np.concatenate((np.array([self.CurrentSequences]), tmpInput))
-                tmplanes =  np.concatenate((np.array([self.CurrentLane[0]]), tmplanes))
+        self.setFilePoint(random.randint(0, self.fileNumber))
+        self.generateRandomTime()
+        self.CurrentEdgePoint = random.randint(0, number)
+        self.generateNewMatrix()
         
-        self.CurrentSequences = tmpInput
-        self.CurrentOutputs = tmpOutput
-        self.CurrentLane = tmplanes
 
 
     def setFilePoint(self, point):

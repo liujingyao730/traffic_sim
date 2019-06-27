@@ -19,17 +19,11 @@ import train
 
 conf.args["seqLength"] = 30
 conf.args["batchSize"] = 1
-conf.args["prefix"] = ["300_d"]
+conf.args["prefix"] = ["300_1", "300_2", "500_1", "500_2", "800_1", "800_2"]
 conf.args["testFilePrefix"] = ["300_3", "500_3", "800_3"]
 conf.args["testBatch"] = 1000
 conf.args["modelFilePrefix"] = "multi_Dimension_LSTM"
 
-prefix = train.trainmd()
+prefix = "multi_Dimension_LSTM_mdLSTM_123456"
 train.testmd(prefix)
-'''
-fcd = conf.fcd("300_3", "varibleLength")
-carIn = conf.midDataName("300_d")
-carOut = conf.midDataName("300_d", "CarOut")
-number = conf.midDataName("300_d", "Number")
-dp.bucketRecord(conf.netDebug, fcd, 300, carIn, carOut, number)
-'''
+
