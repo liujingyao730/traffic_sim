@@ -256,14 +256,33 @@ def resultBoxplot(prefix):
     return 
 
 
-# edgeRecord(conf.netDebug, conf.fcdDebug, conf.carInDebug, conf.carOutDebug, conf.numberDebug)
-# dataCheck(conf.carInDebug, conf.carOutDebug, conf.numberDebug)
-# laneNumber(conf.netDebug, conf.laneNumberDebug)
+def bucketResult(prefix):
 
-'''
-[carIn, carOut, number] = edgeRecord(conf.netDebug, conf.fcdDebug)
-carIn.to_csv(conf.carInDebug)
-carOut.to_csv(conf.carOutDebug)
-number.to_csv(conf.numberDebug)
+    csvR = conf.csvName(prefix+"_result")
+    csvT = conf.csvName(prefix+"_target")
+    result = pd.read_csv(csvR, index_col=0)
+    target = pd.read_csv(csvT, index_col=0)
 
-'''
+    for bucket in result.columns:
+        r = np.array(result[bucket].dropna())
+        t = np.array(target[bucket].dropna())
+        r2 = "r2_sroce : " + str(metrics.r2_score(t, r))
+        absv = "mean_absolute_error : " + str(metrics.mean_absolute_error(t, r))
+
+        t= set(list(t))
+        x = list(t)
+        y = []
+
+        for number in  t:
+            l = list(result[bucket][target[bucket]==number])
+            y.append(l)
+
+        boxplot = pe.Boxplot(str(bucket)+"\n"+r2+"\n"+absv)
+        boxplot.add("", x, boxplot.prepare_data(y))
+        baseline = pe.Scatter("baseline")
+        baseline.add("", x, x)
+        overlap = pe.Overlap()
+        overlap.add(boxplot)
+        overlap.add(baseline)
+
+        overlap.render(conf.picsName(bucket))

@@ -195,6 +195,66 @@ def trainmd(args=conf.args, lane=[1, 2, 3, 4, 5, 6]):
 
     return prefix
 
+
+
+def trainmdRandom(args=conf.args, lane=[1, 2, 3, 4, 5, 6]):
+
+    dataFilePrefix = args["prefix"]
+    modelFilePrefix = args["modelFilePrefix"]
+    datagenerator = batchGenerator(dataFilePrefix, 
+            batchSize=args["batchSize"], simTimeStep=args["trainSimStep"])
+
+    model = mdLSTM(args)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+    criterion = nn.MSELoss()
+
+    if args["useCuda"]:
+        model.cuda()
+        criterion.cuda()
+    lossMeter = meter.AverageValueMeter()
+
+    laneNumber = len(lane)
+
+    for epoch in range(args["epoch"]):
+        lossMeter.reset()
+        datagenerator.setFilePoint(0)
+        i = 0
+        for batch in range(args["batchNum"]):
+            datagenerator.generateBatchRandomForBucket(lane)
+            data = Variable(torch.Tensor(datagenerator.CurrentSequences))
+            laneT = Variable(torch.Tensor(datagenerator.CurrentLane))
+            target = Variable(torch.Tensor(datagenerator.CurrentOutputs))
+            data.squeeze_(0)
+            laneT.squeeze_(0)
+            target.squeeze_(0)
+            if args["useCuda"]: 
+                data = data.cuda()
+                laneT = laneT.cuda()
+                target = target.cuda()
+            optimizer.zero_grad()
+
+            output, _ = model(data, laneT)
+            output.squeeze_(1)
+            loss = criterion(output, target)
+            loss.backward()
+            optimizer.step()
+
+            lossMeter.add(loss.item())
+
+            if i % args["plotEvery"] == 0:
+                print("epoch: ", epoch, "  batch:  ", i, "  loss  ", lossMeter.value()[0])
+            i += 1
+
+    prefix = modelFilePrefix + "_mdLSTM" 
+    if lane:
+        prefix = prefix + "_"
+        for l in lane:
+            prefix = prefix + str(l)
+    torch.save(model.state_dict(), conf.modelName(prefix))
+
+    return prefix
+
+
 def testmd(modelprefix, args=conf.args, lane=[1,2,3,4,5,6]):
 
     dataFilePrefix = args["prefix"]
@@ -238,11 +298,6 @@ def testmd(modelprefix, args=conf.args, lane=[1,2,3,4,5,6]):
     result.to_csv(csvPathR)
     print("result saved as ", csvPathR)
     print("target saved as ", csvPathT)
-
-    traget = np.array(target)
-    result = np.array(result)
-    print("r2_sroce : ", metrics.r2_score(target, result))
-    print("mean_absolute_error : ", metrics.mean_absolute_error(target, result))
 
     return prefix
     

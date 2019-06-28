@@ -24,6 +24,6 @@ conf.args["testFilePrefix"] = ["300_3", "500_3", "800_3"]
 conf.args["testBatch"] = 1000
 conf.args["modelFilePrefix"] = "multi_Dimension_LSTM"
 
-prefix = "multi_Dimension_LSTM_mdLSTM_123456"
+train.trainmdRandom(conf.args)
 train.testmd(prefix)
 

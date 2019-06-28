@@ -69,7 +69,7 @@ args["modelFilePrefix"] = "300"
 # 训练参数
 args["gru"] = False
 args["dropOut"] = 0.4
-args["batchNum"] = 300
+args["batchNum"] = 5000
 args["epoch"] = 10
 args["plotEvery"] = 5
 args["prefix"] = ["300_1", "300_2"]
