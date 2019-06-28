@@ -16,7 +16,7 @@ from model import mdLSTM
 import dataProcess as dp 
 import train
 
-
+'''
 conf.args["seqLength"] = 30
 conf.args["batchSize"] = 1
 conf.args["prefix"] = ["300_1", "300_2", "500_1", "500_2", "800_1", "800_2"]
@@ -24,6 +24,9 @@ conf.args["testFilePrefix"] = ["300_3", "500_3", "800_3"]
 conf.args["testBatch"] = 1000
 conf.args["modelFilePrefix"] = "multi_Dimension_LSTM"
 
-train.trainmdRandom(conf.args)
+prefix = train.trainmdRandom(conf.args)
 train.testmd(prefix)
+'''
 
+prefix = "multi_Dimension_LSTM_mdLSTM_123456_to_mix123456"
+dp.bucketResult(prefix)
