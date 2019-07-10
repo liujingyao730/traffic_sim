@@ -4,6 +4,42 @@ import numpy as np
 from torch.autograd import Variable
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
+import conf
+
+
+class FCNet(nn.Module):
+
+    def __init__(self, addLayer=False, layerSize=[3, conf.args["embeddingLayer"], conf.args["embeddingSize"]]):
+
+        super().__init__()
+
+        self.inputSize = layerSize[0]
+        self.hiddenSize = layerSize[1]
+        self.outputSize = layerSize[2]
+        self.addLayer = addLayer
+
+        self.fc1 = nn.Linear(self.inputSize, self.hiddenSize)
+        self.fc2 = nn.Linear(self.hiddenSize, self.outputSize)
+        
+        self.relu = nn.ReLU()
+
+        if addLayer:
+            self.outputSize2 = layerSize[3]
+            self.fc3 = nn.Linear(self.outputSize, self.outputSize2)
+
+    def forward(self, inputs):
+
+        outputs = self.fc1(inputs)
+        outputs = self.relu(outputs)
+        outputs = self.fc2(outputs)
+        if self.addLayer :
+            outputs = self.relu(outputs)
+            outputs = self.fc3(outputs)
+
+        return outputs
+
+
+
 class BasicLSTM(nn.Module):
 
     def __init__(self, args):
@@ -267,11 +303,12 @@ class stackedLSTM(nn.Module):
 
 class mdLSTM(nn.Module):
 
-    def __init__(self, args):
+    def __init__(self, args, test_mod=False):
 
         super().__init__()
 
         self.args = args
+        self.test_mod = test_mod
         
         #相关参数
         self.seqLength = args["seqLength"]
@@ -289,12 +326,10 @@ class mdLSTM(nn.Module):
         self.outputFC2Size = args["outputFC2"]
 
         #编码层
-        self.embeddingFC1 = nn.Linear(self.inputSize, self.embeddingHiddenSize)
-        self.embeddingFC2 = nn.Linear(self.embeddingHiddenSize, self.embeddingSize)
+        self.embedding = FCNet(layerSize=[self.inputSize, self.embeddingHiddenSize, self.embeddingSize])
         
         #车道控制层
-        self.laneGateFC1 = nn.Linear(1, self.laneGateFCSize)
-        self.laneGateFC2 = nn.Linear(self.laneGateFCSize, 1)
+        self.laneGate = FCNet(layerSize=[1, self.laneGateFCSize, 1])
 
         self.cell = torch.nn.LSTMCell(self.embeddingSize, self.hiddenSize)
         if self.gru:
@@ -303,9 +338,7 @@ class mdLSTM(nn.Module):
         self.outputLayer = nn.Linear(self.hiddenSize, self.outputSize)
 
         #这一阶段的输出
-        self.fc1 = nn.Linear(self.outputSize, self.outputFC1Size)
-        self.fc2 = nn.Linear(self.outputFC1Size, self.outputFC2Size)
-        self.fc3 = nn.Linear(self.outputFC2Size, 1)
+        self.outputs = FCNet(addLayer=True, layerSize=[self.outputSize, self.outputFC1Size, self.outputFC2Size, 1])
 
         #不同bucket间的影响
         self.maxpool = nn.MaxPool1d(3, stride=1, padding=1)
@@ -333,16 +366,12 @@ class mdLSTM(nn.Module):
         H = torch.zeros([SpatialLength, self.hiddenSize, temporalLength])
         C = torch.zeros([SpatialLength, self.hiddenSize, temporalLength])
 
-        laneControler = self.laneGateFC1(lane)
-        laneControler = self.relu(laneControler)
-        laneControler = self.laneGateFC2(laneControler)
+        laneControler = self.laneGate(lane)
         laneControler = self.sigma(laneControler)
         laneControler = laneControler.view(-1, 1, 1)
 
         inputData = inputData * laneControler
-        inputData = self.embeddingFC1(inputData)
-        inputData = self.relu(inputData)
-        inputData = self.embeddingFC2(inputData)
+        inputData = self.embedding(inputData)
         inputData = self.relu(inputData)
 
         for time in range(temporalLength):
@@ -352,18 +381,16 @@ class mdLSTM(nn.Module):
             H[:, :, time] = h_0
             C[:, :, time] = c_0
             if time > self.seqPredict:
-                predict_h[:, time-self.seqPredict, :] = h_0              
+                predict_h[:, time-self.seqPredict, :] = h_0
 
         predict_h = predict_h.view(SpatialLength*self.predictLength, self.hiddenSize)
         output = self.outputLayer(predict_h)
-        output = self.fc1(output)
-        output = self.relu(output)
-        output = self.fc2(output)
-        output = self.relu(output)
-        output = self.fc3(output)
+        output = self.outputs(output)
+        
         laneControler = laneControler.view(-1, 1)
         output = output.view(SpatialLength, self.predictLength, 1)
         output = output / laneControler
 
         return output, [H, C]
+
 
