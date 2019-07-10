@@ -13,7 +13,7 @@ class batchGenerator(object):
 
     def __init__(self, prefix=["defualt"], laneNumberPrefix="", simTimeStep = conf.args["trainSimStep"], 
                 deltaT=conf.args["deltaT"], batchSize=conf.args["batchSize"], seqLength=conf.args["seqLength"], 
-                cycle = conf.args["cycle"], Pass=conf.args["greenPass"]):
+                cycle = conf.args["cycle"], Pass=conf.args["greenPass"], seqPredict=conf.args["seqPredict"]):
 
         self.deltaT = deltaT 
         self.filePrefixList = prefix
@@ -23,6 +23,7 @@ class batchGenerator(object):
         self.batchSize = batchSize
         self.simTimeStep = simTimeStep
         self.seqLength = seqLength
+        self.seqPredict = seqPredict
         self.cycle = cycle
         self.Pass = Pass
         self.CurrentEdgePoint = 0
@@ -63,18 +64,24 @@ class batchGenerator(object):
         if column == None:
             column = edge
         seq = []
+        out = []
         time = self.CurrentTime
 
-        for i in range(self.seqLength):
-            if time > 10 and float(column) > 400:
-                a = 1
+        for i in range(self.seqPredict):
             timeSlice = self.deltaTAccumulate(column, time)
             timeSlice.append(self.Number[self.prefixPoint].loc[time, column])
             seq.append(timeSlice)
             time += self.deltaT
+        
+        for i in range(self.seqPredict, self.seqLength):
+            timeSlice = self.deltaTAccumulate(column, time)
+            timeSlice.append(self.Number[self.prefixPoint].loc[time, column])
+            seq.append(timeSlice)
+            out.append(timeSlice[0])
+            time += self.deltaT
 
+        self.CurrentOutputs.append(out)
         self.CurrentSequences.append(seq)
-        self.CurrentOutputs.append(self.deltaTAccumulate(column, time)[0])
         self.CurrentLane.append([self.LaneNumber.loc["laneNumber", edge]])
 
         return True
@@ -158,7 +165,7 @@ class batchGenerator(object):
         edge = str(laneNumber[self.CurrentEdgePoint]) #这个地方不搞复杂的转换了.....
             
         if not self.isTimePassable():
-            self.CurrentTime += self.cycle - self.Pass - self.simTimeStep + self.deltaT
+            self.CurrentTime += self.cycle - self.Pass - self.simTimeStep + self.deltaT * (self.seqLength - self.seqPredict)
             self.CurrentTime = round(self.CurrentTime, 3)
         if self.isTimeOutBoundary():
             if self.prefixPoint == self.fileNumber:
@@ -242,17 +249,17 @@ class batchGenerator(object):
 
     def isTimePassable(self):
 
-        outStartTime = self.CurrentTime + self.seqLength * self.deltaT
-        outEndTime = self.CurrentTime + (self.seqLength + 1) * self.deltaT
+        outStartTime = self.CurrentTime + self.seqPredict * self.deltaT
+        outEndTime = self.CurrentTime + self.seqLength * self.deltaT
         return outStartTime % self.cycle <= self.Pass and outEndTime % self.cycle <= self.Pass
 
     def isTimeStartBeforeGreen(self):
 
-        return (self.CurrentTime + self.seqLength * self.deltaT) % self.cycle > self.Pass
+        return (self.CurrentTime + self.seqPredict * self.deltaT) % self.cycle > self.Pass
 
     def isTimeEndAfterGreen(self):
 
-        return (self.CurrentTime + (self.seqLength + 1) * self.deltaT) % self.cycle > self.Pass
+        return (self.CurrentTime + self.seqLength * self.deltaT) % self.cycle > self.Pass
 
     def deltaTAccumulate(self, column, time):
 
@@ -267,9 +274,6 @@ class batchGenerator(object):
             Out += self.CarOut[self.prefixPoint].loc[time, column]
             In += self.CarIn[self.prefixPoint].loc[time, column]
             time = round(time + self.simTimeStep, 3)
-
-        if Out > 10:
-            a = 1
 
         return [Out, In]
         

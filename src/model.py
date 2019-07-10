@@ -275,6 +275,8 @@ class mdLSTM(nn.Module):
         
         #相关参数
         self.seqLength = args["seqLength"]
+        self.seqPredict = args["seqPredict"]
+        self.predictLength = self.seqLength - self.seqPredict
         self.batchSize = args["batchSize"]
         self.hiddenSize = args["hiddenSize"]
         self.embeddingHiddenSize = args["embeddingLayer"]
@@ -326,6 +328,8 @@ class mdLSTM(nn.Module):
             h_0 = hidden[0]
             c_0 = hidden[1]
 
+        predict_h = inputData.data.new(SpatialLength, self.predictLength, self.hiddenSize).fill_(0).float()
+
         H = torch.zeros([SpatialLength, self.hiddenSize, temporalLength])
         C = torch.zeros([SpatialLength, self.hiddenSize, temporalLength])
 
@@ -347,15 +351,19 @@ class mdLSTM(nn.Module):
             h_0 = self.convpool(h_0.unsqueeze(1)).squeeze(1)
             H[:, :, time] = h_0
             C[:, :, time] = c_0
+            if time > self.seqPredict:
+                predict_h[:, time-self.seqPredict, :] = h_0              
 
-        output = self.outputLayer(h_0)
+        predict_h = predict_h.view(SpatialLength*self.predictLength, self.hiddenSize)
+        output = self.outputLayer(predict_h)
         output = self.fc1(output)
         output = self.relu(output)
         output = self.fc2(output)
         output = self.relu(output)
         output = self.fc3(output)
         laneControler = laneControler.view(-1, 1)
+        output = output.view(SpatialLength, self.predictLength, 1)
         output = output / laneControler
 
-        return output, [h_0, c_0]
+        return output, [H, C]
 

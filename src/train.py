@@ -175,7 +175,7 @@ def trainmd(args=conf.args, lane=[1, 2, 3, 4, 5, 6]):
             optimizer.zero_grad()
 
             output, _ = model(data, laneT)
-            output.squeeze_(1)
+            output = output.view(-1, args["seqLength"]-args["seqPredict"])
             loss = criterion(output, target)
             loss.backward()
             optimizer.step()

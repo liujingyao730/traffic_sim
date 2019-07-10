@@ -42,15 +42,16 @@ cut = 45
 '''    不区分进入lstm层的     '''
 args = {}
 # 数据相关变量
-args["deltaT"] = 10
+args["deltaT"] = 7
 args["cycle"] = 90
 args["greenPass"] = 42
 args["yellowPass"] = 45
 
 args["useCuda"] = True
-args["seqLength"] = 20
+args["seqLength"] = 25
+args["seqPredict"] = 20
 args["hiddenSize"] = 64
-args["batchSize"] = 50
+args["batchSize"] = 1
 args["embeddingSize"] = 32
 args["inputSize"] = 3
 args["outputSize"] = 16
@@ -76,10 +77,10 @@ args["prefix"] = ["300_1", "300_2"]
 args["trainSimStep"] = 0.1
 args["testFilePrefix"] = ["300_3"]
 args["testSimStep"] = 0.1
-args["testBatch"] = 100
+args["testBatch"] = 6000
 args["gpu_id"] = [0]
 
-args["version"] = "0628"
+args["version"] = "0710"
 
 # 文件名的生成
 def modelName(prefix):
