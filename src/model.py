@@ -352,6 +352,8 @@ class mdLSTM(nn.Module):
     def forward(self, inputData, lane, hidden=None):
 
         [SpatialLength, temporalLength, inputSize] = inputData.size()
+        if self.test_mod:
+            origin_pred = inputData[:,self.seqPredict:,:]
         if hidden == None:
             h_0 = inputData.data.new(SpatialLength, self.hiddenSize).fill_(0).float()
             c_0 = inputData.data.new(SpatialLength, self.hiddenSize).fill_(0).float()
@@ -362,6 +364,7 @@ class mdLSTM(nn.Module):
             c_0 = hidden[1]
 
         predict_h = inputData.data.new(SpatialLength, self.predictLength, self.hiddenSize).fill_(0).float()
+        output = inputData.data.new(SpatialLength, self.predictLength).fill_(0).float()
 
         H = torch.zeros([SpatialLength, self.hiddenSize, temporalLength])
         C = torch.zeros([SpatialLength, self.hiddenSize, temporalLength])
@@ -371,25 +374,55 @@ class mdLSTM(nn.Module):
         laneControler = laneControler.view(-1, 1, 1)
 
         inputData = inputData * laneControler
+        laneControler = laneControler.view(-1, 1)
         inputData = self.embedding(inputData)
         inputData = self.relu(inputData)
 
-        for time in range(temporalLength):
+        for time in range(self.seqPredict):
             h_0, c_0 = self.cell(inputData[:, time, :], (h_0, c_0))
             #h_0 = self.maxpool(h_0.unsqueeze(0).transpose(1, 2)).transpose(1, 2).squeeze(0)
             h_0 = self.convpool(h_0.unsqueeze(1)).squeeze(1)
             H[:, :, time] = h_0
             C[:, :, time] = c_0
-            if time > self.seqPredict:
+
+        if self.test_mod:
+            for time in range(self.predictLength):
+                pred_input = H[:, :, self.seqPredict+time-1]
+                pred_input = self.outputLayer(pred_input)
+                pred_input = self.outputs(pred_input)
+                pred_input = pred_input / laneControler
+                if time > 0:
+                    output[:, time-1] = pred_input.squeeze(1)
+                origin_pred[:, time, 0] = pred_input.squeeze(1)
+                pred_input = origin_pred[:, time, :]
+                pred_input = pred_input * laneControler
+                pred_input = self.embedding(pred_input)
+                pred_input = self.relu(pred_input)
+                h_0, c_0 = self.cell(pred_input, (h_0, c_0))
+                h_0 = self.convpool(h_0.unsqueeze(1)).squeeze(1)
+                H[:, :, time] = h_0
+                C[:, :, time] = c_0
+            pred_input = h_0
+            pred_input = self.outputLayer(pred_input)
+            pred_input = self.outputs(pred_input)
+            pred_input = pred_input / laneControler
+            output[:, time] = pred_input.squeeze(1)
+        else:
+            for time in range(self.seqPredict, self.seqLength):
+
+                h_0, c_0 = self.cell(inputData[:, time, :], (h_0, c_0))
+                #h_0 = self.maxpool(h_0.unsqueeze(0).transpose(1, 2)).transpose(1, 2).squeeze(0)
+                h_0 = self.convpool(h_0.unsqueeze(1)).squeeze(1)
+                H[:, :, time] = h_0
+                C[:, :, time] = c_0
                 predict_h[:, time-self.seqPredict, :] = h_0
 
-        predict_h = predict_h.view(SpatialLength*self.predictLength, self.hiddenSize)
-        output = self.outputLayer(predict_h)
-        output = self.outputs(output)
+            predict_h = predict_h.view(SpatialLength*self.predictLength, self.hiddenSize)
+            output = self.outputLayer(predict_h)
+            output = self.outputs(output)
         
-        laneControler = laneControler.view(-1, 1)
-        output = output.view(SpatialLength, self.predictLength, 1)
-        output = output / laneControler
+            output = output.view(SpatialLength, self.predictLength)
+            output = output / laneControler
 
         return output, [H, C]
 

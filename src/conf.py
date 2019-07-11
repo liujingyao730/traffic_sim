@@ -48,7 +48,7 @@ args["greenPass"] = 42
 args["yellowPass"] = 45
 
 args["useCuda"] = True
-args["seqLength"] = 25
+args["seqLength"] = 24
 args["seqPredict"] = 20
 args["hiddenSize"] = 64
 args["batchSize"] = 1

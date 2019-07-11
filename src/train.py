@@ -234,7 +234,6 @@ def trainmdRandom(args=conf.args, lane=[1, 2, 3, 4, 5, 6]):
             optimizer.zero_grad()
 
             output, _ = model(data, laneT)
-            output.squeeze_(1)
             loss = criterion(output, target)
             loss.backward()
             optimizer.step()
@@ -266,8 +265,8 @@ def testmd(modelprefix, args=conf.args, lane=[1,2,3,4,5,6]):
     model.load_state_dict(state_dict)
     model.eval()
     testData = batchGenerator(testFilePrefix, simTimeStep=args["testSimStep"], batchSize=args["batchSize"])
-    target = pd.DataFrame([])
-    result = pd.DataFrame([])
+    target = np.array([])
+    result = np.array([])
 
     for i in range(args["testBatch"]):
 
@@ -285,19 +284,18 @@ def testmd(modelprefix, args=conf.args, lane=[1,2,3,4,5,6]):
         if args["useCuda"]:
             output = output.cpu()
         
-        output = output.view(SpatialLength, 1)
-        target = pd.concat([target, pd.DataFrame(testData.CurrentOutputs).T], ignore_index=True)
-        result = pd.concat([result, pd.DataFrame(output.detach().numpy()).T], ignore_index=True)
+        target = np.append(target, testData.CurrentOutputs)
+        result = np.append(result, list(output))
 
     prefix = modelprefix + "_to_mix"
     for l in lane:
         prefix = prefix + str(l)
-    csvPathR = conf.csvName(prefix+"_result")
-    csvPathT = conf.csvName(prefix+"_target")
-    target.to_csv(csvPathT)
-    result.to_csv(csvPathR)
-    print("result saved as ", csvPathR)
-    print("target saved as ", csvPathT)
+    PathR = conf.resultPath + "/" + prefix + "_result.npy"
+    PathT = conf.resultPath + "/" + prefix + "_target.npy"
+    np.save(PathR, result)
+    np.save(PathT, target)
+    print("result saved as ", PathR)
+    print("target saved as ", PathT)
 
     return prefix
     
