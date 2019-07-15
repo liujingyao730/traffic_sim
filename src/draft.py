@@ -6,6 +6,7 @@ from torch.autograd import Variable
 import torch.optim as optim
 import torch.nn as nn
 import pandas as pd
+import numpy as np
 
 import conf
 from utils import batchGenerator
@@ -22,24 +23,19 @@ conf.args["testFilePrefix"] = ["300_3", "500_3", "800_3"]
 conf.args["modelFilePrefix"] = "multi_Dimension_LSTM"
 
 
-prefix = train.trainmd(conf.args)
+#prefix = train.trainmd(conf.args)
+prefix = "multi_Dimension_LSTM_mdLSTM_123456"
 train.testmd(prefix)
 
 #prefix = "multi_Dimension_LSTM_mdLSTM_123456_to_mix123456"
 #dp.bucketResult(prefix)
-
 '''
-bg = batchGenerator(prefix=conf.args["prefix"], 
-        batchSize=conf.args["batchSize"], simTimeStep=conf.args["trainSimStep"])
-bg.generateBatchForBucket()
-data = Variable(torch.Tensor(bg.CurrentSequences))
-laneT = Variable(torch.Tensor(bg.CurrentLane))
-target = Variable(torch.Tensor(bg.CurrentOutputs))
-train_model = mdLSTM(conf.args)
-test_model = mdLSTM(conf.args, test_mod=True)
+result = conf.resultPath + "/multi_Dimension_LSTM_mdLSTM_123456_to_mix123456_result.npy"
+target = conf.resultPath + "/multi_Dimension_LSTM_mdLSTM_123456_to_mix123456_target.npy"
 
-output_train, _ = train_model(data, laneT)
-output_test, _ = test_model(data, laneT)
-print(output_train.shape)
-print(output_test.shape)
+r = np.load(result)
+t = np.load(target)
+
+print(r.shape)
+print(t.shape)
 '''

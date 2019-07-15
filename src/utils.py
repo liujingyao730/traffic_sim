@@ -24,8 +24,10 @@ class batchGenerator(object):
         self.simTimeStep = simTimeStep
         self.seqLength = seqLength
         self.seqPredict = seqPredict
+        self.predLength = self.seqLength - self.seqPredict + 1
         self.cycle = cycle
         self.Pass = Pass
+        self.timeindexBoundary = (self.Pass - self.predLength * self.deltaT) / self.simTimeStep
         self.CurrentEdgePoint = 0
         self.laneNumberPrefix = laneNumberPrefix
         self.LaneNumberFileName = self.LaneNumberFile()
@@ -73,11 +75,13 @@ class batchGenerator(object):
             seq.append(timeSlice)
             time += self.deltaT
         
-        for i in range(self.seqPredict, self.seqLength):
+        for i in range(self.seqPredict, self.seqLength+1):
             timeSlice = self.deltaTAccumulate(column, time)
             timeSlice.append(self.Number[self.prefixPoint].loc[time, column])
-            seq.append(timeSlice)
-            out.append(timeSlice[0])
+            if i < self.seqLength:
+                seq.append(timeSlice)
+            if i > self.seqPredict:
+                out.append(timeSlice[0])
             time += self.deltaT
 
         self.CurrentOutputs.append(out)
@@ -237,9 +241,12 @@ class batchGenerator(object):
     def generateRandomTime(self):
 
         cycleIndex = random.randint(self.disableCycle, self.cycleNumber - 1)
-        timeIndex = random.randint(0, (self.Pass - self.deltaT) / self.simTimeStep)
-        self.CurrentTime = cycleIndex * self.cycle + timeIndex * self.simTimeStep - self.deltaT * self.seqLength
+        timeIndex = random.randint(0, self.timeindexBoundary)
+        self.CurrentTime = cycleIndex * self.cycle + timeIndex * self.simTimeStep + \
+                            self.predLength * self.deltaT - self.deltaT * (self.seqLength + 1)
         self.CurrentTime = round(self.CurrentTime, 3)
+        if not self.isTimePassable():
+            a = 1
         return 
 
 
@@ -250,7 +257,7 @@ class batchGenerator(object):
     def isTimePassable(self):
 
         outStartTime = self.CurrentTime + self.seqPredict * self.deltaT
-        outEndTime = self.CurrentTime + self.seqLength * self.deltaT
+        outEndTime = self.CurrentTime + (self.seqLength + 1) * self.deltaT
         return outStartTime % self.cycle <= self.Pass and outEndTime % self.cycle <= self.Pass
 
     def isTimeStartBeforeGreen(self):
@@ -259,7 +266,7 @@ class batchGenerator(object):
 
     def isTimeEndAfterGreen(self):
 
-        return (self.CurrentTime + self.seqLength * self.deltaT) % self.cycle > self.Pass
+        return (self.CurrentTime + (self.seqLength + 1) * self.deltaT) % self.cycle > self.Pass
 
     def deltaTAccumulate(self, column, time):
 

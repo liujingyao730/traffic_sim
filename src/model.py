@@ -365,9 +365,8 @@ class mdLSTM(nn.Module):
 
         predict_h = inputData.data.new(SpatialLength, self.predictLength, self.hiddenSize).fill_(0).float()
         output = inputData.data.new(SpatialLength, self.predictLength).fill_(0).float()
-
-        H = torch.zeros([SpatialLength, self.hiddenSize, temporalLength])
-        C = torch.zeros([SpatialLength, self.hiddenSize, temporalLength])
+        H = inputData.data.new(SpatialLength, self.hiddenSize, temporalLength).fill_(0).float()
+        C = inputData.data.new(SpatialLength, self.hiddenSize, temporalLength).fill_(0).float()
 
         laneControler = self.laneGate(lane)
         laneControler = self.sigma(laneControler)
@@ -378,7 +377,7 @@ class mdLSTM(nn.Module):
         inputData = self.embedding(inputData)
         inputData = self.relu(inputData)
 
-        for time in range(self.seqPredict):
+        for time in range(self.seqPredict+1):
             h_0, c_0 = self.cell(inputData[:, time, :], (h_0, c_0))
             #h_0 = self.maxpool(h_0.unsqueeze(0).transpose(1, 2)).transpose(1, 2).squeeze(0)
             h_0 = self.convpool(h_0.unsqueeze(1)).squeeze(1)
@@ -386,8 +385,8 @@ class mdLSTM(nn.Module):
             C[:, :, time] = c_0
 
         if self.test_mod:
-            for time in range(self.predictLength):
-                pred_input = H[:, :, self.seqPredict+time-1]
+            for time in range(self.predictLength-1):
+                pred_input = H[:, :, self.seqPredict+time]
                 pred_input = self.outputLayer(pred_input)
                 pred_input = self.outputs(pred_input)
                 pred_input = pred_input / laneControler
@@ -400,8 +399,8 @@ class mdLSTM(nn.Module):
                 pred_input = self.relu(pred_input)
                 h_0, c_0 = self.cell(pred_input, (h_0, c_0))
                 h_0 = self.convpool(h_0.unsqueeze(1)).squeeze(1)
-                H[:, :, time] = h_0
-                C[:, :, time] = c_0
+                H[:, :, self.seqPredict+time+1] = h_0
+                C[:, :, self.seqPredict+time+1] = c_0
             pred_input = h_0
             pred_input = self.outputLayer(pred_input)
             pred_input = self.outputs(pred_input)

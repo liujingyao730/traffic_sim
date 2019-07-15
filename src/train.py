@@ -260,7 +260,7 @@ def testmd(modelprefix, args=conf.args, lane=[1,2,3,4,5,6]):
     testFilePrefix = args["testFilePrefix"]
     modelfile = conf.modelName(modelprefix)
 
-    model = mdLSTM(args)
+    model = mdLSTM(args, test_mod=True)
     state_dict = torch.load(modelfile) 
     model.load_state_dict(state_dict)
     model.eval()
