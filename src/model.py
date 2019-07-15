@@ -342,7 +342,8 @@ class mdLSTM(nn.Module):
 
         #不同bucket间的影响
         self.maxpool = nn.MaxPool1d(3, stride=1, padding=1)
-        self.convpool = nn.Conv1d(1, 1, 3, stride=1, padding=1)
+        self.convpool = nn.Conv1d(in_channels=self.hiddenSize, 
+                    out_channels=self.hiddenSize, kernel_size=3, stride=1, padding=1)
 
         #激活函数
         self.relu = nn.ReLU()
@@ -380,7 +381,7 @@ class mdLSTM(nn.Module):
         for time in range(self.seqPredict):
             h_0, c_0 = self.cell(inputData[:, time, :], (h_0, c_0))
             #h_0 = self.maxpool(h_0.unsqueeze(0).transpose(1, 2)).transpose(1, 2).squeeze(0)
-            h_0 = self.convpool(h_0.unsqueeze(1)).squeeze(1)
+            h_0 = self.convpool(h_0.unsqueeze(0).transpose(1, 2)).transpose(1, 2).squeeze(0)
             H[:, :, time] = h_0
             C[:, :, time] = c_0
 
@@ -411,7 +412,7 @@ class mdLSTM(nn.Module):
 
                 h_0, c_0 = self.cell(inputData[:, time, :], (h_0, c_0))
                 #h_0 = self.maxpool(h_0.unsqueeze(0).transpose(1, 2)).transpose(1, 2).squeeze(0)
-                h_0 = self.convpool(h_0.unsqueeze(1)).squeeze(1)
+                h_0 = self.convpool(h_0.unsqueeze(0).transpose(1, 2)).transpose(1, 2).squeeze(0)
                 H[:, :, time] = h_0
                 C[:, :, time] = c_0
                 predict_h[:, time-self.seqPredict, :] = h_0
