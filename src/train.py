@@ -70,7 +70,9 @@ def train(args=conf.args, lane=[1, 2, 3, 4, 5, 6], modelType="basicLSTM"):
             lossMeter.add(loss.item())
 
             if i % args["plotEvery"] == 0:
-                print("epoch: ", epoch, "  batch:  ", i, "  loss  ", lossMeter.value()[0])
+                print("epoch: ", epoch, "  batch:  ", i, "  loss  ", lossMeter.value()[0], 
+                " current time is ", datagenerator.CurrentTime, 
+                " current file is ", datagenerator.filePrefixList[datagenerator.prefixPoint])
             i += 1
 
     prefix = modelFilePrefix + "_" + modelType
@@ -183,7 +185,9 @@ def trainmd(args=conf.args, lane=[1, 2, 3, 4, 5, 6]):
             lossMeter.add(loss.item())
 
             if i % args["plotEvery"] == 0:
-                print("epoch: ", epoch, "  batch:  ", i, "  loss  ", lossMeter.value()[0])
+                print("epoch: ", epoch, "  batch:  ", i, "  loss  ", lossMeter.value()[0], 
+                " current time is ", datagenerator.CurrentTime, 
+                " current file is ", datagenerator.filePrefixList[datagenerator.prefixPoint])
             i += 1
 
     prefix = modelFilePrefix + "_mdLSTM" 
