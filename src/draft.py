@@ -23,8 +23,8 @@ conf.args["testFilePrefix"] = ["300_3", "500_3", "800_3"]
 conf.args["modelFilePrefix"] = "multi_Dimension_LSTM"
 
 
-#prefix = train.trainmd(conf.args)
-prefix = "multi_Dimension_LSTM_mdLSTM_123456"
+prefix = train.trainmd(conf.args)
+#prefix = "multi_Dimension_LSTM_mdLSTM_123456"
 train.testmd(prefix)
 
 #prefix = "multi_Dimension_LSTM_mdLSTM_123456_to_mix123456"

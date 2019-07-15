@@ -169,7 +169,7 @@ class batchGenerator(object):
         edge = str(laneNumber[self.CurrentEdgePoint]) #这个地方不搞复杂的转换了.....
             
         if not self.isTimePassable():
-            self.CurrentTime += self.cycle - self.Pass - self.simTimeStep + self.deltaT * (self.seqLength - self.seqPredict)
+            self.CurrentTime += self.cycle - self.Pass - self.simTimeStep + self.deltaT * (self.seqLength - self.seqPredict + 1)
             self.CurrentTime = round(self.CurrentTime, 3)
         if self.isTimeOutBoundary():
             if self.prefixPoint == self.fileNumber:
@@ -245,8 +245,6 @@ class batchGenerator(object):
         self.CurrentTime = cycleIndex * self.cycle + timeIndex * self.simTimeStep + \
                             self.predLength * self.deltaT - self.deltaT * (self.seqLength + 1)
         self.CurrentTime = round(self.CurrentTime, 3)
-        if not self.isTimePassable():
-            a = 1
         return 
 
 
