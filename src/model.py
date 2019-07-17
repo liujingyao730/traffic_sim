@@ -67,160 +67,53 @@ class MD_lstm_cell(nn.Module):
         return h_s_tp, c_s_tp
 
 
-class mdLSTM(nn.Module):
+class TP_lstm(nn.Module):
 
-    def __init__(self, args, test_mod=False):
+    def __init__(self, args):
 
         super().__init__()
 
         self.args = args
-        self.test_mod = test_mod
+
+        self.input_size = args.input_size
+        self.hidden_size = args.hidden_size
+        self.lane_gate_size = args.lane_gate_size
+        self.output_hidden_size = args.output_hidden_size
+        self.output_size = 3#这里先写死
+        self.t_predict = args.t_predict
+
+        self.cell = MD_lstm_cell(self.input_size, self.hidden_size)
+        self.lane_gate = FCNet(layerSize=[1, self.lane_gate_size, 1])
+        self.output_layer = FCNet(layerSize=[self.hidden_size, self.output_hidden_size, self.output_size])
+
+    def forward(self, temporal_data, init_input, lane):
+
+        [temporal_length, input_size1] = temporal_data.shape
+        [spatial_length, input_size2] = init_input.shape
         
-        #相关参数
-        self.seqLength = args["seqLength"]
-        self.seqPredict = args["seqPredict"]
-        self.predictLength = self.seqLength - self.seqPredict
-        self.batchSize = args["batchSize"]
-        self.hiddenSize = args["hiddenSize"]
-        self.embeddingHiddenSize = args["embeddingLayer"]
-        self.embeddingSize = args["embeddingSize"]
-        self.inputSize = args["inputSize"]
-        self.outputSize = args["outputSize"]
-        self.gru = args["gru"]
-        self.laneGateFCSize = args["laneGateFC"]
-        self.outputFC1Size = args["outputFC1"]
-        self.outputFC2Size = args["outputFC2"]
+        lane_controller = self.lane_gate(lane)
+        temporal_data = temporal_data * lane_controller
+        init_input = init_input * lane_controller
 
-        #编码层
-        self.embedding = FCNet(layerSize=[self.inputSize, self.embeddingHiddenSize, self.embeddingSize])
-        
-        #车道控制层
-        self.laneGate = FCNet(layerSize=[1, self.laneGateFCSize, 1])
+        cell_state = temporal_data.data.new(spatial_length, self.hidden_size).fill_(0).float()
+        hidden_state = temporal_data.data.new(spatial_length, self.hidden_size).fill_(0).float()
+        hidden_state_sp = temporal_data.data.new(spatial_length, self.hidden_size).fill_(0).float()
+        hidden_state_mp = temporal_data.data.new(spatial_length, self.hidden_size).fill_(0).float()
+        zero_hidden = temporal_data.data.new(1, self.hidden_size).fill_(0).float()
+        output = temporal_data.data.new(spatial_length, temporal_length-self.t_predict+1, self.output_size)
 
-        self.cell = torch.nn.LSTMCell(self.inputSize, self.hiddenSize)
+        hidden_state, cell_state = self.cell(init_input, hidden_state, cell_state, hidden_state_sp, hidden_state_mp)
 
-        self.outputLayer = nn.Linear(self.hiddenSize, self.outputSize)
+        for time in range(temporal_length):
+            
+            init_input = self.output_layer(hidden_state)
+            if time >= self.t_predict-1:
+                output[:, time-self.t_predict, :] = init_input
+            input_of_first_block = temporal_data[time, :].unsqueeze(0)
+            init_input = torch.cat((input_of_first_block, init_input[1:, :]))
+            hidden_state_sp = torch.cat((hidden_state[:spatial_length-1, :], zero_hidden))
+            hidden_state_sm = torch.cat((zero_hidden, hidden_state[1:, :]))
+            hidden_state, cell_state = self.cell(init_input, hidden_state, cell_state, hidden_state_sp, hidden_state_sm)
+            
 
-        #这一阶段的输出
-        self.outputs = FCNet(addLayer=True, layerSize=[self.outputSize, self.outputFC1Size, self.outputFC2Size, 1])
-
-        #不同bucket间的影响
-        self.maxpool = nn.MaxPool1d(3, stride=1, padding=1)
-        self.convpool = nn.Conv1d(in_channels=self.hiddenSize, 
-                    out_channels=self.hiddenSize, kernel_size=3, stride=1, padding=1)
-
-        #激活函数
-        self.relu = nn.ReLU()
-        self.sigma = nn.Sigmoid()
-        
-
-    def forward(self, inputData, lane, hidden=None):
-
-        [SpatialLength, temporalLength, inputSize] = inputData.size()
-        if self.test_mod:
-            origin_pred = inputData[:,self.seqPredict:,:]
-        if hidden == None:
-            h_0 = inputData.data.new(SpatialLength, self.hiddenSize).fill_(0).float()
-            c_0 = inputData.data.new(SpatialLength, self.hiddenSize).fill_(0).float()
-            h_0 = Variable(h_0)
-            c_0 = Variable(c_0)
-        else:
-            h_0 = hidden[0]
-            c_0 = hidden[1]
-
-        predict_h = inputData.data.new(SpatialLength, self.predictLength, self.hiddenSize).fill_(0).float()
-        output = inputData.data.new(SpatialLength, self.predictLength).fill_(0).float()
-        H = inputData.data.new(SpatialLength, self.hiddenSize, temporalLength).fill_(0).float()
-        C = inputData.data.new(SpatialLength, self.hiddenSize, temporalLength).fill_(0).float()
-
-        laneControler = self.laneGate(lane)
-        laneControler = self.sigma(laneControler)
-        laneControler = laneControler.view(-1, 1, 1)
-
-        inputData = inputData * laneControler
-        laneControler = laneControler.view(-1, 1)
-
-        for time in range(self.seqPredict):
-            tmp_input = inputData[:, time, :]
-            h_0, c_0 = self.cell(inputData[:, time, :], (h_0, c_0))
-            #h_0 = self.maxpool(h_0.unsqueeze(0).transpose(1, 2)).transpose(1, 2).squeeze(0)
-            h_0 = self.convpool(h_0.unsqueeze(0).transpose(1, 2)).transpose(1, 2).squeeze(0)
-            H[:, :, time] = h_0
-            C[:, :, time] = c_0
-
-        for time in range(self.seqPredict, self.seqLength):
-            h_0, c_0 = self.cell(inputData[:, time, :], (h_0, c_0))
-            #h_0 = self.maxpool(h_0.unsqueeze(0).transpose(1, 2)).transpose(1, 2).squeeze(0)
-            h_0 = self.convpool(h_0.unsqueeze(0).transpose(1, 2)).transpose(1, 2).squeeze(0)
-            H[:, :, time] = h_0
-            C[:, :, time] = c_0
-            predict_h[:, time-self.seqPredict, :] = h_0
-
-        predict_h = predict_h.view(SpatialLength*self.predictLength, self.hiddenSize)
-        output = self.outputLayer(predict_h)
-        output = self.outputs(output)
-        
-        output = output.view(SpatialLength, self.predictLength)
-        output = output / laneControler
-
-        return output, [H, C]
-
-    def infer(self, lane, hidden=None):
-
-        [SpatialLength, temporalLength, inputSize] = inputData.size()
-        if self.test_mod:
-            origin_pred = inputData[:,self.seqPredict:,:]
-        if hidden == None:
-            h_0 = inputData.data.new(SpatialLength, self.hiddenSize).fill_(0).float()
-            c_0 = inputData.data.new(SpatialLength, self.hiddenSize).fill_(0).float()
-            h_0 = Variable(h_0)
-            c_0 = Variable(c_0)
-        else:
-            h_0 = hidden[0]
-            c_0 = hidden[1]
-
-        predict_h = inputData.data.new(SpatialLength, self.predictLength, self.hiddenSize).fill_(0).float()
-        output = inputData.data.new(SpatialLength, self.predictLength).fill_(0).float()
-        H = inputData.data.new(SpatialLength, self.hiddenSize, temporalLength).fill_(0).float()
-        C = inputData.data.new(SpatialLength, self.hiddenSize, temporalLength).fill_(0).float()
-
-        laneControler = self.laneGate(lane)
-        laneControler = self.sigma(laneControler)
-        laneControler = laneControler.view(-1, 1, 1)
-
-        inputData = inputData * laneControler
-        laneControler = laneControler.view(-1, 1)
-        inputData = self.embedding(inputData)
-        inputData = self.relu(inputData)
-
-        for time in range(self.seqPredict):
-            h_0, c_0 = self.cell(inputData[:, time, :], (h_0, c_0))
-            #h_0 = self.maxpool(h_0.unsqueeze(0).transpose(1, 2)).transpose(1, 2).squeeze(0)
-            h_0 = self.convpool(h_0.unsqueeze(0).transpose(1, 2)).transpose(1, 2).squeeze(0)
-            H[:, :, time] = h_0
-            C[:, :, time] = c_0
-
-        for time in range(self.predictLength):
-            pred_input = H[:, :, self.seqPredict+time-1]
-            pred_input = self.outputLayer(pred_input)
-            pred_input = self.outputs(pred_input)
-            pred_input = pred_input / laneControler
-            if time > 0:
-                output[:, time-1] = pred_input.squeeze(1)
-            origin_pred[:, time, 0] = pred_input.squeeze(1)
-            pred_input = origin_pred[:, time, :]
-            pred_input = pred_input * laneControler
-            pred_input = self.embedding(pred_input)
-            pred_input = self.relu(pred_input)
-            h_0, c_0 = self.cell(pred_input, (h_0, c_0))
-            h_0 = self.convpool(h_0.unsqueeze(0).transpose(1, 2)).transpose(1, 2).squeeze(0)
-            H[:, :, self.seqPredict+time] = h_0
-            C[:, :, self.seqPredict+time] = c_0
-        pred_input = h_0
-        pred_input = self.outputLayer(pred_input)
-        pred_input = self.outputss(pred_input)
-        pred_input = pred_input / laneControler
-        output[:, time] = pred_input.squeeze(1)
-        
-        return output, [H, C]
-
+        return output    

@@ -8,24 +8,40 @@ import torch.nn as nn
 import pandas as pd
 import numpy as np
 
+import argparse
+import os
+import time
+import pickle
+
 import conf
 from utils import batchGenerator
-from model import BasicLSTM
-from model import stackedLSTM
-from model import mixBasicLSTM
-from model import mdLSTM
+from model import MD_lstm_cell
+from model import TP_lstm
 import dataProcess as dp 
 import train
 
 
-conf.args["prefix"] = ["300_1", "300_2", "500_1", "500_2", "800_1", "800_2"]
-conf.args["testFilePrefix"] = ["300_3", "500_3", "800_3"]
-conf.args["modelFilePrefix"] = "multi_Dimension_LSTM"
+parser = argparse.ArgumentParser()
+parser.add_argument('--input_size', type=int, default=3)
+parser.add_argument('--hidden_size', type=int, default=64)
+parser.add_argument('--lane_gate_size', type=int, default=4)
+parser.add_argument('--output_hidden_size', type=int, default=16)
+parser.add_argument('--t_predict', type=int, default=20)
 
-
+args = parser.parse_args()
+model = TP_lstm(args)
+lane = Variable(torch.tensor([1]).float())
+init_input = Variable(torch.randn(5, 3))
+temporal_input = Variable(torch.randn(23, 3))
+target = Variable(torch.randn(5, 4, 3))
+criterion = torch.nn.MSELoss()
+output = model(temporal_input, init_input, lane)
+loss = criterion(output, target)
+loss.backward()
+print(output.shape)
 #prefix = train.trainmd(conf.args)
-prefix = "multi_Dimension_LSTM_mdLSTM_123456"
-train.testmd(prefix)
+#refix = "multi_Dimension_LSTM_mdLSTM_123456"
+#train.testmd(prefix)
 
 #prefix = "multi_Dimension_LSTM_mdLSTM_123456_to_mix123456"
 #dp.bucketResult(prefix)
