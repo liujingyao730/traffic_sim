@@ -38,6 +38,34 @@ class FCNet(nn.Module):
 
         return outputs
 
+class MD_lstm_cell(nn.Module):
+
+    def __init__(self, input_size, hidden_size):
+
+        super().__init__()
+
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+
+        self.cell = torch.nn.LSTMCell(input_size, hidden_size)
+        
+        self.sigma = torch.nn.Sigmoid()
+
+        self.spatial_embedding = torch.nn.Linear(2*hidden_size, hidden_size)
+         
+
+    def forward(self, inputs, h_s_t, c_s_t, h_sp_t, h_sm_t):
+
+        spatial_gate = torch.cat((h_sp_t, h_sm_t), dim=1)
+        spatial_gate = self.spatial_embedding(spatial_gate)
+        spatial_gate = self.sigma(spatial_gate)
+
+        h_hat, c_s_tp = self.cell(inputs, (h_s_t, c_s_t))
+        
+        h_s_tp = h_hat * spatial_gate
+
+        return h_s_tp, c_s_tp
+
 
 class mdLSTM(nn.Module):
 
@@ -111,10 +139,9 @@ class mdLSTM(nn.Module):
 
         inputData = inputData * laneControler
         laneControler = laneControler.view(-1, 1)
-        inputData = self.embedding(inputData)
-        inputData = self.relu(inputData)
 
         for time in range(self.seqPredict):
+            tmp_input = inputData[:, time, :]
             h_0, c_0 = self.cell(inputData[:, time, :], (h_0, c_0))
             #h_0 = self.maxpool(h_0.unsqueeze(0).transpose(1, 2)).transpose(1, 2).squeeze(0)
             h_0 = self.convpool(h_0.unsqueeze(0).transpose(1, 2)).transpose(1, 2).squeeze(0)
@@ -122,7 +149,6 @@ class mdLSTM(nn.Module):
             C[:, :, time] = c_0
 
         for time in range(self.seqPredict, self.seqLength):
-
             h_0, c_0 = self.cell(inputData[:, time, :], (h_0, c_0))
             #h_0 = self.maxpool(h_0.unsqueeze(0).transpose(1, 2)).transpose(1, 2).squeeze(0)
             h_0 = self.convpool(h_0.unsqueeze(0).transpose(1, 2)).transpose(1, 2).squeeze(0)
@@ -197,3 +223,4 @@ class mdLSTM(nn.Module):
         output[:, time] = pred_input.squeeze(1)
         
         return output, [H, C]
+
