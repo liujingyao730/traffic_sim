@@ -264,19 +264,27 @@ def testmd(modelprefix, args=conf.args, lane=[1,2,3,4,5,6]):
     testFilePrefix = args["testFilePrefix"]
     modelfile = conf.modelName(modelprefix)
 
-    model = mdLSTM(args, test_mod=True)
+    model = mdLSTM(args, test_mod=False)
     state_dict = torch.load(modelfile) 
     model.load_state_dict(state_dict)
     model.eval()
-    testData = batchGenerator(testFilePrefix, simTimeStep=args["testSimStep"], batchSize=args["batchSize"])
-    target = np.array([])
-    result = np.array([])
+    testData = batchGenerator(testFilePrefix, 
+        simTimeStep=args["testSimStep"], batchSize=args["batchSize"])
+    result1 = pd.DataFrame(columns=list(range(15)))
+    result2 = pd.DataFrame(columns=list(range(15)))
+    result3 = pd.DataFrame(columns=list(range(15)))
+    result4 = pd.DataFrame(columns=list(range(15)))
+    target1 = pd.DataFrame(columns=list(range(15)))
+    target2 = pd.DataFrame(columns=list(range(15)))
+    target3 = pd.DataFrame(columns=list(range(15)))
+    target4 = pd.DataFrame(columns=list(range(15)))
 
     for i in range(args["testBatch"]):
 
         testData.generateBatchRandomForBucket()
-        laneT = Variable(torch.Tensor(testData.CurrentLane))
-        inputData = Variable(torch.Tensor(testData.CurrentSequences))
+        laneT = torch.Tensor(testData.CurrentLane)
+        inputData = torch.Tensor(testData.CurrentSequences)
+        target = np.array(testData.CurrentOutputs)
         [SpatialLength, temporalLength, inputSize] = inputData.size()
         
         if args["useCuda"]:
@@ -284,22 +292,28 @@ def testmd(modelprefix, args=conf.args, lane=[1,2,3,4,5,6]):
             inputData = inputData.cuda()
             model.cuda()
             
-        output, _ = model(inputData, laneT)
+        output, _ = model.infer(inputData, laneT)
         if args["useCuda"]:
             output = output.cpu()
+        output = output.detach().numpy()
         
-        target = np.append(target, testData.CurrentOutputs)
-        result = np.append(result, list(output))
+        result1 = result1.append(pd.DataFrame(output[:, 0]).T, ignore_index=True)
+        result2 = result2.append(pd.DataFrame(output[:, 1]).T, ignore_index=True)
+        result3 = result3.append(pd.DataFrame(output[:, 2]).T, ignore_index=True)
+        result4 = result4.append(pd.DataFrame(output[:, 3]).T, ignore_index=True)
+        target1 = target1.append(pd.DataFrame(target[:, 0]).T, ignore_index=True)
+        target2 = target2.append(pd.DataFrame(target[:, 1]).T, ignore_index=True)
+        target3 = target3.append(pd.DataFrame(target[:, 2]).T, ignore_index=True)
+        target4 = target4.append(pd.DataFrame(target[:, 3]).T, ignore_index=True)
 
-    prefix = modelprefix + "_to_mix"
-    for l in lane:
-        prefix = prefix + str(l)
-    PathR = conf.resultPath + "/" + prefix + "_result.npy"
-    PathT = conf.resultPath + "/" + prefix + "_target.npy"
-    np.save(PathR, result)
-    np.save(PathT, target)
-    print("result saved as ", PathR)
-    print("target saved as ", PathT)
+    result1.to_csv(conf.csvName(modelprefix+"_result_time1"))
+    result2.to_csv(conf.csvName(modelprefix+"_result_time2"))
+    result3.to_csv(conf.csvName(modelprefix+"_result_time3"))
+    result4.to_csv(conf.csvName(modelprefix+"_result_time4"))
+    target1.to_csv(conf.csvName(modelprefix+"_target_time1"))
+    target2.to_csv(conf.csvName(modelprefix+"_target_time2"))
+    target3.to_csv(conf.csvName(modelprefix+"_target_time3"))
+    target4.to_csv(conf.csvName(modelprefix+"_target_time4"))
 
-    return prefix
+    return 
     

@@ -100,7 +100,6 @@ class batchGenerator(object):
         bucketL = edge * 100
         bucketH = bucketL + 100
         bucketList = []
-        
 
         for bucket in self.CarIn[self.prefixPoint].columns:
             b = float(bucket)
