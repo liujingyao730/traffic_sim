@@ -81,15 +81,17 @@ class TP_lstm(nn.Module):
         self.output_hidden_size = args.output_hidden_size
         self.output_size = 3#这里先写死
         self.t_predict = args.t_predict
+        self.temporal_length = args.temporal_length
+        self.spatial_length = args.spatial_length
 
         self.cell = MD_lstm_cell(self.input_size, self.hidden_size)
         self.lane_gate = FCNet(layerSize=[1, self.lane_gate_size, 1])
         self.output_layer = FCNet(layerSize=[self.hidden_size, self.output_hidden_size, self.output_size])
 
-    def forward(self, temporal_data, init_input, lane):
+    def infer(self, temporal_data, init_input, lane):
 
-        [temporal_length, input_size1] = temporal_data.shape
-        [spatial_length, input_size2] = init_input.shape
+        temporal_length = self.temporal_length - 1
+        spatial_length = self.spatial_length
         
         lane_controller = self.lane_gate(lane)
         temporal_data = temporal_data * lane_controller
@@ -102,7 +104,7 @@ class TP_lstm(nn.Module):
         zero_hidden = temporal_data.data.new(1, self.hidden_size).fill_(0).float()
         output = temporal_data.data.new(spatial_length, temporal_length-self.t_predict+1, self.output_size)
 
-        hidden_state, cell_state = self.cell(init_input, hidden_state, cell_state, hidden_state_sp, hidden_state_mp)
+        hidden_state, cell_state = self.cell(init_input, hidden_state, cell_state, hidden_state_sp, hidden_state_sm)
 
         for time in range(temporal_length):
             
@@ -114,6 +116,31 @@ class TP_lstm(nn.Module):
             hidden_state_sp = torch.cat((hidden_state[:spatial_length-1, :], zero_hidden))
             hidden_state_sm = torch.cat((zero_hidden, hidden_state[1:, :]))
             hidden_state, cell_state = self.cell(init_input, hidden_state, cell_state, hidden_state_sp, hidden_state_sm)
-            
 
         return output    
+
+    def forward(self, input_data, lane):
+
+        [spatial_length, temporal_length, input_size] = input_data.shape
+
+        cell_state = input_data.data.new(spatial_length, self.hidden_size).fill_(0).float()
+        hidden_state = input_data.data.new(spatial_length, self.hidden_size).fill_(0).float()
+        hidden_state_sp = input_data.data.new(spatial_length, self.hidden_size).fill_(0).float()
+        hidden_state_sm = input_data.data.new(spatial_length, self.hidden_size).fill_(0).float()
+        zero_hidden = input_data.data.new(1, self.hidden_size).fill_(0).float()
+        output = input_data.data.new(spatial_length, temporal_length-self.t_predict, self.output_size)
+
+        lane_controller = self.lane_gate(lane)
+        input_data = input_data * lane_controller
+
+        for time in range(temporal_length):
+                
+            hidden_state, cell_state = self.cell(input_data[:, time, :], 
+                    hidden_state, cell_state, hidden_state_sp, hidden_state_sm)
+            if time >= self.t_predict:
+                output[:, time-self.t_predict, :] = self.output_layer(hidden_state)
+                
+            hidden_state_sp = torch.cat((hidden_state[:spatial_length-1, :], zero_hidden))
+            hidden_state_sm = torch.cat((zero_hidden, hidden_state[1:, :]))
+
+        return output
