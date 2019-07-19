@@ -11,6 +11,7 @@ midDataPath = dataPath + "/midData"
 modelPath = dataPath + "/model"
 picsPath = dataPath + "/pics"
 resultPath = dataPath + "/result"
+logPath = dataPath + "/log"
 
 firstStageSim = simConfigurePath + "/firstStageSim"
 firstStageFcd = fcdOutputPath + "/firstStage"
@@ -31,6 +32,8 @@ carOutDefualt = midDataPath + "/defualtCarOut.csv"
 numberDefualt = midDataPath + "/defualtNumber.csv"
 laneNumberDefualt = midDataPath + "/defualtLaneNumeber.csv"
 modelDefualt = modelPath + "/defualtModel.pth"
+
+# 
 
 # 关心的路段
 edges = ["1", "2", "3", "4", "5", "6"]
@@ -65,7 +68,7 @@ args["outputFC2"] = 8
 '''     分别进入三个lstm的     '''
 args["sHiddenSize"] = 8
 args["sEmbeddingSize"] = 4
-args["modelFilePrefix"] = "300"
+args["modelFilePrefix"] = "multi_dimension"
 
 # 训练参数
 args["gru"] = False

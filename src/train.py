@@ -17,183 +17,112 @@ import pickle
 
 from utils import batchGenerator
 from model import TP_lstm
+from model import loss_function
 import conf
 
-
-
-def trainmd(args=conf.args, lane=[1, 2, 3, 4, 5, 6]):
-
-    dataFilePrefix = args["prefix"]
-    modelFilePrefix = args["modelFilePrefix"]
-    datagenerator = batchGenerator(dataFilePrefix, 
-            batchSize=args["batchSize"], simTimeStep=args["trainSimStep"])
-
-    model = mdLSTM(args)
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
-    criterion = nn.MSELoss()
-
-    if args["useCuda"]:
-        model.cuda()
-        criterion.cuda()
-    lossMeter = meter.AverageValueMeter()
-
-    laneNumber = len(lane)
-
-    for epoch in range(args["epoch"]):
-        lossMeter.reset()
-        datagenerator.setFilePoint(0)
-        i = 0
-        while datagenerator.generateBatchForBucket(lane):
-            data = Variable(torch.Tensor(datagenerator.CurrentSequences))
-            laneT = Variable(torch.Tensor(datagenerator.CurrentLane))
-            target = Variable(torch.Tensor(datagenerator.CurrentOutputs))
-            data.squeeze_(0)
-            laneT.squeeze_(0)
-            target.squeeze_(0)
-            if args["useCuda"]: 
-                data = data.cuda()
-                laneT = laneT.cuda()
-                target = target.cuda()
-            optimizer.zero_grad()
-
-            output, _ = model(data, laneT)
-            output = output.view(-1, args["seqLength"]-args["seqPredict"])
-            loss = criterion(output, target)
-            loss.backward()
-            optimizer.step()
-
-            lossMeter.add(loss.item())
-
-            if i % args["plotEvery"] == 0:
-                print("epoch: ", epoch, "  batch:  ", i, "  loss  ", lossMeter.value()[0], 
-                " current time is ", datagenerator.CurrentTime, 
-                " current file is ", datagenerator.filePrefixList[datagenerator.prefixPoint])
-            i += 1
-
-    prefix = modelFilePrefix + "_mdLSTM" 
-    if lane:
-        prefix = prefix + "_"
-        for l in lane:
-            prefix = prefix + str(l)
-    torch.save(model.state_dict(), conf.modelName(prefix))
-
-    return prefix
-
-
-
-def trainmdRandom(args=conf.args, lane=[1, 2, 3, 4, 5, 6]):
-
-    dataFilePrefix = args["prefix"]
-    modelFilePrefix = args["modelFilePrefix"]
-    datagenerator = batchGenerator(dataFilePrefix, 
-            batchSize=args["batchSize"], simTimeStep=args["trainSimStep"])
-
-    model = mdLSTM(args)
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
-    criterion = nn.MSELoss()
-
-    if args["useCuda"]:
-        model.cuda()
-        criterion.cuda()
-    lossMeter = meter.AverageValueMeter()
-
-    laneNumber = len(lane)
-
-    for epoch in range(args["epoch"]):
-        lossMeter.reset()
-        datagenerator.setFilePoint(0)
-        i = 0
-        for batch in range(args["batchNum"]):
-            datagenerator.generateBatchRandomForBucket(lane)
-            data = Variable(torch.Tensor(datagenerator.CurrentSequences))
-            laneT = Variable(torch.Tensor(datagenerator.CurrentLane))
-            target = Variable(torch.Tensor(datagenerator.CurrentOutputs))
-            data.squeeze_(0)
-            laneT.squeeze_(0)
-            target.squeeze_(0)
-            if args["useCuda"]: 
-                data = data.cuda()
-                laneT = laneT.cuda()
-                target = target.cuda()
-            optimizer.zero_grad()
-
-            output, _ = model(data, laneT)
-            loss = criterion(output, target)
-            loss.backward()
-            optimizer.step()
-
-            lossMeter.add(loss.item())
-
-            if i % args["plotEvery"] == 0:
-                print("epoch: ", epoch, "  batch:  ", i, "  loss  ", lossMeter.value()[0])
-            i += 1
-
-    prefix = modelFilePrefix + "_mdLSTM" 
-    if lane:
-        prefix = prefix + "_"
-        for l in lane:
-            prefix = prefix + str(l)
-    torch.save(model.state_dict(), conf.modelName(prefix))
-
-    return prefix
-
-
-def testmd(modelprefix, args=conf.args, lane=[1,2,3,4,5,6]):
-
-    dataFilePrefix = args["prefix"]
-    testFilePrefix = args["testFilePrefix"]
-    modelfile = conf.modelName(modelprefix)
-
-    model = mdLSTM(args, test_mod=False)
-    state_dict = torch.load(modelfile) 
-    model.load_state_dict(state_dict)
-    model.eval()
-    testData = batchGenerator(testFilePrefix, 
-        simTimeStep=args["testSimStep"], batchSize=args["batchSize"])
-    result1 = pd.DataFrame(columns=list(range(15)))
-    result2 = pd.DataFrame(columns=list(range(15)))
-    result3 = pd.DataFrame(columns=list(range(15)))
-    result4 = pd.DataFrame(columns=list(range(15)))
-    target1 = pd.DataFrame(columns=list(range(15)))
-    target2 = pd.DataFrame(columns=list(range(15)))
-    target3 = pd.DataFrame(columns=list(range(15)))
-    target4 = pd.DataFrame(columns=list(range(15)))
-
-    for i in range(args["testBatch"]):
-
-        testData.generateBatchRandomForBucket()
-        laneT = torch.Tensor(testData.CurrentLane)
-        inputData = torch.Tensor(testData.CurrentSequences)
-        target = np.array(testData.CurrentOutputs)
-        [SpatialLength, temporalLength, inputSize] = inputData.size()
-        
-        if args["useCuda"]:
-            laneT = laneT.cuda()
-            inputData = inputData.cuda()
-            model.cuda()
-            
-        output, _ = model.infer(inputData, laneT)
-        if args["useCuda"]:
-            output = output.cpu()
-        output = output.detach().numpy()
-        
-        result1 = result1.append(pd.DataFrame(output[:, 0]).T, ignore_index=True)
-        result2 = result2.append(pd.DataFrame(output[:, 1]).T, ignore_index=True)
-        result3 = result3.append(pd.DataFrame(output[:, 2]).T, ignore_index=True)
-        result4 = result4.append(pd.DataFrame(output[:, 3]).T, ignore_index=True)
-        target1 = target1.append(pd.DataFrame(target[:, 0]).T, ignore_index=True)
-        target2 = target2.append(pd.DataFrame(target[:, 1]).T, ignore_index=True)
-        target3 = target3.append(pd.DataFrame(target[:, 2]).T, ignore_index=True)
-        target4 = target4.append(pd.DataFrame(target[:, 3]).T, ignore_index=True)
-
-    result1.to_csv(conf.csvName(modelprefix+"_result_time1"))
-    result2.to_csv(conf.csvName(modelprefix+"_result_time2"))
-    result3.to_csv(conf.csvName(modelprefix+"_result_time3"))
-    result4.to_csv(conf.csvName(modelprefix+"_result_time4"))
-    target1.to_csv(conf.csvName(modelprefix+"_target_time1"))
-    target2.to_csv(conf.csvName(modelprefix+"_target_time2"))
-    target3.to_csv(conf.csvName(modelprefix+"_target_time3"))
-    target4.to_csv(conf.csvName(modelprefix+"_target_time4"))
-
-    return 
+def main():
     
+    parser = argparse.ArgumentParser()
+    
+    #网络结构
+    parser.add_argument('--input_size', type=int, default=3)
+    parser.add_argument('--hidden_size', type=int, default=64)
+    parser.add_argument('--lane_gate_size', type=int, default=4)
+    parser.add_argument('--output_hidden_size', type=int, default=16)
+    parser.add_argument('--t_predict', type=int, default=20)
+    parser.add_argument('--temporal_length', type=int, default=24)
+    parser.add_argument('--spatial_length', type=int, default=5)
+
+    #训练参数
+    parser.add_argument('--num_epochs', type=int, default=3)
+    parser.add_argument('--save_every', type=int, default=1000)
+    parser.add_argument('--batch_size', type=int, default=1)
+    parser.add_argument('--learing_rate', type=float, default=0.003)
+    parser.add_argument('--decay_rate', type=float, default=0.95)
+    parser.add_argument('--lambda_param', type=float, default=0.0005)
+    parser.add_argument('--use_cuda', action='store_true', default=False)
+    parser.add_argument('--spatial_loss_weight', type=float, default=0.5)
+    parser.add_argument('--temporal_loss_weight', type=float, default=0.5)
+    parser.add_argument('--grad_clip', type=float, default=10.)
+
+    #数据参数
+    parser.add_argument('--sim_step', type=float, default=0.1)
+
+    args = parser.parse_args()
+    train(args)
+
+
+def train(args):
+
+        data_prefix = conf.args["prefix"]
+        model_prefix = conf.args["modelFilePrefix"] 
+        data_generator = batchGenerator(data_prefix, 
+            batchSize=args.batch_size, simTimeStep=args.sim_step)
+
+        log_directory = os.path.join(conf.logPath, model_prefix+"/")
+        plot_directory = os.path.join(conf.picsPath, model_prefix+'_plot/')
+
+        log_file_curve = open(os.path.join(log_directory, 'log_curve.txt'), 'w+')
+        log_file = open(os.path.join(log_directory + 'val.txt'), 'w+')
+
+        save_directory = os.path.join(conf.logPath, model_prefix)
+
+        with open(os.path.join(save_directory, 'config.pkl'), 'wb') as f:
+            pickle.dump(args, f)
+
+        def checkpoint_path(x):
+            return os.path.join(save_directory, str(x)+'.tar')
+
+        net = TP_lstm(args)
+        optimizer = torch.optim.Adagrad(net.parameters(), weight_decay=args.lambda_param)
+        criterion = loss_function(args.spatial_loss_weight, args.temporal_loss_weight)
+        learing_rate = args.learing_rate
+        if args.use_cuda:
+            net = net.cuda()
+            criterion = criterion.cuda()
+
+        print("********training epoch beginning***********")
+        for epoch in range(args.num_epochs):
+            
+            loss_meter = meter.AverageValueMeter()
+            i = 0
+            start = time.time()
+
+            while data_generator.generateBatchForBucket():
+        
+                net.zero_grad()
+                optimizer.zero_grad()
+                
+                data = Variable(torch.Tensor(data_generator.CurrentSequences))
+                laneT = Variable(torch.Tensor(data_generator.CurrentLane))
+                target = Variable(torch.Tensor(data_generator.CurrentOutputs))
+
+                if args.use_cuda:
+                    data = data.cuda()
+                    laneT = laneT.cuda()
+                    target = target.cuda()
+
+                output = net(data, laneT)
+                loss = criterion(target, output)
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(net.parameters(), args.grad_clip)
+                optimizer.step()
+
+                loss_meter.add(loss.item())
+
+                if (i + 1) % args.save_every == 0:
+                    print("epoch{}, train_loss = {:.3f}, time{}", format(epoch, loss_meter.value()[0], time.time()))
+            
+        print('saving model')
+        torch.save({
+            'epoch':epoch,
+            'state_dict': net.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict()
+        }, checkpoint_path(epoch))
+        log_file_curve.write("training epoch: " + str(epoch) + " loss: " + str(loss_meter.value()[0]) + '\n')
+            
+
+        return 
+
+if __name__ == '__main__':
+    main()

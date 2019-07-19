@@ -144,3 +144,34 @@ class TP_lstm(nn.Module):
             hidden_state_sm = torch.cat((zero_hidden, hidden_state[1:, :]))
 
         return output
+
+class loss_function(nn.Module):
+
+    def __init__(self, alpha, beta):
+
+        super(loss_function, self).__init__()
+
+        self.alpha = alpha
+        self.beta = beta
+        self.mes_criterion = nn.MSELoss()
+
+    def forward(self, target, result):
+
+        [spatial_size, temporal_size, input_size] = target.shape
+
+        temporal_number_ahead = result[:, 1:, 2]
+        temporal_number_before = result[:, :temporal_size-1, 2]
+        temporal_in_before = result[:, :temporal_size-1, 1]
+        temporal_out_before = result[:, :temporal_size-1, 0]
+        caculate_temport_reslut = temporal_number_before + temporal_in_before - temporal_out_before
+
+        spatial_in = result[1:, :, 1]
+        spatial_out = result[:spatial_size-1, :, 0]
+
+        spatial_match_loss = self.mes_criterion(spatial_in, spatial_out)
+        temporal_match_loss = self.mes_criterion(temporal_number_ahead, caculate_temport_reslut)
+        mes_loss = self.mes_criterion(target, result)
+
+        loss = mes_loss + self.alpha * spatial_match_loss + self.beta * temporal_match_loss
+
+        return loss

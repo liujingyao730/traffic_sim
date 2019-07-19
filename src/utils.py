@@ -81,12 +81,11 @@ class batchGenerator(object):
             if i < self.seqLength:
                 seq.append(timeSlice)
             if i > self.seqPredict:
-                out.append(timeSlice[0])
+                out.append(timeSlice)
             time += self.deltaT
 
         self.CurrentOutputs.append(out)
         self.CurrentSequences.append(seq)
-        self.CurrentLane.append([self.LaneNumber.loc["laneNumber", edge]])
 
         return True
 
@@ -108,6 +107,9 @@ class batchGenerator(object):
 
         for bucket in bucketList:
             self.generateNewSequence(bucket)
+        
+        edge = str(edge)
+        self.CurrentLane.append(self.LaneNumber.loc["laneNumber", edge])
             
 
 
