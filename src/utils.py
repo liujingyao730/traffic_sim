@@ -174,6 +174,7 @@ class batchGenerator(object):
             self.CurrentTime = round(self.CurrentTime, 3)
         if self.isTimeOutBoundary():
             if self.prefixPoint == self.fileNumber:
+                self.setFilePoint(0)
                 return False
             else:
                 self.setFilePoint(self.prefixPoint+1)

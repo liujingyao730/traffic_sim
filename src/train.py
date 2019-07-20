@@ -29,8 +29,8 @@ def main():
     parser.add_argument('--hidden_size', type=int, default=64)
     parser.add_argument('--lane_gate_size', type=int, default=4)
     parser.add_argument('--output_hidden_size', type=int, default=16)
-    parser.add_argument('--t_predict', type=int, default=20)
-    parser.add_argument('--temporal_length', type=int, default=24)
+    parser.add_argument('--t_predict', type=int, default=7)
+    parser.add_argument('--temporal_length', type=int, default=11)
     parser.add_argument('--spatial_length', type=int, default=5)
 
     #训练参数
@@ -47,6 +47,7 @@ def main():
 
     #数据参数
     parser.add_argument('--sim_step', type=float, default=0.1)
+    parser.add_argument('--delta_T', type=int, default=7)
 
     args = parser.parse_args()
     train(args)
@@ -55,9 +56,24 @@ def main():
 def train(args):
 
         data_prefix = conf.args["prefix"]
-        model_prefix = conf.args["modelFilePrefix"] 
-        data_generator = batchGenerator(data_prefix, 
-            batchSize=args.batch_size, simTimeStep=args.sim_step)
+        model_prefix = conf.args["modelFilePrefix"]
+        test_prefix = conf.args["testFilePrefix"] 
+        data_generator = batchGenerator(
+            data_prefix, 
+            batchSize=args.batch_size, 
+            simTimeStep=args.sim_step,
+            seqLength=args.temporal_length,
+            seqPredict=args.t_predict,
+            deltaT=args.delta_T
+            )
+        data_generator = batchGenerator(
+            test_prefix, 
+            batchSize=args.batch_size, 
+            simTimeStep=args.sim_step,
+            seqLength=args.temporal_length,
+            seqPredict=args.t_predict,
+            deltaT=args.delta_T
+            )
 
         log_directory = os.path.join(conf.logPath, model_prefix+"/")
         plot_directory = os.path.join(conf.picsPath, model_prefix+'_plot/')
@@ -80,11 +96,12 @@ def train(args):
         if args.use_cuda:
             net = net.cuda()
             criterion = criterion.cuda()
+        loss_meter = meter.AverageValueMeter()
 
         print("********training epoch beginning***********")
         for epoch in range(args.num_epochs):
             
-            loss_meter = meter.AverageValueMeter()
+            loss_meter.reset()
             i = 0
             start = time.time()
 
@@ -110,9 +127,34 @@ def train(args):
 
                 loss_meter.add(loss.item())
 
-                if (i + 1) % args.save_every == 0:
-                    print("epoch{}, train_loss = {:.3f}, time{}", format(epoch, loss_meter.value()[0], time.time()))
+            print("epoch{}, train_loss = {:.3f}, time{}", format(epoch, loss_meter.value()[0], time.time()-start))
             
+            loss_meter.reset()
+            number_batch = 0
+
+            while test_generator.generateBatchForBucket():
+
+                number_batch += 1
+                init_data = torch.tensor(test_generator.CurrentSequences[:, 0, :])
+                temporal_data = torch.tensor(test_generator.CurrentSequences[0, 1:, :])
+                laneT = torch.tensor(test_generator.CurrentLane)
+                target = torch.tensor(test_generator.CurrentOutputs)
+
+                if args.use_cuda:
+                    init_data = init_data.cuda()
+                    temporal_data = temporal_data.cuda()
+                    laneT = laneT.cuda()
+                    target = target.cuda()
+
+                output = net.infer(temporal_data, init_data, laneT)
+                test_loss = criterion(target, output)
+                loss_meter.add(test_loss.item())
+                error += metrics.mean_absolute_error(target, output)
+
+            error = error / number_batch
+            loss = loss_meter.value()[0]
+            print("epoch{}, test_loss={:.3f}, test_err={:.3f}".format(epoch, loss, error))
+
         print('saving model')
         torch.save({
             'epoch':epoch,
