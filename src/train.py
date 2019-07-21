@@ -66,7 +66,7 @@ def train(args):
             seqPredict=args.t_predict,
             deltaT=args.delta_T
             )
-        data_generator = batchGenerator(
+        test_generator = batchGenerator(
             test_prefix, 
             batchSize=args.batch_size, 
             simTimeStep=args.sim_step,
@@ -127,7 +127,7 @@ def train(args):
 
                 loss_meter.add(loss.item())
 
-            print("epoch{}, train_loss = {:.3f}, time{}", format(epoch, loss_meter.value()[0], time.time()-start))
+            print("epoch{}, train_loss = {:.3f}, time{}".format(epoch, loss_meter.value()[0], time.time()-start))
             
             loss_meter.reset()
             number_batch = 0

@@ -20,7 +20,7 @@ from model import TP_lstm
 import dataProcess as dp 
 import train
 
-
+'''
 parser = argparse.ArgumentParser()
 parser.add_argument('--input_size', type=int, default=3)
 parser.add_argument('--hidden_size', type=int, default=64)
@@ -45,7 +45,11 @@ print(output.shape)
 #prefix = train.trainmd(conf.args)
 #refix = "multi_Dimension_LSTM_mdLSTM_123456"
 #train.testmd(prefix)
-
+'''
+a = 1 
+b = 2
+c = 3
+print(print("epoch{}, train_loss = {:.3f}, time{}", format(a, b, c)))
 #prefix = "multi_Dimension_LSTM_mdLSTM_123456_to_mix123456"
 #dp.bucketResult(prefix)
 '''
