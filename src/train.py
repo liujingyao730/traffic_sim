@@ -128,17 +128,17 @@ def train(args):
                 loss_meter.add(loss.item())
 
             print("epoch{}, train_loss = {:.3f}, time{}".format(epoch, loss_meter.value()[0], time.time()-start))
-            log_file_curve.write("training epoch: " + str(epoch) + " loss: " + str(loss_meter.value()[0] + '\n'))
+            log_file_curve.write("training epoch: " + str(epoch) + " loss: " + str(loss_meter.value()[0]) + '\n')
             loss_meter.reset()
             number_batch = 0
 
             while test_generator.generateBatchForBucket():
 
                 number_batch += 1
-                init_data = torch.tensor(test_generator.CurrentSequences[:, 0, :])
-                temporal_data = torch.tensor(test_generator.CurrentSequences[0, 1:, :])
-                laneT = torch.tensor(test_generator.CurrentLane)
-                target = torch.tensor(test_generator.CurrentOutputs)
+                init_data = torch.tensor(test_generator.CurrentSequences[:, 0, :]).float()
+                temporal_data = torch.tensor(test_generator.CurrentSequences[0, 1:, :]).float()
+                laneT = torch.tensor(test_generator.CurrentLane).float()
+                target = torch.tensor(test_generator.CurrentOutputs).float()
 
                 if args.use_cuda:
                     init_data = init_data.cuda()
