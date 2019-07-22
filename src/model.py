@@ -100,7 +100,7 @@ class TP_lstm(nn.Module):
         cell_state = temporal_data.data.new(spatial_length, self.hidden_size).fill_(0).float()
         hidden_state = temporal_data.data.new(spatial_length, self.hidden_size).fill_(0).float()
         hidden_state_sp = temporal_data.data.new(spatial_length, self.hidden_size).fill_(0).float()
-        hidden_state_mp = temporal_data.data.new(spatial_length, self.hidden_size).fill_(0).float()
+        hidden_state_sm = temporal_data.data.new(spatial_length, self.hidden_size).fill_(0).float()
         zero_hidden = temporal_data.data.new(1, self.hidden_size).fill_(0).float()
         output = temporal_data.data.new(spatial_length, temporal_length-self.t_predict+1, self.output_size)
 

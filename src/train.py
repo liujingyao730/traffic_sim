@@ -128,7 +128,7 @@ def train(args):
                 loss_meter.add(loss.item())
 
             print("epoch{}, train_loss = {:.3f}, time{}".format(epoch, loss_meter.value()[0], time.time()-start))
-            
+            log_file_curve.write("training epoch: " + str(epoch) + " loss: " + str(loss_meter.value()[0] + '\n'))
             loss_meter.reset()
             number_batch = 0
 
@@ -154,15 +154,14 @@ def train(args):
             error = error / number_batch
             loss = loss_meter.value()[0]
             print("epoch{}, test_loss={:.3f}, test_err={:.3f}".format(epoch, loss, error))
+            log_file_curve.write("Validation epoch: "+str(epoch)+" loss: "+str(loss)+" err: "+str(error)+'\n')
 
-        print('saving model')
-        torch.save({
-            'epoch':epoch,
-            'state_dict': net.state_dict(),
-            'optimizer_state_dict': optimizer.state_dict()
-        }, checkpoint_path(epoch))
-        log_file_curve.write("training epoch: " + str(epoch) + " loss: " + str(loss_meter.value()[0]) + '\n')
-            
+            print('saving model')
+            torch.save({
+                'epoch':epoch,
+                'state_dict': net.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict()
+            }, checkpoint_path(epoch))   
 
         return 
 
