@@ -79,7 +79,7 @@ class TP_lstm(nn.Module):
         self.hidden_size = args.hidden_size
         self.lane_gate_size = args.lane_gate_size
         self.output_hidden_size = args.output_hidden_size
-        self.output_size = 3#这里先写死
+        self.output_size = 1#这里先写死
         self.t_predict = args.t_predict
         self.temporal_length = args.temporal_length
         self.spatial_length = args.spatial_length
@@ -102,17 +102,18 @@ class TP_lstm(nn.Module):
         hidden_state_sp = temporal_data.data.new(spatial_length, self.hidden_size).fill_(0).float()
         hidden_state_sm = temporal_data.data.new(spatial_length, self.hidden_size).fill_(0).float()
         zero_hidden = temporal_data.data.new(1, self.hidden_size).fill_(0).float()
-        output = temporal_data.data.new(spatial_length, temporal_length-self.t_predict+1, self.output_size)
+        output = temporal_data.data.new(spatial_length, temporal_length-self.t_predict+1)
 
         hidden_state, cell_state = self.cell(init_input, hidden_state, cell_state, hidden_state_sp, hidden_state_sm)
 
         for time in range(temporal_length):
             
-            init_input = self.output_layer(hidden_state)
+            outflow = self.output_layer(hidden_state)
             if time >= self.t_predict-1:
-                output[:, time-self.t_predict, :] = init_input
-            input_of_first_block = temporal_data[time, :].unsqueeze(0)
-            init_input = torch.cat((input_of_first_block, init_input[1:, :]))
+                output[:, time-self.t_predict] = outflow.view(-1)
+            inflow = torch.cat((temporal_data[time, 1].view(1,1), outflow[:spatial_length-1]))
+            number = init_input[:, 2].view(-1, 1) - outflow + inflow
+            init_input = torch.cat((outflow, inflow, number), 1)
             hidden_state_sp = torch.cat((hidden_state[:spatial_length-1, :], zero_hidden))
             hidden_state_sm = torch.cat((zero_hidden, hidden_state[1:, :]))
             hidden_state, cell_state = self.cell(init_input, hidden_state, cell_state, hidden_state_sp, hidden_state_sm)
@@ -128,7 +129,7 @@ class TP_lstm(nn.Module):
         hidden_state_sp = input_data.data.new(spatial_length, self.hidden_size).fill_(0).float()
         hidden_state_sm = input_data.data.new(spatial_length, self.hidden_size).fill_(0).float()
         zero_hidden = input_data.data.new(1, self.hidden_size).fill_(0).float()
-        output = input_data.data.new(spatial_length, temporal_length-self.t_predict, self.output_size)
+        output = input_data.data.new(spatial_length, temporal_length-self.t_predict)
 
         lane_controller = self.lane_gate(lane)
         input_data = input_data * lane_controller
@@ -138,7 +139,7 @@ class TP_lstm(nn.Module):
             hidden_state, cell_state = self.cell(input_data[:, time, :], 
                     hidden_state, cell_state, hidden_state_sp, hidden_state_sm)
             if time >= self.t_predict:
-                output[:, time-self.t_predict, :] = self.output_layer(hidden_state)
+                output[:, time-self.t_predict] = self.output_layer(hidden_state).view(-1)
                 
             hidden_state_sp = torch.cat((hidden_state[:spatial_length-1, :], zero_hidden))
             hidden_state_sm = torch.cat((zero_hidden, hidden_state[1:, :]))
@@ -147,31 +148,20 @@ class TP_lstm(nn.Module):
 
 class loss_function(nn.Module):
 
-    def __init__(self, alpha, beta):
+    def __init__(self):
 
         super(loss_function, self).__init__()
 
-        self.alpha = alpha
-        self.beta = beta
         self.mes_criterion = nn.MSELoss()
 
-    def forward(self, target, result):
+    def forward(self, number_current, number_before, In, outflow):
 
-        [spatial_size, temporal_size, input_size] = target.shape
+        [spatial_size, temporal_size] = number_current.shape
 
-        temporal_number_ahead = result[:, 1:, 2]
-        temporal_number_before = result[:, :temporal_size-1, 2]
-        temporal_in_before = result[:, :temporal_size-1, 1]
-        temporal_out_before = result[:, :temporal_size-1, 0]
-        caculate_temport_reslut = temporal_number_before + temporal_in_before - temporal_out_before
 
-        spatial_in = result[1:, :, 1]
-        spatial_out = result[:spatial_size-1, :, 0]
+        inflow = torch.cat((In, outflow[:spatial_size-1,:]))
+        number_caculate = number_before + inflow - outflow
 
-        spatial_match_loss = self.mes_criterion(spatial_in, spatial_out)
-        temporal_match_loss = self.mes_criterion(temporal_number_ahead, caculate_temport_reslut)
-        mes_loss = self.mes_criterion(target, result)
-
-        loss = mes_loss + self.alpha * spatial_match_loss + self.beta * temporal_match_loss
+        loss = self.mes_criterion(number_current, number_caculate)
 
         return loss

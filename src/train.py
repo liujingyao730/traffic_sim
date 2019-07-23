@@ -35,14 +35,13 @@ def main():
 
     #训练参数
     parser.add_argument('--num_epochs', type=int, default=3)
-    parser.add_argument('--save_every', type=int, default=1000)
+    parser.add_argument('--save_every', type=int, default=5000)
     parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--learing_rate', type=float, default=0.003)
     parser.add_argument('--decay_rate', type=float, default=0.95)
     parser.add_argument('--lambda_param', type=float, default=0.0005)
     parser.add_argument('--use_cuda', action='store_true', default=False)
-    parser.add_argument('--spatial_loss_weight', type=float, default=0.5)
-    parser.add_argument('--temporal_loss_weight', type=float, default=0.5)
+    parser.add_argument('--flow_loss_weight', type=float, default=0.5)
     parser.add_argument('--grad_clip', type=float, default=10.)
 
     #数据参数
@@ -91,12 +90,15 @@ def train(args):
 
         net = TP_lstm(args)
         optimizer = torch.optim.Adagrad(net.parameters(), weight_decay=args.lambda_param)
-        criterion = loss_function(args.spatial_loss_weight, args.temporal_loss_weight)
+        criterion = loss_function()
+        mes_criterion = torch.nn.MSELoss()
         learing_rate = args.learing_rate
         if args.use_cuda:
             net = net.cuda()
             criterion = criterion.cuda()
         loss_meter = meter.AverageValueMeter()
+        flow_loss_meter = meter.AverageValueMeter()
+        last_loss_meter = meter.AverageValueMeter()
 
         print("********training epoch beginning***********")
         for epoch in range(args.num_epochs):
@@ -120,23 +122,39 @@ def train(args):
                     target = target.cuda()
 
                 output = net(data, laneT)
-                loss = criterion(target, output)
+
+                number_before = data[:, args.t_predict:, 2]
+                number_current = target[:, :, 2]
+                In = target[0, :, 1].view(1, -1)
+                flow_loss = criterion(number_current, number_before, In, output)
+                mes_loss = mes_criterion(target[:, :, 0], output)
+                loss = args.flow_loss_weight * flow_loss + mes_loss
+
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(net.parameters(), args.grad_clip)
                 optimizer.step()
 
                 loss_meter.add(loss.item())
-
-            print("epoch{}, train_loss = {:.3f}, time{}".format(epoch, loss_meter.value()[0], time.time()-start))
-            log_file_curve.write("training epoch: " + str(epoch) + " loss: " + str(loss_meter.value()[0]) + '\n')
+                if i % args.save_every == 0:
+                    print("epoch{}, train_loss = {:.3f}".format(epoch, loss_meter.value()[0]))
+                    log_file_curve.write("epoch{}, train_loss = {:.3f}".format(epoch, loss_meter.value()[0]))
+                #if i > 5:
+                #    break
+                i += 1
+            
+            t = time.time()
+            print("epoch{}, train_loss = {:.3f}, time{}".format(epoch, loss_meter.value()[0], t-start))
+            log_file_curve.write("epoch{}, train_loss = {:.3f}, time{}".format(epoch, loss_meter.value()[0], t-start))
             loss_meter.reset()
-            number_batch = 0
+            flow_loss_meter.reset()
+            last_loss_meter.reset()
+            i = 0
 
             while test_generator.generateBatchForBucket():
 
-                number_batch += 1
-                init_data = torch.tensor(test_generator.CurrentSequences[:, 0, :]).float()
-                temporal_data = torch.tensor(test_generator.CurrentSequences[0, 1:, :]).float()
+                data = torch.tensor(test_generator.CurrentSequences).float()
+                init_data = data[:, 0, :]
+                temporal_data = data[0, 1:, :]
                 laneT = torch.tensor(test_generator.CurrentLane).float()
                 target = torch.tensor(test_generator.CurrentOutputs).float()
 
@@ -147,14 +165,22 @@ def train(args):
                     target = target.cuda()
 
                 output = net.infer(temporal_data, init_data, laneT)
-                test_loss = criterion(target, output)
-                loss_meter.add(test_loss.item())
-                error += metrics.mean_absolute_error(target, output)
+                number_current = target[:, :, 2]
+                number_before = data[:, args.t_predict:, 2]
+                In = target[0, :, 1].view(1, -1)
+                flow_loss = criterion(number_current, number_before, In, output)
+                mes_loss = mes_criterion(target[:, :, 0], output)
+                last_frame_loss = mes_criterion(target[:, -1, 0], output[:, -1])
+                loss_meter.add(mes_loss.item())
+                flow_loss_meter.add(flow_loss.item())
+                last_loss_meter.add(last_frame_loss.item())
 
-            error = error / number_batch
-            loss = loss_meter.value()[0]
-            print("epoch{}, test_loss={:.3f}, test_err={:.3f}".format(epoch, loss, error))
-            log_file_curve.write("Validation epoch: "+str(epoch)+" loss: "+str(loss)+" err: "+str(error)+'\n')
+                if i % args.save_every == 0:
+                    print("epoch{}, flow_loss={:.3f}, mes_loss={:.3f}, last_frame_loss={:.3f}".format(epoch, loss_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0]))
+                    log_file_curve.write("epoch{}, flow_loss={:.3f}, mes_loss={:.3f}, last_frame_loss={:.3f}".format(epoch, loss_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0]))
+                #if i > 5:
+                #    break
+                i += 1
 
             print('saving model')
             torch.save({

@@ -1,0 +1,1 @@
+epoch0, train_loss = 88.980, time2.7005105018615723epoch1, train_loss = 81.144, time2.522801637649536epoch2, train_loss = 76.910, time2.6050567626953125
