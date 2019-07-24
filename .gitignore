@@ -121,4 +121,6 @@ dmypy.json
 *.png
 *.pth
 *.npy
+*.tar
+*.pkl
 dataFile/log/*
