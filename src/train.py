@@ -35,7 +35,7 @@ def main():
 
     #训练参数
     parser.add_argument('--num_epochs', type=int, default=3)
-    parser.add_argument('--save_every', type=int, default=5000)
+    parser.add_argument('--save_every', type=int, default=500)
     parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--learing_rate', type=float, default=0.003)
     parser.add_argument('--decay_rate', type=float, default=0.95)
@@ -136,10 +136,10 @@ def train(args):
 
                 loss_meter.add(loss.item())
                 if i % args.save_every == 0:
-                    print("epoch{}, train_loss = {:.3f}".format(epoch, loss_meter.value()[0]))
-                    log_file_curve.write("epoch{}, train_loss = {:.3f}".format(epoch, loss_meter.value()[0]))
+                    print("batch{}, train_loss = {:.3f}".format(i, loss_meter.value()[0]))
+                    log_file_curve.write("batch{}, train_loss = {:.3f}".format(i, loss_meter.value()[0]))
                 #if i > 5:
-                #    break
+                #break
                 i += 1
             
             t = time.time()
@@ -176,8 +176,8 @@ def train(args):
                 last_loss_meter.add(last_frame_loss.item())
 
                 if i % args.save_every == 0:
-                    print("epoch{}, flow_loss={:.3f}, mes_loss={:.3f}, last_frame_loss={:.3f}".format(epoch, loss_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0]))
-                    log_file_curve.write("epoch{}, flow_loss={:.3f}, mes_loss={:.3f}, last_frame_loss={:.3f}".format(epoch, loss_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0]))
+                    print("batch{}, flow_loss={:.3f}, mes_loss={:.3f}, last_frame_loss={:.3f}".format(i, loss_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0]))
+                    log_file_curve.write("batch{}, flow_loss={:.3f}, mes_loss={:.3f}, last_frame_loss={:.3f}".format(i, loss_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0]))
                 #if i > 5:
                 #    break
                 i += 1

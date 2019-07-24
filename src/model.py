@@ -165,3 +165,9 @@ class loss_function(nn.Module):
         loss = self.mes_criterion(number_current, number_caculate)
 
         return loss
+
+
+class network(nn.Module):
+
+    def __init__(self):
+        a = 1
