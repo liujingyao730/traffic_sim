@@ -123,4 +123,3 @@ dmypy.json
 *.npy
 *.tar
 *.pkl
-dataFile/log/*
