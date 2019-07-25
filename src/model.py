@@ -90,8 +90,8 @@ class TP_lstm(nn.Module):
 
     def infer(self, temporal_data, init_input, lane):
 
-        temporal_length = temporal_data.shape[0]
-        spatial_length = init_input.shape[0]
+        predict_input_length = temporal_data.shape[0]
+        [spatial_length, input_temporal, input_size]= init_input.shape
         
         lane_controller = self.lane_gate(lane)
         temporal_data = temporal_data * lane_controller
@@ -102,21 +102,26 @@ class TP_lstm(nn.Module):
         hidden_state_after = temporal_data.data.new(spatial_length, self.hidden_size).fill_(0).float()
         hidden_state_before = temporal_data.data.new(spatial_length, self.hidden_size).fill_(0).float()
         zero_hidden = temporal_data.data.new(1, self.hidden_size).fill_(0).float()
-        output = temporal_data.data.new(spatial_length, temporal_length-self.t_predict+1)
+        output = temporal_data.data.new(spatial_length, predict_input_length)
 
-        hidden_state, cell_state = self.cell(init_input, hidden_state, cell_state, hidden_state_after, hidden_state_before)
+        for time in range(input_temporal):
 
-        for time in range(temporal_length):
-            
-            outflow = self.output_layer(hidden_state)
-            if time >= self.t_predict-1:
-                output[:, time-self.t_predict] = outflow.view(-1)
-            inflow = torch.cat((temporal_data[time, 1].view(1,1), outflow[:spatial_length-1]))
-            number = init_input[:, 2].view(-1, 1) - outflow + inflow
-            init_input = torch.cat((outflow, inflow, number), 1)
+            hidden_state, cell_state = self.cell(init_input[:, time, :], hidden_state, cell_state, hidden_state_after, hidden_state_before)
             hidden_state_after = torch.cat((hidden_state[1:, :], zero_hidden))
             hidden_state_before = torch.cat((zero_hidden, hidden_state[:spatial_length-1, :]))
-            hidden_state, cell_state = self.cell(init_input, hidden_state, cell_state, hidden_state_after, hidden_state_before)
+
+        predict_input = init_input[:, -1, :]
+
+        for time in range(predict_input_length):
+            
+            outflow = self.output_layer(hidden_state)
+            output[:, time] = outflow.view(-1)
+            inflow = torch.cat((temporal_data[time, 1].view(1,1), outflow[:spatial_length-1]))
+            number = predict_input[:, 2].view(-1, 1) - outflow + inflow
+            predict_input = torch.cat((outflow, inflow, number), 1)
+            hidden_state_after = torch.cat((hidden_state[1:, :], zero_hidden))
+            hidden_state_before = torch.cat((zero_hidden, hidden_state[:spatial_length-1, :]))
+            hidden_state, cell_state = self.cell(predict_input, hidden_state, cell_state, hidden_state_after, hidden_state_before)
 
         return output    
 

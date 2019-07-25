@@ -109,7 +109,9 @@ def train(args):
 
             while data_generator.generateBatchForBucket():
                 
-                break
+                #debug用
+                #break
+                
                 net.zero_grad()
                 optimizer.zero_grad()
                 
@@ -149,16 +151,13 @@ def train(args):
             loss_meter.reset()
             flow_loss_meter.reset()
             last_loss_meter.reset()
-            test_generator.setFilePoint(2)
-            test_generator.CurrentTime = 1128.0
-            test_generator.CurrentEdgePoint = 4
             i = 0
 
             while test_generator.generateBatchForBucket():
 
                 data = torch.tensor(test_generator.CurrentSequences).float()
-                init_data = data[:, 0, :]
-                temporal_data = data[0, 1:, :]
+                init_data = data[:, :args.t_predict, :]
+                temporal_data = data[0, args.t_predict:, :]
                 laneT = torch.tensor(test_generator.CurrentLane).float()
                 target = torch.tensor(test_generator.CurrentOutputs).float()              
 
