@@ -114,7 +114,7 @@ class TP_lstm(nn.Module):
 
         # 处理batch
         temporal_data = temporal_data.view(batch_size, -1)
-        init_input = init_input.view(batch_size, -1)
+        init_input = init_input.view(batch_size, spatial_length, -1)
 
         temporal_data = temporal_data * lane_controller
         init_input = init_input * lane_controller
@@ -194,10 +194,10 @@ class loss_function(nn.Module):
 
     def forward(self, number_current, number_before, In, outflow):
 
-        [spatial_size, temporal_size] = number_current.shape
+        [batch_size, spatial_size, temporal_size] = number_current.shape
 
 
-        inflow = torch.cat((In, outflow[:spatial_size-1,:]))
+        inflow = torch.cat((In, outflow[:, :spatial_size-1,:]), 1)
         number_caculate = number_before + inflow - outflow
 
         loss = self.mes_criterion(number_current, number_caculate)

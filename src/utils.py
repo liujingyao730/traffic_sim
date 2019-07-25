@@ -110,85 +110,46 @@ class batchGenerator(object):
         
         edge = str(edge)
         self.CurrentLane.append(self.LaneNumber.loc["laneNumber", edge])
-            
 
 
-    def generateBatch(self, laneNumber=conf.laneNumber):
-
-        #这里edge的车道数就是edge名，不高复杂的转换了……
-        self.CurrentSequences.clear()
-        self.CurrentOutputs.clear()
-        self.CurrentLane.clear()
+    def generateBatchForBucket(self, laneNumber=conf.laneNumber):
+        
         numberEdge = len(laneNumber)
-
+        batch_data = []
+        tmpOutput = []
+        tmpLane = []
+            
         for i in range(self.batchSize):
+            edge = str(laneNumber[self.CurrentEdgePoint]) #这个地方不搞复杂的转换了.....
+        
+            self.CurrentSequences = []
+            self.CurrentOutputs = []
+            self.CurrentLane = []
 
+            if not self.isTimePassable():
+                self.CurrentTime += self.cycle - self.Pass - self.simTimeStep + self.deltaT * (self.seqLength - self.seqPredict + 1)
+                self.CurrentTime = round(self.CurrentTime, 3)
+            if self.isTimeOutBoundary():
+                if self.prefixPoint == self.fileNumber:
+                    self.setFilePoint(0)
+                    return False
+                else:
+                    self.setFilePoint(self.prefixPoint+1)
+
+            self.generateNewMatrix()
+            tmpOutput.append(self.CurrentOutputs)
+            batch_data.append(self.CurrentSequences)
+            tmpLane.append(self.CurrentLane)
+
+            self.CurrentEdgePoint += 1
             if self.CurrentEdgePoint >= numberEdge:
                 self.CurrentEdgePoint = 0
                 self.CurrentTime += self.simTimeStep
                 self.CurrentTime = round(self.CurrentTime, 3)
-            
-            if not self.isTimePassable():
-                self.CurrentTime += self.cycle - self.Pass - self.simTimeStep + self.deltaT
-                self.CurrentTime = round(self.CurrentTime, 3)
-            if self.isTimeOutBoundary():
-                if self.prefixPoint == self.fileNumber:
-                    return False
-                else:
-                    self.setFilePoint(self.prefixPoint+1)
-            self.generateNewSequence()
-            
-        return True
- 
 
-    def generateBatchRandom(self, laneNumber=conf.laneNumber):
-
-        self.CurrentOutputs.clear()
-        self.CurrentSequences.clear()
-        self.CurrentLane.clear()
-        number = len(laneNumber) - 1
-
-        for i in range(self.batchSize):
-            self.setFilePoint(random.randint(0, self.fileNumber))
-            self.generateRandomTime()
-            self.CurrentEdgePoint = random.randint(0, number)
-            self.generateNewSequence()
-
-
-    def generateBatchForBucket(self, laneNumber=conf.laneNumber):
-
-        self.CurrentSequences = []
-        self.CurrentOutputs = []
-        self.CurrentLane = []
-        
-
-        numberEdge = len(laneNumber)
-        tmplanes = np.array([])
-        tmpInput = np.array([])
-        tmpOutput = np.array([])
-            
-        edge = str(laneNumber[self.CurrentEdgePoint]) #这个地方不搞复杂的转换了.....
-            
-        if not self.isTimePassable():
-            self.CurrentTime += self.cycle - self.Pass - self.simTimeStep + self.deltaT * (self.seqLength - self.seqPredict + 1)
-            self.CurrentTime = round(self.CurrentTime, 3)
-        if self.isTimeOutBoundary():
-            if self.prefixPoint == self.fileNumber:
-                self.setFilePoint(0)
-                return False
-            else:
-                self.setFilePoint(self.prefixPoint+1)
-
-        self.generateNewMatrix()
-        self.CurrentOutputs = np.array(self.CurrentOutputs)
-        self.CurrentSequences = np.array(self.CurrentSequences)
-        self.CurrentLane = np.array(self.CurrentLane)
-
-        self.CurrentEdgePoint += 1
-        if self.CurrentEdgePoint >= numberEdge:
-            self.CurrentEdgePoint = 0
-            self.CurrentTime += self.simTimeStep
-            self.CurrentTime = round(self.CurrentTime, 3)
+        self.CurrentOutputs = np.array(tmpOutput)
+        self.CurrentSequences = np.array(batch_data)
+        self.CurrentLane = np.array(tmpLane)
 
         return True
 

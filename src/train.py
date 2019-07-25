@@ -34,9 +34,9 @@ def main():
     parser.add_argument('--spatial_length', type=int, default=5)
 
     #训练参数
+    parser.add_argument('--batch_size', type=int, default=5)
     parser.add_argument('--num_epochs', type=int, default=3)
     parser.add_argument('--save_every', type=int, default=500)
-    parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--learing_rate', type=float, default=0.003)
     parser.add_argument('--decay_rate', type=float, default=0.95)
     parser.add_argument('--lambda_param', type=float, default=0.0005)
@@ -108,10 +108,7 @@ def train(args):
             start = time.time()
 
             while data_generator.generateBatchForBucket():
-                
-                #debug用
-                #break
-                
+
                 net.zero_grad()
                 optimizer.zero_grad()
                 
@@ -126,11 +123,11 @@ def train(args):
 
                 output = net(data, laneT)
 
-                number_before = data[:, args.t_predict:, 2]
-                number_current = target[:, :, 2]
-                In = target[0, :, 1].view(1, -1)
+                number_before = data[:, :, args.t_predict:, 2]
+                number_current = target[:, :, :, 2]
+                In = data[:, 0, args.t_predict:, 1].view(args.batch_size, 1, -1)
                 flow_loss = criterion(number_current, number_before, In, output)
-                mes_loss = mes_criterion(target[:, :, 0], output)
+                mes_loss = mes_criterion(target[:, :, :, 0], output)
                 loss = args.flow_loss_weight * flow_loss + mes_loss
 
                 loss.backward()
@@ -138,6 +135,7 @@ def train(args):
                 optimizer.step()
 
                 loss_meter.add(loss.item())
+                break
                 if i % args.save_every == 0:
                     print("batch{}, train_loss = {:.3f}".format(i, loss_meter.value()[0]))
                     log_file_curve.write("batch{}, train_loss = {:.3f}".format(i, loss_meter.value()[0]))
@@ -156,8 +154,8 @@ def train(args):
             while test_generator.generateBatchForBucket():
 
                 data = torch.tensor(test_generator.CurrentSequences).float()
-                init_data = data[:, :args.t_predict, :]
-                temporal_data = data[0, args.t_predict:, :]
+                init_data = data[:, :, :args.t_predict, :]
+                temporal_data = data[:, 0, args.t_predict:, :]
                 laneT = torch.tensor(test_generator.CurrentLane).float()
                 target = torch.tensor(test_generator.CurrentOutputs).float()              
 
@@ -168,16 +166,17 @@ def train(args):
                     target = target.cuda()
 
                 output = net.infer(temporal_data, init_data, laneT)
-                number_current = target[:, :, 2]
-                number_before = data[:, args.t_predict:, 2]
-                In = target[0, :, 1].view(1, -1)
+                number_current = target[:, :, :, 2]
+                number_before = data[:, :, args.t_predict:, 2]
+                In = data[:, 0, args.t_predict:, 1].view(args.batch_size, 1, -1)
                 flow_loss = criterion(number_current, number_before, In, output)
-                mes_loss = mes_criterion(target[:, :, 0], output)
-                last_frame_loss = mes_criterion(target[:, -1, 0], output[:, -1])
+                mes_loss = mes_criterion(target[:, :, :, 0], output)
+                last_frame_loss = mes_criterion(target[:, :, -1, 0], output[:, :, -1])
                 loss_meter.add(mes_loss.item())
                 flow_loss_meter.add(flow_loss.item())
                 last_loss_meter.add(last_frame_loss.item())
 
+                break
                 if i % args.save_every == 0:
                     print("batch{}, flow_loss={:.3f}, mes_loss={:.3f}, last_frame_loss={:.3f}".format(i, loss_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0]))
                     log_file_curve.write("batch{}, flow_loss={:.3f}, mes_loss={:.3f}, last_frame_loss={:.3f}".format(i, loss_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0]))
