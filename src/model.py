@@ -54,9 +54,9 @@ class MD_lstm_cell(nn.Module):
         self.spatial_embedding = torch.nn.Linear(2*hidden_size, hidden_size)
          
 
-    def forward(self, inputs, h_s_t, c_s_t, h_sp_t, h_sm_t):
+    def forward(self, inputs, h_s_t, c_s_t, h_after_t, h_before_t):
 
-        spatial_gate = torch.cat((h_sp_t, h_sm_t), dim=1)
+        spatial_gate = torch.cat((h_after_t, h_before_t), dim=1)
         spatial_gate = self.spatial_embedding(spatial_gate)
         spatial_gate = self.sigma(spatial_gate)
 
@@ -90,8 +90,8 @@ class TP_lstm(nn.Module):
 
     def infer(self, temporal_data, init_input, lane):
 
-        temporal_length = self.temporal_length - 1
-        spatial_length = self.spatial_length
+        temporal_length = temporal_data.shape[0]
+        spatial_length = init_input.shape[0]
         
         lane_controller = self.lane_gate(lane)
         temporal_data = temporal_data * lane_controller
@@ -99,12 +99,12 @@ class TP_lstm(nn.Module):
 
         cell_state = temporal_data.data.new(spatial_length, self.hidden_size).fill_(0).float()
         hidden_state = temporal_data.data.new(spatial_length, self.hidden_size).fill_(0).float()
-        hidden_state_sp = temporal_data.data.new(spatial_length, self.hidden_size).fill_(0).float()
-        hidden_state_sm = temporal_data.data.new(spatial_length, self.hidden_size).fill_(0).float()
+        hidden_state_after = temporal_data.data.new(spatial_length, self.hidden_size).fill_(0).float()
+        hidden_state_before = temporal_data.data.new(spatial_length, self.hidden_size).fill_(0).float()
         zero_hidden = temporal_data.data.new(1, self.hidden_size).fill_(0).float()
         output = temporal_data.data.new(spatial_length, temporal_length-self.t_predict+1)
 
-        hidden_state, cell_state = self.cell(init_input, hidden_state, cell_state, hidden_state_sp, hidden_state_sm)
+        hidden_state, cell_state = self.cell(init_input, hidden_state, cell_state, hidden_state_after, hidden_state_before)
 
         for time in range(temporal_length):
             
@@ -114,9 +114,9 @@ class TP_lstm(nn.Module):
             inflow = torch.cat((temporal_data[time, 1].view(1,1), outflow[:spatial_length-1]))
             number = init_input[:, 2].view(-1, 1) - outflow + inflow
             init_input = torch.cat((outflow, inflow, number), 1)
-            hidden_state_sp = torch.cat((hidden_state[:spatial_length-1, :], zero_hidden))
-            hidden_state_sm = torch.cat((zero_hidden, hidden_state[1:, :]))
-            hidden_state, cell_state = self.cell(init_input, hidden_state, cell_state, hidden_state_sp, hidden_state_sm)
+            hidden_state_after = torch.cat((hidden_state[1:, :], zero_hidden))
+            hidden_state_before = torch.cat((zero_hidden, hidden_state[:spatial_length-1, :]))
+            hidden_state, cell_state = self.cell(init_input, hidden_state, cell_state, hidden_state_after, hidden_state_before)
 
         return output    
 
@@ -126,8 +126,8 @@ class TP_lstm(nn.Module):
 
         cell_state = input_data.data.new(spatial_length, self.hidden_size).fill_(0).float()
         hidden_state = input_data.data.new(spatial_length, self.hidden_size).fill_(0).float()
-        hidden_state_sp = input_data.data.new(spatial_length, self.hidden_size).fill_(0).float()
-        hidden_state_sm = input_data.data.new(spatial_length, self.hidden_size).fill_(0).float()
+        hidden_state_after = input_data.data.new(spatial_length, self.hidden_size).fill_(0).float()
+        hidden_state_before = input_data.data.new(spatial_length, self.hidden_size).fill_(0).float()
         zero_hidden = input_data.data.new(1, self.hidden_size).fill_(0).float()
         output = input_data.data.new(spatial_length, temporal_length-self.t_predict)
 
@@ -137,12 +137,12 @@ class TP_lstm(nn.Module):
         for time in range(temporal_length):
                 
             hidden_state, cell_state = self.cell(input_data[:, time, :], 
-                    hidden_state, cell_state, hidden_state_sp, hidden_state_sm)
+                    hidden_state, cell_state, hidden_state_after, hidden_state_before)
             if time >= self.t_predict:
                 output[:, time-self.t_predict] = self.output_layer(hidden_state).view(-1)
                 
-            hidden_state_sp = torch.cat((hidden_state[:spatial_length-1, :], zero_hidden))
-            hidden_state_sm = torch.cat((zero_hidden, hidden_state[1:, :]))
+            hidden_state_after = torch.cat((hidden_state[1:, :], zero_hidden))
+            hidden_state_before = torch.cat((zero_hidden, hidden_state[:spatial_length-1, :]))
 
         return output
 

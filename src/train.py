@@ -41,7 +41,7 @@ def main():
     parser.add_argument('--decay_rate', type=float, default=0.95)
     parser.add_argument('--lambda_param', type=float, default=0.0005)
     parser.add_argument('--use_cuda', action='store_true', default=False)
-    parser.add_argument('--flow_loss_weight', type=float, default=0.5)
+    parser.add_argument('--flow_loss_weight', type=float, default=1)
     parser.add_argument('--grad_clip', type=float, default=10.)
 
     #数据参数
@@ -108,7 +108,8 @@ def train(args):
             start = time.time()
 
             while data_generator.generateBatchForBucket():
-        
+                
+                break
                 net.zero_grad()
                 optimizer.zero_grad()
                 
@@ -148,6 +149,9 @@ def train(args):
             loss_meter.reset()
             flow_loss_meter.reset()
             last_loss_meter.reset()
+            test_generator.setFilePoint(2)
+            test_generator.CurrentTime = 1128.0
+            test_generator.CurrentEdgePoint = 4
             i = 0
 
             while test_generator.generateBatchForBucket():
@@ -156,7 +160,7 @@ def train(args):
                 init_data = data[:, 0, :]
                 temporal_data = data[0, 1:, :]
                 laneT = torch.tensor(test_generator.CurrentLane).float()
-                target = torch.tensor(test_generator.CurrentOutputs).float()
+                target = torch.tensor(test_generator.CurrentOutputs).float()              
 
                 if args.use_cuda:
                     init_data = init_data.cuda()

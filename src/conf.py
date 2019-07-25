@@ -37,6 +37,7 @@ modelDefualt = modelPath + "/defualtModel.pth"
 
 # 关心的路段
 edges = ["1", "2", "3", "4", "5", "6"]
+laneNumber = [1, 2, 3, 4, 5, 6]
 
 # 路段裁剪量
 cut = 45

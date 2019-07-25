@@ -19,7 +19,7 @@ class batchGenerator(object):
         self.filePrefixList = prefix
         self.prefixPoint = 0
         self.prefix = self.filePrefixList[0]
-        self.fileNumber = len(prefix) - 1
+        self.fileNumber = len(prefix) - 1 #因为后面转换文件的时候的索引是从0开始的
         self.batchSize = batchSize
         self.simTimeStep = simTimeStep
         self.seqLength = seqLength
@@ -113,7 +113,7 @@ class batchGenerator(object):
             
 
 
-    def generateBatch(self, laneNumber=[1,2,3,4,5,6]):
+    def generateBatch(self, laneNumber=conf.laneNumber):
 
         #这里edge的车道数就是edge名，不高复杂的转换了……
         self.CurrentSequences.clear()
@@ -141,7 +141,7 @@ class batchGenerator(object):
         return True
  
 
-    def generateBatchRandom(self, laneNumber=[1,2,3,4,5,6]):
+    def generateBatchRandom(self, laneNumber=conf.laneNumber):
 
         self.CurrentOutputs.clear()
         self.CurrentSequences.clear()
@@ -155,7 +155,7 @@ class batchGenerator(object):
             self.generateNewSequence()
 
 
-    def generateBatchForBucket(self, laneNumber=[1,2,3,4,5,6]):
+    def generateBatchForBucket(self, laneNumber=conf.laneNumber):
 
         self.CurrentSequences = []
         self.CurrentOutputs = []
@@ -193,7 +193,7 @@ class batchGenerator(object):
         return True
 
     
-    def generateBatchRandomForBucket(self, lane=[1,2,3,4,5,6]):
+    def generateBatchRandomForBucket(self, lane=conf.laneNumber):
         self.CurrentOutputs = []
         self.CurrentSequences = []
         self.CurrentLane = []
