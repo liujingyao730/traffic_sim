@@ -116,15 +116,20 @@ def train(args):
         flow_loss_meter = meter.AverageValueMeter()
         last_loss_meter = meter.AverageValueMeter()
 
+        # 预测的时段长
+        predict_preiod = args.temporal_length - args.t_predict
         
         for epoch in range(args.num_epochs):
             
             loss_meter.reset()
             i = 0
             start = time.time()
+            flag = True
 
             print("********training epoch beginning***********")
-            while data_generator.generateBatchForBucket():
+            while flag:
+
+                flag = data_generator.generateBatchForBucket()
 
                 net.zero_grad()
                 optimizer.zero_grad()
@@ -142,10 +147,10 @@ def train(args):
 
                 number_before = data[:, :, args.t_predict:, 2]
                 number_current = target[:, :, :, 2]
-                In = data[:, 0, args.t_predict:, 1].view(args.batch_size, 1, -1)
+                In = data[:, 0, args.t_predict:, 1].view(-1, 1, predict_preiod)
                 flow_loss = criterion(number_current, number_before, In, output)
                 mes_loss = mes_criterion(target[:, :, :, 0], output)
-                loss = flow_loss + mes_loss
+                loss = args.flow_loss_weight * flow_loss + mes_loss
 
                 loss.backward()
                 #torch.nn.utils.clip_grad_norm_(net.parameters(), args.grad_clip)
@@ -166,10 +171,13 @@ def train(args):
             loss_meter.reset()
             flow_loss_meter.reset()
             last_loss_meter.reset()
+            flag = True
             i = 0
 
             print("********validation epoch beginning***********")
-            while test_generator.generateBatchForBucket():
+            while flag:
+
+                flag = test_generator.generateBatchForBucket()
 
                 data = torch.tensor(test_generator.CurrentSequences).float()
                 init_data = data[:, :, :args.t_predict, :]
@@ -186,7 +194,7 @@ def train(args):
                 output = net.infer(temporal_data, init_data, laneT)
                 number_current = target[:, :, :, 2]
                 number_before = data[:, :, args.t_predict:, 2]
-                In = data[:, 0, args.t_predict:, 1].view(args.batch_size, 1, -1)
+                In = data[:, 0, args.t_predict:, 1].view(-1, 1, predict_preiod)
                 flow_loss = criterion(number_current, number_before, In, output)
                 mes_loss = mes_criterion(target[:, :, :, 0], output)
                 last_frame_loss = mes_criterion(target[:, :, -1, 0], output[:, :, -1])
