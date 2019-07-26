@@ -54,6 +54,7 @@ def main():
 
 def train(args):
 
+        # 初始化一些变量， 数据文件不太好通过命令行输入，所以在conf文件中提取
         data_prefix = conf.args["prefix"]
         model_prefix = conf.args["modelFilePrefix"]
         test_prefix = conf.args["testFilePrefix"] 
@@ -74,39 +75,54 @@ def train(args):
             deltaT=args.delta_T
             )
 
+        # 记录文件
         log_directory = os.path.join(conf.logPath, model_prefix+"/")
-        plot_directory = os.path.join(conf.picsPath, model_prefix+'_plot/')
 
         log_file_curve = open(os.path.join(log_directory, 'log_curve.txt'), 'w+')
         log_file = open(os.path.join(log_directory + 'val.txt'), 'w+')
 
         save_directory = os.path.join(conf.logPath, model_prefix)
 
+        # 保存参数设置
         with open(os.path.join(save_directory, 'config.pkl'), 'wb') as f:
             pickle.dump(args, f)
 
+        # 保存checkpoint的位置
         def checkpoint_path(x):
             return os.path.join(save_directory, str(x)+'.tar')
 
+        # 初始化模型对象
         net = TP_lstm(args)
+        
+        # 初始化优化器
         optimizer = torch.optim.Adagrad(net.parameters(), weight_decay=args.lambda_param)
+        
+        # 初始化不同的损失指标
         criterion = loss_function()
         mes_criterion = torch.nn.MSELoss()
+        
+        # 学习率的设置
         learing_rate = args.learing_rate
+        
         if args.use_cuda:
             net = net.cuda()
             criterion = criterion.cuda()
+        
+        # 训练过程中衡量的损失
         loss_meter = meter.AverageValueMeter()
+        
+        # 测试过程中的损失指标
         flow_loss_meter = meter.AverageValueMeter()
         last_loss_meter = meter.AverageValueMeter()
 
-        print("********training epoch beginning***********")
+        
         for epoch in range(args.num_epochs):
             
             loss_meter.reset()
             i = 0
             start = time.time()
 
+            print("********training epoch beginning***********")
             while data_generator.generateBatchForBucket():
 
                 net.zero_grad()
@@ -135,7 +151,7 @@ def train(args):
                 optimizer.step()
 
                 loss_meter.add(loss.item())
-                break
+                
                 if i % args.save_every == 0:
                     print("batch{}, train_loss = {:.3f}".format(i, loss_meter.value()[0]))
                     log_file_curve.write("batch{}, train_loss = {:.3f}".format(i, loss_meter.value()[0]))
@@ -151,6 +167,7 @@ def train(args):
             last_loss_meter.reset()
             i = 0
 
+            print("********validation epoch beginning***********")
             while test_generator.generateBatchForBucket():
 
                 data = torch.tensor(test_generator.CurrentSequences).float()
@@ -176,7 +193,7 @@ def train(args):
                 flow_loss_meter.add(flow_loss.item())
                 last_loss_meter.add(last_frame_loss.item())
 
-                break
+                
                 if i % args.save_every == 0:
                     print("batch{}, flow_loss={:.3f}, mes_loss={:.3f}, last_frame_loss={:.3f}".format(i, loss_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0]))
                     log_file_curve.write("batch{}, flow_loss={:.3f}, mes_loss={:.3f}, last_frame_loss={:.3f}".format(i, loss_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0]))

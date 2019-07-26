@@ -186,7 +186,10 @@ class TP_lstm(nn.Module):
         for time in range(predict_input_length):
             
             outflow = self.output_layer(hidden_state)
-            output[:, :, time] = outflow.view(batch_size, spatial_length)
+            
+            # output是下一时刻的输出，所以与当前时刻要错后一位
+            if time > 0:
+                output[:, :, time-1] = outflow.view(batch_size, spatial_length)
             
             # 每个节点的输入是由第一个节点的输入与预测得到的从第一个节点到倒数第二个节点的流出值
             inflow = torch.cat((temporal_data[:, time, 1].view(batch_size,1,1), outflow[:, :spatial_length-1]), 1)
@@ -199,6 +202,10 @@ class TP_lstm(nn.Module):
             hidden_state_after = torch.cat((hidden_state[:, 1:, :], zero_hidden), 1)
             hidden_state_before = torch.cat((zero_hidden, hidden_state[:, :spatial_length-1, :]), 1)
             hidden_state, cell_state = self.cell(predict_input, hidden_state, cell_state, hidden_state_after, hidden_state_before)
+
+        # output是下一时段的输出，所以与当前时刻要错后一位
+        outflow = self.output_layer(hidden_state)
+        output[:, :, predict_input_length] = outflow.view(batch_size, spatial_length)
 
         return output    
 

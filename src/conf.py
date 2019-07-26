@@ -69,7 +69,7 @@ args["outputFC2"] = 8
 '''     分别进入三个lstm的     '''
 args["sHiddenSize"] = 8
 args["sEmbeddingSize"] = 4
-args["modelFilePrefix"] = "multi_dimension"
+args["modelFilePrefix"] = "7-26"
 
 # 训练参数
 args["gru"] = False
