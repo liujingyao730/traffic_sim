@@ -40,7 +40,7 @@ def main():
     parser.add_argument('--learing_rate', type=float, default=0.003)
     parser.add_argument('--decay_rate', type=float, default=0.95)
     parser.add_argument('--lambda_param', type=float, default=0.0005)
-    parser.add_argument('--use_cuda', action='store_true', default=False)
+    parser.add_argument('--use_cuda', action='store_true', default=True)
     parser.add_argument('--flow_loss_weight', type=float, default=1)
     parser.add_argument('--grad_clip', type=float, default=10.)
 
@@ -94,9 +94,6 @@ def train(args):
         # 初始化模型对象
         net = TP_lstm(args)
         
-        # 初始化优化器
-        optimizer = torch.optim.Adagrad(net.parameters(), weight_decay=args.lambda_param)
-        
         # 初始化不同的损失指标
         criterion = loss_function()
         mes_criterion = torch.nn.MSELoss()
@@ -107,6 +104,10 @@ def train(args):
         if args.use_cuda:
             net = net.cuda()
             criterion = criterion.cuda()
+            mes_criterion = mes_criterion.cuda()
+        
+        # 初始化优化器
+        optimizer = torch.optim.Adagrad(net.parameters(), weight_decay=args.lambda_param)
         
         # 训练过程中衡量的损失
         loss_meter = meter.AverageValueMeter()
@@ -144,10 +145,10 @@ def train(args):
                 In = data[:, 0, args.t_predict:, 1].view(args.batch_size, 1, -1)
                 flow_loss = criterion(number_current, number_before, In, output)
                 mes_loss = mes_criterion(target[:, :, :, 0], output)
-                loss = args.flow_loss_weight * flow_loss + mes_loss
+                loss = flow_loss + mes_loss
 
                 loss.backward()
-                torch.nn.utils.clip_grad_norm_(net.parameters(), args.grad_clip)
+                #torch.nn.utils.clip_grad_norm_(net.parameters(), args.grad_clip)
                 optimizer.step()
 
                 loss_meter.add(loss.item())
