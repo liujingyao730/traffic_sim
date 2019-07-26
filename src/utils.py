@@ -135,6 +135,7 @@ class batchGenerator(object):
                     return False
                 else:
                     self.setFilePoint(self.prefixPoint+1)
+                    break # 保证每个batch都是相同长度的路段
 
             self.generateNewMatrix()
             tmpOutput.append(self.CurrentOutputs)
