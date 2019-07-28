@@ -128,7 +128,7 @@ def train(args):
 
             print("********training epoch beginning***********")
             while True:
-
+                
                 flag = data_generator.generateBatchForBucket()
                 if not flag:
                     break
@@ -178,7 +178,7 @@ def train(args):
 
             print("********validation epoch beginning***********")
             while True:
-
+                
                 flag = test_generator.generateBatchForBucket()
                 if not flag:
                     break
@@ -190,6 +190,7 @@ def train(args):
                 target = torch.tensor(test_generator.CurrentOutputs).float()              
 
                 if args.use_cuda:
+                    data = data.cuda()
                     init_data = init_data.cuda()
                     temporal_data = temporal_data.cuda()
                     laneT = laneT.cuda()
@@ -211,7 +212,7 @@ def train(args):
                     print("batch{}, flow_loss={:.3f}, mes_loss={:.3f}, last_frame_loss={:.3f}".format(i, loss_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0]))
                     log_file_curve.write("batch{}, flow_loss={:.3f}, mes_loss={:.3f}, last_frame_loss={:.3f}".format(i, loss_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0]))
                 #if i > 5:
-                #    break
+                #break
                 i += 1
 
             print('saving model')

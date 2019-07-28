@@ -140,7 +140,7 @@ class TP_lstm(nn.Module):
 
         # 处理batch
         temporal_data = temporal_data.view(batch_size, -1)
-        init_input = init_input.view(batch_size, spatial_length, -1)
+        init_input = init_input.view(batch_size, -1)
 
         # lane_gate
         lane_controller = self.lane_gate(lane)
@@ -168,7 +168,7 @@ class TP_lstm(nn.Module):
         zero_hidden = temporal_data.data.new(batch_size, 1, self.hidden_size).fill_(0).float()
         
         #初始化输出变量
-        output = temporal_data.data.new(batch_size, spatial_length, predict_input_length)
+        output = temporal_data.data.new(batch_size, spatial_length, predict_input_length).fill_(0).float()
 
         # 在非预测时序空间计算
         for time in range(input_temporal):
@@ -205,7 +205,7 @@ class TP_lstm(nn.Module):
 
         # output是下一时段的输出，所以与当前时刻要错后一位
         outflow = self.output_layer(hidden_state)
-        output[:, :, predict_input_length] = outflow.view(batch_size, spatial_length)
+        output[:, :, predict_input_length-1] = outflow.view(batch_size, spatial_length)
 
         return output    
 
