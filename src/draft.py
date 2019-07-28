@@ -20,7 +20,6 @@ from model import TP_lstm
 import dataProcess as dp 
 import train
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument('--input_size', type=int, default=3)
 parser.add_argument('--hidden_size', type=int, default=64)
@@ -52,11 +51,16 @@ laneT = torch.tensor(test_generator.CurrentLane).float()
 target = Variable(torch.tensor(test_generator.CurrentOutputs).float())
 
 criterion = torch.nn.MSELoss()
-output = model.infer(temporal_data, init_data, laneT)
+#output = model.infer(temporal_data, init_data, laneT)
+t1 = time.time()
 output = model(data, Variable(laneT))
+t2 = time.time()
 output = criterion(target[:, :, :, 0], output)
+t3 = time.time()
 output.backward()
-print(output.shape)
+t4 = time.time()
+print(t2-t1, t3-t2, t4-t3)
 #prefix = train.trainmd(conf.args)
 #refix = "multi_Dimension_LSTM_mdLSTM_123456"
 #train.testmd(prefix)
+

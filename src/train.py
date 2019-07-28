@@ -127,9 +127,11 @@ def train(args):
             flag = True
 
             print("********training epoch beginning***********")
-            while flag:
+            while True:
 
                 flag = data_generator.generateBatchForBucket()
+                if not flag:
+                    break
 
                 net.zero_grad()
                 optimizer.zero_grad()
@@ -175,9 +177,11 @@ def train(args):
             i = 0
 
             print("********validation epoch beginning***********")
-            while flag:
+            while True:
 
                 flag = test_generator.generateBatchForBucket()
+                if not flag:
+                    break
 
                 data = torch.tensor(test_generator.CurrentSequences).float()
                 init_data = data[:, :, :args.t_predict, :]

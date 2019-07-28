@@ -186,7 +186,7 @@ class TP_lstm(nn.Module):
         for time in range(predict_input_length):
             
             outflow = self.output_layer(hidden_state)
-            
+
             # output是下一时刻的输出，所以与当前时刻要错后一位
             if time > 0:
                 output[:, :, time-1] = outflow.view(batch_size, spatial_length)
@@ -271,7 +271,12 @@ class loss_function(nn.Module):
         return loss
 
 
-class network(nn.Module):
+class long_edge(nn.Module):
 
-    def __init__(self):
-        a = 1
+    def __init__(self, args):
+        
+        self.args = args
+
+        self.length = args.length
+        
+        
