@@ -129,9 +129,10 @@ def train(args):
 
             print("********training epoch beginning***********")
             while True:
-                
+
                 flag = data_generator.generateBatchForBucket()
-                if not flag:
+                if not flag and data_generator.CurrentOutputs == []:
+                    data_generator.setFilePoint(0)
                     break
 
                 net.zero_grad()
@@ -156,7 +157,7 @@ def train(args):
                 loss = args.flow_loss_weight * flow_loss + mes_loss
 
                 loss.backward()
-                #torch.nn.utils.clip_grad_norm_(net.parameters(), args.grad_clip)
+                torch.nn.utils.clip_grad_norm_(net.parameters(), args.grad_clip)
                 optimizer.step()
 
                 loss_meter.add(loss.item())
@@ -165,7 +166,7 @@ def train(args):
                     print("batch{}, train_loss = {:.3f}".format(i, loss_meter.value()[0]))
                     log_file_curve.write("batch{}, train_loss = {:.3f}\n".format(i, loss_meter.value()[0]))
                 #if i > 5:
-                break
+                #break
                 i += 1
             
             t = time.time()

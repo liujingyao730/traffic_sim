@@ -115,24 +115,22 @@ class batchGenerator(object):
     def generateBatchForBucket(self, laneNumber=conf.laneNumber):
         
         numberEdge = len(laneNumber)
+        self.CurrentSequences = []
+        self.CurrentOutputs = []
+        self.CurrentLane = []
         batch_data = []
         tmpOutput = []
         tmpLane = []
             
         for i in range(self.batchSize):
             edge = str(laneNumber[self.CurrentEdgePoint]) #这个地方不搞复杂的转换了.....
-        
-            self.CurrentSequences = []
-            self.CurrentOutputs = []
-            self.CurrentLane = []
 
             if not self.isTimePassable():
                 self.CurrentTime += self.cycle - self.Pass - self.simTimeStep + self.deltaT * (self.seqLength - self.seqPredict + 1)
                 self.CurrentTime = round(self.CurrentTime, 3)
             if self.isTimeOutBoundary():
                 if self.prefixPoint == self.fileNumber:
-                    self.setFilePoint(0)
-                    return False
+                    return False # 重置文件的动作放在外面进行
                 else:
                     self.setFilePoint(self.prefixPoint+1)
                     break # 保证每个batch都是相同长度的路段
