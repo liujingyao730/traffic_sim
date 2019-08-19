@@ -3,6 +3,7 @@ import xml.etree.cElementTree as ET
 import pyecharts as pe
 import numpy as np
 from sklearn import metrics
+from decimal import Decimal
 
 import conf
 '''
@@ -200,6 +201,43 @@ def bucketRecord(netXml, fcdXml, length, carInFile=conf.carInDefualt, carOutFile
     print("number information have been saved as ", numberFile)
 
     return 
+
+
+def resetBucketData(prefix, detalT=conf.args["deltaT"], simStep=conf.args["trainSimStep"]):
+    '''根据bucketRecord函数生成的中间数据生成每个时刻在接下来一个delta T内的流入流出量
+    '''
+
+    car_in_file = conf.midDataName(prefix, 'CarIn')
+    car_out_file = conf.midDataName(prefix, 'CarOut')
+
+    car_in = pd.read_csv(car_in_file, index_col=0)
+    car_out = pd.read_csv(car_out_file, index_col=0)
+    max_time = len(car_in.index)
+    max_time -= int(detalT / simStep)
+
+    reset_car_in = pd.DataFrame(index=car_in.index, columns=car_in.columns)
+    reset_car_out = pd.DataFrame(index=car_out.index, columns=car_out.columns)
+
+    reset_car_in.loc[0] = 0
+    reset_car_out.loc[0] = 0
+    t = 0
+
+    for i in range(int(detalT / simStep)):
+        reset_car_in.loc[0] += car_in.loc[t]
+        reset_car_out.loc[0] += car_out.loc[t]
+        t = round(t+simStep, 1)
+
+    for i in range(1, max_time+1):
+        time = round(i * simStep, 1)
+        minus_time = round(time-simStep, 1)
+        plus_time = round(time+detalT-simStep, 1)
+        reset_car_in.loc[time] = reset_car_in.loc[minus_time] - car_in.loc[minus_time] + car_in.loc[plus_time]
+        reset_car_out.loc[time] = reset_car_out.loc[minus_time] - car_out.loc[minus_time] + car_out.loc[plus_time]
+
+    reset_car_in.to_csv(car_in_file)
+    reset_car_out.to_csv(car_out_file)
+
+    print("car in and out file have been reset")
 
 
 def dataCheck(carInFile, carOutFile, numberFile):
