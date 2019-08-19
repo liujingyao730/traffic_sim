@@ -130,36 +130,48 @@ def train(args):
             print("********training epoch beginning***********")
             while True:
 
+                #t0 = time.time()
                 flag = data_generator.generateBatchForBucket()
-                if not flag and data_generator.CurrentOutputs == []:
+
+                #t1 = time.time()
+                if not flag and data_generator.CurrentOutputs.size == 0:
                     data_generator.setFilePoint(0)
                     break
 
+                #t2 = time.time()
                 net.zero_grad()
                 optimizer.zero_grad()
-                
+
+                #t3 = time.time()
                 data = Variable(torch.Tensor(data_generator.CurrentSequences))
                 laneT = Variable(torch.Tensor(data_generator.CurrentLane))
                 target = Variable(torch.Tensor(data_generator.CurrentOutputs))
 
+                #t4 = time.time()
                 if args.use_cuda:
                     data = data.cuda()
                     laneT = laneT.cuda()
                     target = target.cuda()
 
+                #t5 = time.time()
                 output = net(data, laneT)
 
+                #t6 = time.time()
                 number_before = data[:, :, args.t_predict:, 2]
                 number_current = target[:, :, :, 2]
                 In = data[:, 0, args.t_predict:, 1].view(-1, 1, predict_preiod)
+                
+                #t7 = time.time()
                 flow_loss = criterion(number_current, number_before, In, output)
                 mes_loss = mes_criterion(target[:, :, :, 0], output)
                 loss = args.flow_loss_weight * flow_loss + mes_loss
 
+                #t8 = time.time()
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(net.parameters(), args.grad_clip)
                 optimizer.step()
 
+                #t9 = time.time()
                 loss_meter.add(loss.item())
                 
                 if i % args.save_every == 0:
@@ -170,6 +182,10 @@ def train(args):
                 i += 1
             
             t = time.time()
+            #print("生成样本时间：", t1-t0)
+            #print("前向传播时间：", t6-t5)
+            #print("计算损失时间：", t8-t7)
+            #print("反向传播时间：", t9-t8)
             print("epoch{}, train_loss = {:.3f}, time{}".format(epoch, loss_meter.value()[0], t-start))
             log_file_curve.write("epoch{}, train_loss = {:.3f}, time{}\n".format(epoch, loss_meter.value()[0], t-start))
             loss_meter.reset()
@@ -183,7 +199,7 @@ def train(args):
             while True:
                 
                 flag = test_generator.generateBatchForBucket()
-                if not flag and test_generator.CurrentOutputs == []:
+                if not flag and test_generator.CurrentOutputs.size == 0:
                     test_generator.setFilePoint(0)
                     break
 

@@ -55,59 +55,41 @@ class batchGenerator(object):
             self.CurrentTime += self.simTimeStep
         self.CurrentTime = round(self.CurrentTime, 3)
 
-        self.CurrentSequences = []
+        self.CurrentSequences = np.array([])
         self.CurrentLane = []
-        self.CurrentOutputs = []
-
-
-    def generateNewSequence(self, column=None):
-        
-        edge = conf.edges[self.CurrentEdgePoint]
-        if column == None:
-            column = edge
-        seq = []
-        out = []
-        time = self.CurrentTime
-
-        for i in range(self.seqPredict):
-            timeSlice = self.deltaTAccumulate(column, time)
-            timeSlice.append(self.Number[self.prefixPoint].loc[time, column])
-            seq.append(timeSlice)
-            time += self.deltaT
-        
-        for i in range(self.seqPredict, self.seqLength+1):
-            timeSlice = self.deltaTAccumulate(column, time)
-            timeSlice.append(self.Number[self.prefixPoint].loc[time, column])
-            if i < self.seqLength:
-                seq.append(timeSlice)
-            if i > self.seqPredict:
-                out.append(timeSlice)
-            time += self.deltaT
-
-        self.CurrentOutputs.append(out)
-        self.CurrentSequences.append(seq)
-
-        return True
+        self.CurrentOutputs = np.array([])
 
     def generateNewMatrix(self):
 
-        self.CurrentSequences.clear()
-        self.CurrentOutputs.clear()
-        self.CurrentLane.clear()
+        self.CurrentSequences = np.array([])
+        self.CurrentLane = []
+        self.CurrentOutputs = np.array([])
 
         edge = self.CurrentEdgePoint + 1
         bucketL = edge * 100
         bucketH = bucketL + 100
         bucketList = []
+        timeList = []
 
         for bucket in self.CarIn[self.prefixPoint].columns:
             b = float(bucket)
             if b >= bucketL and  b < bucketH:
                 bucketList.append(bucket)
 
-        for bucket in bucketList:
-            self.generateNewSequence(bucket)
-        
+        for i in range(self.seqLength):
+            timeList.append(self.CurrentTime + i * self.deltaT)
+        timeList.append(self.CurrentTime + self.seqLength * self.deltaT)
+
+        spatial = len(bucketList)
+        temporal = len(timeList)
+
+        In = np.array(self.CarIn[self.prefixPoint].loc[timeList, bucketList].T).reshape(spatial, temporal, 1)
+        out = np.array(self.CarOut[self.prefixPoint].loc[timeList, bucketList].T).reshape(spatial, temporal, 1)
+        number = np.array(self.Number[self.prefixPoint].loc[timeList, bucketList].T).reshape(spatial, temporal, 1)
+
+        self.CurrentSequences = np.concatenate((In[:, :-1, :], out[:, :-1, :], number[:, :-1, :]), axis=2)
+        self.CurrentOutputs = np.concatenate((In[:, self.seqPredict+1:, :], out[:, self.seqPredict+1:, :], number[:, self.seqPredict+1:, :]), axis=2)        
+
         edge = str(edge)
         self.CurrentLane.append(self.LaneNumber.loc["laneNumber", edge])
 
@@ -115,9 +97,9 @@ class batchGenerator(object):
     def generateBatchForBucket(self, laneNumber=conf.laneNumber):
         
         numberEdge = len(laneNumber)
-        self.CurrentSequences = []
-        self.CurrentOutputs = []
+        self.CurrentSequences = np.array([])
         self.CurrentLane = []
+        self.CurrentOutputs = np.array([])
         batch_data = []
         tmpOutput = []
         tmpLane = []
@@ -227,22 +209,6 @@ class batchGenerator(object):
     def isTimeEndAfterGreen(self):
 
         return (self.CurrentTime + (self.seqLength + 1) * self.deltaT) % self.cycle > self.Pass
-
-    def deltaTAccumulate(self, column, time):
-
-        if self.CurrentTime + self.deltaT > self.TimeBoundary:
-            return False
-
-        Out = 0
-        In = 0
-        time = round(time + self.simTimeStep, 3)
-
-        for i in range(int(self.deltaT / self.simTimeStep)):
-            Out += self.CarOut[self.prefixPoint].loc[time, column]
-            In += self.CarIn[self.prefixPoint].loc[time, column]
-            time = round(time + self.simTimeStep, 3)
-
-        return [Out, In]
         
 
     def CarInFile(self):
@@ -255,7 +221,4 @@ class batchGenerator(object):
         return conf.midDataPath + "/" + self.prefix + "Number.csv"
 
     def LaneNumberFile(self):
-        return conf.midDataPath + "/" + self.laneNumberPrefix + "LaneNumber.csv"
-
-
-    
+        return conf.midDataPath + "/" + self.laneNumberPrefix + "LaneNumber.csv"    
