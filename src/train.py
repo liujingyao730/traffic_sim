@@ -115,6 +115,7 @@ def train(args):
         # 测试过程中的损失指标
         flow_loss_meter = meter.AverageValueMeter()
         last_loss_meter = meter.AverageValueMeter()
+        flow_last_loss_meter = meter.AverageValueMeter()
 
         # 预测的时段长
         predict_preiod = args.temporal_length - args.t_predict
@@ -162,17 +163,18 @@ def train(args):
                 
                 if i % args.save_every == 0:
                     print("batch{}, train_loss = {:.3f}".format(i, loss_meter.value()[0]))
-                    log_file_curve.write("batch{}, train_loss = {:.3f}".format(i, loss_meter.value()[0]))
+                    log_file_curve.write("batch{}, train_loss = {:.3f}\n".format(i, loss_meter.value()[0]))
                 #if i > 5:
-                #break
+                break
                 i += 1
             
             t = time.time()
             print("epoch{}, train_loss = {:.3f}, time{}".format(epoch, loss_meter.value()[0], t-start))
-            log_file_curve.write("epoch{}, train_loss = {:.3f}, time{}".format(epoch, loss_meter.value()[0], t-start))
+            log_file_curve.write("epoch{}, train_loss = {:.3f}, time{}\n".format(epoch, loss_meter.value()[0], t-start))
             loss_meter.reset()
             flow_loss_meter.reset()
             last_loss_meter.reset()
+            flow_last_loss_meter.reset()
             flag = True
             i = 0
 
@@ -203,14 +205,15 @@ def train(args):
                 flow_loss = criterion(number_current, number_before, In, output)
                 mes_loss = mes_criterion(target[:, :, :, 0], output)
                 last_frame_loss = mes_criterion(target[:, :, -1, 0], output[:, :, -1])
+                last_frame_flow_loss = criterion(number_before[:, :, -1].unsqueeze(2), number_current[:, :, -1].unsqueeze(2), In[:, :, -1].unsqueeze(1), output[:, :, -1].unsqueeze(2))
                 loss_meter.add(mes_loss.item())
                 flow_loss_meter.add(flow_loss.item())
                 last_loss_meter.add(last_frame_loss.item())
-
+                flow_last_loss_meter.add(last_frame_flow_loss.item())
                 
                 if i % args.save_every == 0:
                     print("batch{}, flow_loss={:.3f}, mes_loss={:.3f}, last_frame_loss={:.3f}".format(i, loss_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0]))
-                    log_file_curve.write("batch{}, flow_loss={:.3f}, mes_loss={:.3f}, last_frame_loss={:.3f}".format(i, loss_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0]))
+                    log_file_curve.write("batch{}, flow_loss={:.3f}, mes_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}\n".format(i, loss_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0], flow_last_loss_meter.value()[0]))
                 #if i > 5:
                 #break
                 i += 1

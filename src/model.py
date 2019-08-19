@@ -262,7 +262,6 @@ class loss_function(nn.Module):
 
         [batch_size, spatial_size, temporal_size] = number_current.shape
 
-
         inflow = torch.cat((In, outflow[:, :spatial_size-1,:]), 1)
         number_caculate = number_before + inflow - outflow
 
