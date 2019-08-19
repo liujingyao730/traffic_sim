@@ -183,7 +183,8 @@ def train(args):
             while True:
                 
                 flag = test_generator.generateBatchForBucket()
-                if not flag:
+                if not flag and test_generator.CurrentOutputs == []:
+                    test_generator.setFilePoint(0)
                     break
 
                 data = torch.tensor(test_generator.CurrentSequences).float()
