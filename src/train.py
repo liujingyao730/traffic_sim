@@ -34,7 +34,7 @@ def main():
     parser.add_argument('--spatial_length', type=int, default=5)
 
     # 训练参数
-    parser.add_argument('--batch_size', type=int, default=5)
+    parser.add_argument('--batch_size', type=int, default=30)
     parser.add_argument('--num_epochs', type=int, default=3)
     parser.add_argument('--save_every', type=int, default=500)
     parser.add_argument('--learing_rate', type=float, default=0.003)
@@ -126,9 +126,12 @@ def train(args):
                 flag = data_generator.generateBatchForBucket()
 
                 #t1 = time.time()
-                if not flag and data_generator.CurrentOutputs.size == 0:
-                    data_generator.setFilePoint(0)
-                    break
+                if data_generator.CurrentOutputs.size == 0:
+                    if not flag:
+                        data_generator.setFilePoint(0)
+                        break
+                    else:
+                        continue
 
                 #t2 = time.time()
                 net.zero_grad()
