@@ -36,55 +36,22 @@ modelDefualt = modelPath + "/defualtModel.pth"
 # 
 
 # 关心的路段
-edges = ["1", "2", "3", "4", "5", "6"]
-laneNumber = [1, 2, 3, 4, 5, 6]
+# edges = ["1", "2", "3", "4", "5", "6"] # 8-20改 之后的数据是单双车道
+# laneNumber = [1, 2, 3, 4, 5, 6]
+
+edges = ['1', '2']
+laneNumber = [1, 2]
 
 # 路段裁剪量
 cut = 45
 
-# 网络参数
-'''    不区分进入lstm层的     '''
 args = {}
-# 数据相关变量
-args["deltaT"] = 7
-args["cycle"] = 90
-args["greenPass"] = 42
-args["yellowPass"] = 45
-
-args["useCuda"] = True
-args["seqLength"] = 24
-args["seqPredict"] = 20
-args["hiddenSize"] = 64
-args["batchSize"] = 1
-args["embeddingSize"] = 32
-args["inputSize"] = 3
-args["outputSize"] = 16
-args["fc1"] = 32
-args["fc2"] = 16
-args["inputFC1"] = 8
-args["laneGateFC"] = 4
-args["embeddingLayer"] = 8
-args["outputFC1"] = 16
-args["outputFC2"] = 8 
-'''     分别进入三个lstm的     '''
-args["sHiddenSize"] = 8
-args["sEmbeddingSize"] = 4
 args["modelFilePrefix"] = "7-26"
+args["prefix"] = ["300", "400", "500", "600", "700", "800"]
+args["testFilePrefix"] = ["300_1", "400_1", "500_1", '600_1', '700_1', '800_1']
 
-# 训练参数
-args["gru"] = False
-args["dropOut"] = 0.4
-args["batchNum"] = 5000
-args["epoch"] = 5
-args["plotEvery"] = 50
-args["prefix"] = ["300_1", "300_2", "500_1", "500_2", "800_1", "800_2"]
-args["trainSimStep"] = 0.1
-args["testFilePrefix"] = ["300_3", "500_3", "800_3"]
-args["testSimStep"] = 0.1
-args["testBatch"] = 6000
-args["gpu_id"] = [0]
+# 网络中的结构
 
-args["version"] = "0710"
 
 # 文件名的生成
 def modelName(prefix):

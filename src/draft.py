@@ -20,6 +20,7 @@ from model import TP_lstm
 import dataProcess as dp 
 import train
 
+'''
 parser = argparse.ArgumentParser()
 parser.add_argument('--input_size', type=int, default=3)
 parser.add_argument('--hidden_size', type=int, default=64)
@@ -35,15 +36,20 @@ args = parser.parse_args()
 
 model = TP_lstm(args)
 model.eval()
-test_generator = batchGenerator(
+test_generator1 = batchGenerator(
             ['300_3'], 
-            batchSize=args.batch_size, 
+            batchSize=30, 
             simTimeStep=args.sim_step,
             seqLength=args.temporal_length,
             seqPredict=args.t_predict,
             deltaT=args.delta_T
             )
-test_generator.generateBatchForBucket()
+t0 = time.time()
+test_generator1.generateBatchForBucket()
+t1 = time.time()
+print(t1-t0)
+'''
+'''
 init_data = torch.tensor(test_generator.CurrentSequences[:, :, :args.t_predict, :]).float()
 temporal_data = torch.tensor(test_generator.CurrentSequences[:, 0, args.t_predict:, :]).float()
 data = Variable(torch.tensor(test_generator.CurrentSequences).float())
@@ -60,6 +66,7 @@ t3 = time.time()
 output.backward()
 t4 = time.time()
 print(t2-t1, t3-t2, t4-t3)
+'''
 #prefix = train.trainmd(conf.args)
 #refix = "multi_Dimension_LSTM_mdLSTM_123456"
 #train.testmd(prefix)

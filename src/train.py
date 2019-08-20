@@ -24,7 +24,7 @@ def main():
     
     parser = argparse.ArgumentParser()
     
-    #网络结构
+    # 网络结构
     parser.add_argument('--input_size', type=int, default=3)
     parser.add_argument('--hidden_size', type=int, default=64)
     parser.add_argument('--lane_gate_size', type=int, default=4)
@@ -33,7 +33,7 @@ def main():
     parser.add_argument('--temporal_length', type=int, default=11)
     parser.add_argument('--spatial_length', type=int, default=5)
 
-    #训练参数
+    # 训练参数
     parser.add_argument('--batch_size', type=int, default=5)
     parser.add_argument('--num_epochs', type=int, default=3)
     parser.add_argument('--save_every', type=int, default=500)
@@ -44,9 +44,15 @@ def main():
     parser.add_argument('--flow_loss_weight', type=float, default=1)
     parser.add_argument('--grad_clip', type=float, default=10.)
 
-    #数据参数
+    # 数据参数
     parser.add_argument('--sim_step', type=float, default=0.1)
     parser.add_argument('--delta_T', type=int, default=7)
+    parser.add_argument('--cycle', type=int, default=100)
+    parser.add_argument('--green_pass', type=int, default=52)
+    parser.add_argument('--yellow_pass', type=int, default=55)
+
+    # 模型相关
+    parser.add_argument('--model_prefix', type=str, default='8-17')
 
     args = parser.parse_args()
     train(args)
@@ -58,22 +64,8 @@ def train(args):
         data_prefix = conf.args["prefix"]
         model_prefix = conf.args["modelFilePrefix"]
         test_prefix = conf.args["testFilePrefix"] 
-        data_generator = batchGenerator(
-            data_prefix, 
-            batchSize=args.batch_size, 
-            simTimeStep=args.sim_step,
-            seqLength=args.temporal_length,
-            seqPredict=args.t_predict,
-            deltaT=args.delta_T
-            )
-        test_generator = batchGenerator(
-            test_prefix, 
-            batchSize=args.batch_size, 
-            simTimeStep=args.sim_step,
-            seqLength=args.temporal_length,
-            seqPredict=args.t_predict,
-            deltaT=args.delta_T
-            )
+        data_generator = batchGenerator(data_prefix, args)
+        test_generator = batchGenerator(test_prefix, args)
 
         # 记录文件
         log_directory = os.path.join(conf.logPath, model_prefix+"/")
@@ -177,8 +169,8 @@ def train(args):
                 if i % args.save_every == 0:
                     print("batch{}, train_loss = {:.3f}".format(i, loss_meter.value()[0]))
                     log_file_curve.write("batch{}, train_loss = {:.3f}\n".format(i, loss_meter.value()[0]))
-                #if i > 5:
-                #break
+                #if i > 30:
+                #    break
                 i += 1
             
             t = time.time()

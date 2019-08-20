@@ -11,7 +11,7 @@ class FCNet(nn.Module):
     '''
     为了简化结构写的一个封装好的三层或者四层的全连接网络
     '''
-    def __init__(self, addLayer=False, layerSize=[3, conf.args["embeddingLayer"], conf.args["embeddingSize"]]):
+    def __init__(self, addLayer=False, layerSize=[3, 8, 32]):
         '''
         初始化函数
         addLayer: bool 表示是否是4层的全连接网络，如果是的话后面layerSize需要4个变量表示
