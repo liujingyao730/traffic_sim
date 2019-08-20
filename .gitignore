@@ -124,3 +124,4 @@ dmypy.json
 *.tar
 *.pkl
 /src/draft.py
+/dataFile/log/*.txt

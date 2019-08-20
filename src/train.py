@@ -26,6 +26,7 @@ def main():
     
     # 网络结构
     parser.add_argument('--input_size', type=int, default=3)
+    parser.add_argument('--emmbedding_size', type=int, default=8)
     parser.add_argument('--hidden_size', type=int, default=64)
     parser.add_argument('--lane_gate_size', type=int, default=4)
     parser.add_argument('--output_hidden_size', type=int, default=16)
@@ -62,7 +63,7 @@ def train(args):
 
         # 初始化一些变量， 数据文件不太好通过命令行输入，所以在conf文件中提取
         data_prefix = conf.args["prefix"]
-        model_prefix = conf.args["modelFilePrefix"]
+        model_prefix = args.model_prefix
         test_prefix = conf.args["testFilePrefix"] 
         data_generator = batchGenerator(data_prefix, args)
         test_generator = batchGenerator(test_prefix, args)
@@ -224,7 +225,7 @@ def train(args):
                 flow_last_loss_meter.add(last_frame_flow_loss.item())
                 
                 if i % args.save_every == 0:
-                    print("batch{}, flow_loss={:.3f}, mes_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}\n".format(i, loss_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0], flow_last_loss_meter.value()[0]))
+                    print("batch{}, flow_loss={:.3f}, mes_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}".format(i, loss_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0], flow_last_loss_meter.value()[0]))
                     log_file_curve.write("batch{}, flow_loss={:.3f}, mes_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}\n".format(i, loss_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0], flow_last_loss_meter.value()[0]))
                 #if i > 5:
                 #break

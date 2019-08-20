@@ -268,14 +268,36 @@ class loss_function(nn.Module):
         loss = self.mes_criterion(number_current, number_caculate)
 
         return loss
-
-
-class long_edge(nn.Module):
+        
+class embedding_TP_lstm(nn.Module):
 
     def __init__(self, args):
-        
-        self.args = args
 
-        self.length = args.length
-        
-        
+        super.__init__()
+
+        self.embedding = torch.nn.Linear(args.input_size, args.embedding_size)
+
+        args.input_size = args.embedding_size
+
+        self.tp_lstm = TP_lstm(args)
+
+    def forward(self, input_data, lane):
+
+        [batch_size, spatial, temporal, input_size] = input_data.shape
+
+        input_data = self.embedding(input_data.view(-1, input_size)).view(batch_size, spatial, temporal, -1)
+        output = self.tp_lstm(input_data, lane)
+
+        return output
+
+    def infer(self, temporal_data, init_input, lane):
+
+        predict_input_length = temporal_data.shape[1]
+        [batch_size, spatial_length, input_temporal, input_size]= init_input.shape
+
+        temporal_data = self.embedding(temporal_data.view(-1, input_size)).view(batch_size, predict_input_length, -1)
+        init_input = self.embedding(init_input.view(-1, input_size)).view(batch_size, spatial_length, input_temporal, -1)
+
+        output = self.tp_lstm(temporal_data, init_input, lane)
+
+        return output
