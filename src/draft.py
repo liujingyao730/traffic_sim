@@ -20,8 +20,9 @@ from model import TP_lstm
 import dataProcess as dp 
 import train
 
-'''
 parser = argparse.ArgumentParser()
+    
+# 网络结构
 parser.add_argument('--input_size', type=int, default=3)
 parser.add_argument('--hidden_size', type=int, default=64)
 parser.add_argument('--lane_gate_size', type=int, default=4)
@@ -29,45 +30,31 @@ parser.add_argument('--output_hidden_size', type=int, default=16)
 parser.add_argument('--t_predict', type=int, default=7)
 parser.add_argument('--temporal_length', type=int, default=11)
 parser.add_argument('--spatial_length', type=int, default=5)
-parser.add_argument('--batch_size', type=int, default=5)
+
+# 训练参数
+parser.add_argument('--batch_size', type=int, default=30)
+parser.add_argument('--num_epochs', type=int, default=3)
+parser.add_argument('--save_every', type=int, default=500)
+parser.add_argument('--learing_rate', type=float, default=0.003)
+parser.add_argument('--decay_rate', type=float, default=0.95)
+parser.add_argument('--lambda_param', type=float, default=0.0005)
+parser.add_argument('--use_cuda', action='store_true', default=True)
+parser.add_argument('--flow_loss_weight', type=float, default=1)
+parser.add_argument('--grad_clip', type=float, default=10.)
+
+# 数据参数
 parser.add_argument('--sim_step', type=float, default=0.1)
 parser.add_argument('--delta_T', type=int, default=7)
+parser.add_argument('--cycle', type=int, default=100)
+parser.add_argument('--green_pass', type=int, default=52)
+parser.add_argument('--yellow_pass', type=int, default=55)
+
+# 模型相关
+parser.add_argument('--model_prefix', type=str, default='8-17')
+
 args = parser.parse_args()
 
-model = TP_lstm(args)
-model.eval()
-test_generator1 = batchGenerator(
-            ['300_3'], 
-            batchSize=30, 
-            simTimeStep=args.sim_step,
-            seqLength=args.temporal_length,
-            seqPredict=args.t_predict,
-            deltaT=args.delta_T
-            )
-t0 = time.time()
-test_generator1.generateBatchForBucket()
-t1 = time.time()
-print(t1-t0)
-'''
-'''
-init_data = torch.tensor(test_generator.CurrentSequences[:, :, :args.t_predict, :]).float()
-temporal_data = torch.tensor(test_generator.CurrentSequences[:, 0, args.t_predict:, :]).float()
-data = Variable(torch.tensor(test_generator.CurrentSequences).float())
-laneT = torch.tensor(test_generator.CurrentLane).float()
-target = Variable(torch.tensor(test_generator.CurrentOutputs).float())
-
-criterion = torch.nn.MSELoss()
-#output = model.infer(temporal_data, init_data, laneT)
-t1 = time.time()
-output = model(data, Variable(laneT))
-t2 = time.time()
-output = criterion(target[:, :, :, 0], output)
-t3 = time.time()
-output.backward()
-t4 = time.time()
-print(t2-t1, t3-t2, t4-t3)
-'''
-#prefix = train.trainmd(conf.args)
-#refix = "multi_Dimension_LSTM_mdLSTM_123456"
-#train.testmd(prefix)
-
+dg = batchGenerator(["300", "400", "500"], args)
+for i in range(50):
+    dg.generateBatchRandomForBucket()
+    print(dg.CurrentSequences.shape)

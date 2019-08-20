@@ -50,6 +50,10 @@ args["modelFilePrefix"] = "7-26"
 args["prefix"] = ["300", "400", "500", "600", "700", "800"]
 args["testFilePrefix"] = ["300_1", "400_1", "500_1", "600_1", "700_1", "800_1"]
 
+# 数据处理中用到的 dataprocess.py中
+args["deltaT"] = 10
+args["trainSimStep"] = 0.1
+
 # 网络中的结构
 
 

@@ -134,18 +134,27 @@ class batchGenerator(object):
 
     
     def generateBatchRandomForBucket(self, lane=conf.laneNumber):
+        
         self.CurrentOutputs = []
         self.CurrentSequences = []
         self.CurrentLane = []
         number = len(lane) - 1
-        tmplanes = np.array([])
-        tmpInput = np.array([])
-        tmpOutput = np.array([])
-
+        batch_data = []
+        tmpOutput = []
+        tmpLane = []
         self.setFilePoint(random.randint(0, self.fileNumber))
-        self.generateRandomTime()
-        self.CurrentEdgePoint = random.randint(0, number)
-        self.generateNewMatrix()
+
+        for i in range(self.batchSize):
+            self.generateRandomTime()
+            self.CurrentEdgePoint = random.randint(0, number)
+            self.generateNewMatrix()
+            tmpOutput.append(self.CurrentOutputs)
+            batch_data.append(self.CurrentSequences)
+            tmpLane.append(self.CurrentLane)
+
+        self.CurrentOutputs = np.array(tmpOutput)
+        self.CurrentSequences = np.array(batch_data)
+        self.CurrentLane = np.array(tmpLane)
         
 
 

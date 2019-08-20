@@ -71,7 +71,6 @@ def train(args):
         log_directory = os.path.join(conf.logPath, model_prefix+"/")
 
         log_file_curve = open(os.path.join(log_directory, 'log_curve.txt'), 'w+')
-        log_file = open(os.path.join(log_directory + 'val.txt'), 'w+')
 
         save_directory = os.path.join(conf.logPath, model_prefix)
 
@@ -225,7 +224,7 @@ def train(args):
                 flow_last_loss_meter.add(last_frame_flow_loss.item())
                 
                 if i % args.save_every == 0:
-                    print("batch{}, flow_loss={:.3f}, mes_loss={:.3f}, last_frame_loss={:.3f}".format(i, loss_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0]))
+                    print("batch{}, flow_loss={:.3f}, mes_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}\n".format(i, loss_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0], flow_last_loss_meter.value()[0]))
                     log_file_curve.write("batch{}, flow_loss={:.3f}, mes_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}\n".format(i, loss_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0], flow_last_loss_meter.value()[0]))
                 #if i > 5:
                 #break
@@ -237,6 +236,8 @@ def train(args):
                 'state_dict': net.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict()
             }, checkpoint_path(epoch))   
+        
+        log_file_curve.close()
 
         return 
 
