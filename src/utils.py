@@ -37,11 +37,12 @@ class batchGenerator(object):
             self.CarInFileName = self.CarInFile()
             self.CarOutFileName = self.CarOutFile()
             self.NumberFileName = self.NumberFile()
-            self.CarIn[i] = pd.read_csv(self.CarInFileName, index_col=0)
-            self.CarOut[i] = pd.read_csv(self.CarOutFileName, index_col=0)
+            self.CarIn[i] = pd.read_csv(self.CarInFileName, index_col=0).dropna(axis=0)
+            self.CarOut[i] = pd.read_csv(self.CarOutFileName, index_col=0).dropna(axis=0)
             self.Number[i] = pd.read_csv(self.NumberFileName, index_col=0)
              
         self.TimeBoundary = self.CarIn[self.prefixPoint].index[-1]
+        self.prefix = self.filePrefixList[self.prefixPoint]
         self.indexNumber = len(self.CarIn[self.prefixPoint].index) - 1
         self.cycleNumber = int(self.indexNumber * self.simTimeStep / self.cycle)
         self.disableCycle = int(self.deltaT * self.seqLength / self.cycle) + 1 
@@ -106,6 +107,9 @@ class batchGenerator(object):
                 self.CurrentTime = round(self.CurrentTime, 3)
             if self.isTimeOutBoundary():
                 if self.prefixPoint == self.fileNumber:
+                    self.CurrentOutputs = np.array(tmpOutput)
+                    self.CurrentSequences = np.array(batch_data)
+                    self.CurrentLane = np.array(tmpLane)
                     return False # 重置文件的动作放在外面进行
                 else:
                     self.setFilePoint(self.prefixPoint+1)
