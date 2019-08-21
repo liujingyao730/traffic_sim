@@ -123,5 +123,5 @@ dmypy.json
 *.npy
 *.tar
 *.pkl
-/src/draft.py
-/dataFile/log/*.txt
+src/draft.py
+dataFile/log/*.txt

@@ -17,6 +17,7 @@ import conf
 from utils import batchGenerator
 from model import MD_lstm_cell
 from model import TP_lstm
+from model import embedding_TP_lstm
 import dataProcess as dp 
 import train
 
@@ -24,6 +25,7 @@ parser = argparse.ArgumentParser()
     
 # 网络结构
 parser.add_argument('--input_size', type=int, default=3)
+parser.add_argument('--embedding_size', type=int, default=8)
 parser.add_argument('--hidden_size', type=int, default=64)
 parser.add_argument('--lane_gate_size', type=int, default=4)
 parser.add_argument('--output_hidden_size', type=int, default=16)
@@ -55,6 +57,22 @@ parser.add_argument('--model_prefix', type=str, default='8-17')
 args = parser.parse_args()
 
 dg = batchGenerator(["300", "400", "500"], args)
-for i in range(50):
-    dg.generateBatchRandomForBucket()
-    print(dg.CurrentSequences.shape)
+dg.generateBatchRandomForBucket()
+
+data = Variable(torch.Tensor(dg.CurrentSequences))
+laneT = Variable(torch.Tensor(dg.CurrentLane))
+target = Variable(torch.Tensor(dg.CurrentOutputs))
+
+net = embedding_TP_lstm(args)
+
+output = net(data, laneT)
+mes_criterion = torch.nn.MSELoss()
+mes_loss = mes_criterion(target[:, :, :, 0], output)
+mes_loss.backward()
+
+
+init_data = data[:, :, :args.t_predict, :]
+temporal_data = data[:, 0, args.t_predict:, :]
+
+outputs = net.infer(temporal_data, init_data, laneT)
+print(mes_loss.item())

@@ -273,9 +273,13 @@ class embedding_TP_lstm(nn.Module):
 
     def __init__(self, args):
 
-        super.__init__()
+        super().__init__()
 
-        self.embedding = torch.nn.Linear(args.input_size, args.embedding_size)
+        self.input_size = args.input_size
+        self.embedding_size = args.embedding_size
+        self.hidden_size = args.hidden_size
+
+        self.embedding = torch.nn.Linear(self.input_size, self.embedding_size)
 
         args.input_size = args.embedding_size
 
@@ -295,9 +299,77 @@ class embedding_TP_lstm(nn.Module):
         predict_input_length = temporal_data.shape[1]
         [batch_size, spatial_length, input_temporal, input_size]= init_input.shape
 
-        temporal_data = self.embedding(temporal_data.view(-1, input_size)).view(batch_size, predict_input_length, -1)
-        init_input = self.embedding(init_input.view(-1, input_size)).view(batch_size, spatial_length, input_temporal, -1)
+        temporal_data = self.embedding(temporal_data.contiguous().view(-1, input_size)).view(batch_size, predict_input_length, -1)
+        init_input = self.embedding(init_input.contiguous().view(-1, input_size)).view(batch_size, spatial_length, input_temporal, -1)
 
-        output = self.tp_lstm(temporal_data, init_input, lane)
+         # 处理batch
+        temporal_data = temporal_data.view(batch_size, -1)
+        init_input = init_input.view(batch_size, -1)
+
+        # lane_gate
+        lane_controller = self.tp_lstm.lane_gate(lane)
+        lane_controller = self.tp_lstm.sigma(lane_controller)
+        temporal_data = temporal_data * lane_controller
+        init_input = init_input * lane_controller
+
+        # 还原
+        temporal_data = temporal_data.view(batch_size, predict_input_length, self.embedding_size)
+        init_input = init_input.view(batch_size, spatial_length, input_temporal, self.embedding_size)
+
+        # 开始时序的推演 创建一些初始变量
+        
+        # 初始化细胞状态变量
+        cell_state = temporal_data.data.new(batch_size, spatial_length, self.hidden_size).fill_(0).float()
+        
+        # 初始化隐层状态变量
+        hidden_state = temporal_data.data.new(batch_size, spatial_length, self.hidden_size).fill_(0).float()
+        
+        # 初始化前向后向节点的隐层状态
+        hidden_state_after = temporal_data.data.new(batch_size, spatial_length, self.hidden_size).fill_(0).float()
+        hidden_state_before = temporal_data.data.new(batch_size, spatial_length, self.hidden_size).fill_(0).float()
+        
+        # 初始化填充值
+        zero_hidden = temporal_data.data.new(batch_size, 1, self.hidden_size).fill_(0).float()
+        
+        #初始化输出变量
+        output = temporal_data.data.new(batch_size, spatial_length, predict_input_length).fill_(0).float()
+
+        # 在非预测时序空间计算
+        for time in range(input_temporal):
+
+            hidden_state, cell_state = self.tp_lstm.cell(init_input[:, :, time, :], hidden_state, cell_state, hidden_state_after, hidden_state_before)
+            
+            # 后一个节点的隐层状态是从第二个节点的隐层状态开始到最后，再添加一个填充的0值tensor
+            hidden_state_after = torch.cat((hidden_state[:, 1:, :], zero_hidden), 1)
+            
+            # 前一个节点的隐层状态是一开始填充一个0值的tensor，然后再拼上从第一个节点开始到倒数第二个节点
+            hidden_state_before = torch.cat((zero_hidden, hidden_state[:, :spatial_length-1, :]), 1)
+
+        predict_input = init_input[:, :, -1, :]
+
+        for time in range(predict_input_length):
+            
+            outflow = self.tp_lstm.output_layer(hidden_state)
+
+            # output是下一时刻的输出，所以与当前时刻要错后一位
+            if time > 0:
+                output[:, :, time-1] = outflow.view(batch_size, spatial_length)
+            
+            # 每个节点的输入是由第一个节点的输入与预测得到的从第一个节点到倒数第二个节点的流出值
+            inflow = torch.cat((temporal_data[:, time, 1].view(batch_size,1,1), outflow[:, :spatial_length-1]), 1)
+            
+            # 每个节点的车辆数是由每个节点前一个时刻的车辆数以及输入和输出车辆数计算得到的
+            number = predict_input[:, :, 2].view(batch_size, spatial_length, 1) - outflow + inflow
+            
+            # 拼接得到下一时刻的输入
+            predict_input = torch.cat((outflow, inflow, number), 2)
+            predict_input = self.embedding(predict_input.view(-1, self.input_size)).view(batch_size, spatial_length, self.embedding_size)
+            hidden_state_after = torch.cat((hidden_state[:, 1:, :], zero_hidden), 1)
+            hidden_state_before = torch.cat((zero_hidden, hidden_state[:, :spatial_length-1, :]), 1)
+            hidden_state, cell_state = self.tp_lstm.cell(predict_input, hidden_state, cell_state, hidden_state_after, hidden_state_before)
+
+        # output是下一时段的输出，所以与当前时刻要错后一位
+        outflow = self.tp_lstm.output_layer(hidden_state)
+        output[:, :, predict_input_length-1] = outflow.view(batch_size, spatial_length)
 
         return output
