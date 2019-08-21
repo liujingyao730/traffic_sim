@@ -207,6 +207,9 @@ class TP_lstm(nn.Module):
         outflow = self.output_layer(hidden_state)
         output[:, :, predict_input_length-1] = outflow.view(batch_size, spatial_length)
 
+        output = output.view(batch_size, -1) / lane_controller
+        output = output.view(batch_size, spatial_length, predict_input_length)
+
         return output    
 
     def forward(self, input_data, lane):
