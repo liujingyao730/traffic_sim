@@ -53,7 +53,7 @@ def main():
     parser.add_argument('--yellow_pass', type=int, default=55)
 
     # 模型相关
-    parser.add_argument('--model_prefix', type=str, default='8-17')
+    parser.add_argument('--model_prefix', type=str, default='multi_dimension')
 
     args = parser.parse_args()
     train(args)
@@ -173,7 +173,7 @@ def train(args):
                     print("batch{}, train_loss = {:.3f}".format(i, loss_meter.value()[0]))
                     log_file_curve.write("batch{}, train_loss = {:.3f}\n".format(i, loss_meter.value()[0]))
                 #if i > 30:
-                #    break
+                break
                 i += 1
             
             t = time.time()
@@ -225,8 +225,8 @@ def train(args):
                 flow_last_loss_meter.add(last_frame_flow_loss.item())
                 
                 if i % args.save_every == 0:
-                    print("batch{}, flow_loss={:.3f}, mes_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}".format(i, loss_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0], flow_last_loss_meter.value()[0]))
-                    log_file_curve.write("batch{}, flow_loss={:.3f}, mes_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}\n".format(i, loss_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0], flow_last_loss_meter.value()[0]))
+                    print("batch{}, mes_loss={:.3f}, flow_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}".format(i, loss_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0], flow_last_loss_meter.value()[0]))
+                    log_file_curve.write("batch{}, mes_loss={:.3f}, flow_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}\n".format(i, loss_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0], flow_last_loss_meter.value()[0]))
                 #if i > 5:
                 #break
                 i += 1
