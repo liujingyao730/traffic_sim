@@ -34,7 +34,7 @@ parser.add_argument('--temporal_length', type=int, default=11)
 parser.add_argument('--spatial_length', type=int, default=5)
 
 # 训练参数
-parser.add_argument('--batch_size', type=int, default=30)
+parser.add_argument('--batch_size', type=int, default=1)
 parser.add_argument('--num_epochs', type=int, default=3)
 parser.add_argument('--save_every', type=int, default=500)
 parser.add_argument('--learing_rate', type=float, default=0.003)
@@ -57,22 +57,27 @@ parser.add_argument('--model_prefix', type=str, default='8-17')
 args = parser.parse_args()
 
 dg = batchGenerator(["300", "400", "500"], args)
-dg.generateBatchRandomForBucket()
+f = dg.generateBatchRandomForBucket()
 
-data = Variable(torch.Tensor(dg.CurrentSequences))
-laneT = Variable(torch.Tensor(dg.CurrentLane))
-target = Variable(torch.Tensor(dg.CurrentOutputs))
+model_prefix = '8-21'
 
-net = embedding_TP_lstm(args)
+save_directory = os.path.join(conf.logPath, model_prefix)
 
-output = net(data, laneT)
-mes_criterion = torch.nn.MSELoss()
-mes_loss = mes_criterion(target[:, :, :, 0], output)
-mes_loss.backward()
+def checkpoint_path(x):
+    return os.path.join(save_directory, str(x)+'.tar')
 
+file = checkpoint_path(0)
+checkpoint = torch.load(file)
+model = TP_lstm(args)
+model.load_state_dict(checkpoint['state_dict'])
+model.eval()
 
-init_data = data[:, :, :args.t_predict, :]
-temporal_data = data[:, 0, args.t_predict:, :]
+data = torch.tensor(dg.CurrentSequences).float()
+init_data = data[:, :, :args.t_predict, :].contiguous()
+temporal_data = data[:, 0, args.t_predict:, :].contiguous()
+laneT = torch.tensor(dg.CurrentLane).float()
+target = torch.tensor(dg.CurrentOutputs).float()
 
-outputs = net.infer(temporal_data, init_data, laneT)
-print(mes_loss.item())
+output = model.infer(temporal_data, init_data, laneT)
+print(output)
+print(target[:, :, :, 0])
