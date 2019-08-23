@@ -17,6 +17,7 @@ import pickle
 
 from utils import batchGenerator
 from model import TP_lstm
+from model import embedding_TP_lstm
 from model import loss_function
 import conf
 
@@ -26,12 +27,12 @@ def main():
     
     # 网络结构
     parser.add_argument('--input_size', type=int, default=3)
-    parser.add_argument('--emmbedding_size', type=int, default=8)
+    parser.add_argument('--embedding_size', type=int, default=8)
     parser.add_argument('--hidden_size', type=int, default=64)
     parser.add_argument('--lane_gate_size', type=int, default=4)
     parser.add_argument('--output_hidden_size', type=int, default=16)
-    parser.add_argument('--t_predict', type=int, default=7)
-    parser.add_argument('--temporal_length', type=int, default=11)
+    parser.add_argument('--t_predict', type=int, default=20)
+    parser.add_argument('--temporal_length', type=int, default=24)
     parser.add_argument('--spatial_length', type=int, default=5)
 
     # 训练参数
@@ -47,7 +48,7 @@ def main():
 
     # 数据参数
     parser.add_argument('--sim_step', type=float, default=0.1)
-    parser.add_argument('--delta_T', type=int, default=7)
+    parser.add_argument('--delta_T', type=int, default=10)
     parser.add_argument('--cycle', type=int, default=100)
     parser.add_argument('--green_pass', type=int, default=52)
     parser.add_argument('--yellow_pass', type=int, default=55)
@@ -194,9 +195,12 @@ def train(args):
             while True:
                 
                 flag = test_generator.generateBatchForBucket()
-                if not flag and test_generator.CurrentOutputs.size == 0:
-                    test_generator.setFilePoint(0)
-                    break
+                if test_generator.CurrentOutputs.size == 0:
+                    if not flag:
+                        test_generator.setFilePoint(0)
+                        break
+                    else:
+                        continue
 
                 data = torch.tensor(test_generator.CurrentSequences).float()
                 init_data = data[:, :, :args.t_predict, :]

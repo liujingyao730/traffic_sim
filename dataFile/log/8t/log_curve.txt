@@ -1,0 +1,280 @@
+batch0, train_loss = 2.060
+batch500, train_loss = 3.458
+batch1000, train_loss = 2.866
+batch1500, train_loss = 3.121
+batch2000, train_loss = 3.217
+batch2500, train_loss = 3.225
+batch3000, train_loss = 3.341
+batch3500, train_loss = 3.210
+batch4000, train_loss = 3.225
+batch4500, train_loss = 3.348
+batch5000, train_loss = 3.330
+batch5500, train_loss = 3.344
+batch6000, train_loss = 3.380
+batch6500, train_loss = 3.329
+batch7000, train_loss = 3.435
+batch7500, train_loss = 3.409
+epoch0, train_loss = 3.396, time105.9356005191803
+batch0, mes_loss=0.630, flow_loss=0.904, last_frame_loss=0.521, last_frame_flow_loss=1.006
+batch500, mes_loss=7.311, flow_loss=3.303, last_frame_loss=7.252, last_frame_flow_loss=5.353
+batch1000, mes_loss=5.275, flow_loss=3.052, last_frame_loss=5.077, last_frame_flow_loss=4.536
+batch1500, mes_loss=6.846, flow_loss=3.467, last_frame_loss=6.667, last_frame_flow_loss=4.878
+batch2000, mes_loss=7.063, flow_loss=3.448, last_frame_loss=7.291, last_frame_flow_loss=4.518
+batch2500, mes_loss=7.121, flow_loss=3.380, last_frame_loss=7.330, last_frame_flow_loss=4.193
+batch3000, mes_loss=8.179, flow_loss=3.632, last_frame_loss=8.498, last_frame_flow_loss=4.277
+batch3500, mes_loss=7.988, flow_loss=3.563, last_frame_loss=8.409, last_frame_flow_loss=4.103
+batch4000, mes_loss=8.566, flow_loss=3.574, last_frame_loss=8.964, last_frame_flow_loss=4.163
+batch4500, mes_loss=8.766, flow_loss=3.558, last_frame_loss=9.222, last_frame_flow_loss=4.135
+epoch0, mes_loss=8.885, flow_loss=3.537, last_frame_loss=9.326, last_frame_flow_loss=4.125
+batch0, train_loss = 1.248
+batch500, train_loss = 3.144
+batch1000, train_loss = 2.697
+batch1500, train_loss = 2.971
+batch2000, train_loss = 3.078
+batch2500, train_loss = 3.093
+batch3000, train_loss = 3.205
+batch3500, train_loss = 3.092
+batch4000, train_loss = 3.112
+batch4500, train_loss = 3.231
+batch5000, train_loss = 3.218
+batch5500, train_loss = 3.237
+batch6000, train_loss = 3.278
+batch6500, train_loss = 3.230
+batch7000, train_loss = 3.340
+batch7500, train_loss = 3.317
+epoch1, train_loss = 3.306, time117.01374506950378
+batch0, mes_loss=0.656, flow_loss=0.895, last_frame_loss=0.623, last_frame_flow_loss=1.021
+batch500, mes_loss=6.882, flow_loss=3.225, last_frame_loss=6.829, last_frame_flow_loss=5.346
+batch1000, mes_loss=5.077, flow_loss=3.018, last_frame_loss=4.821, last_frame_flow_loss=4.596
+batch1500, mes_loss=6.588, flow_loss=3.443, last_frame_loss=6.388, last_frame_flow_loss=4.892
+batch2000, mes_loss=6.775, flow_loss=3.407, last_frame_loss=6.996, last_frame_flow_loss=4.527
+batch2500, mes_loss=6.829, flow_loss=3.370, last_frame_loss=7.056, last_frame_flow_loss=4.199
+batch3000, mes_loss=7.777, flow_loss=3.623, last_frame_loss=8.139, last_frame_flow_loss=4.283
+batch3500, mes_loss=7.611, flow_loss=3.551, last_frame_loss=8.067, last_frame_flow_loss=4.101
+batch4000, mes_loss=8.142, flow_loss=3.577, last_frame_loss=8.580, last_frame_flow_loss=4.155
+batch4500, mes_loss=8.305, flow_loss=3.552, last_frame_loss=8.819, last_frame_flow_loss=4.122
+epoch1, mes_loss=8.440, flow_loss=3.543, last_frame_loss=8.942, last_frame_flow_loss=4.109
+batch0, train_loss = 1.252
+batch500, train_loss = 3.172
+batch1000, train_loss = 2.711
+batch1500, train_loss = 2.962
+batch2000, train_loss = 3.048
+batch2500, train_loss = 3.063
+batch3000, train_loss = 3.164
+batch3500, train_loss = 3.050
+batch4000, train_loss = 3.068
+batch4500, train_loss = 3.180
+batch5000, train_loss = 3.170
+batch5500, train_loss = 3.187
+batch6000, train_loss = 3.226
+batch6500, train_loss = 3.178
+batch7000, train_loss = 3.287
+batch7500, train_loss = 3.266
+epoch2, train_loss = 3.256, time121.72820496559143
+batch0, mes_loss=0.687, flow_loss=0.909, last_frame_loss=0.687, last_frame_flow_loss=1.052
+batch500, mes_loss=6.592, flow_loss=3.200, last_frame_loss=6.440, last_frame_flow_loss=5.489
+batch1000, mes_loss=4.863, flow_loss=2.976, last_frame_loss=4.624, last_frame_flow_loss=4.632
+batch1500, mes_loss=6.227, flow_loss=3.428, last_frame_loss=6.009, last_frame_flow_loss=4.935
+batch2000, mes_loss=6.431, flow_loss=3.393, last_frame_loss=6.589, last_frame_flow_loss=4.589
+batch2500, mes_loss=6.494, flow_loss=3.396, last_frame_loss=6.658, last_frame_flow_loss=4.261
+batch3000, mes_loss=7.394, flow_loss=3.663, last_frame_loss=7.665, last_frame_flow_loss=4.343
+batch3500, mes_loss=7.258, flow_loss=3.593, last_frame_loss=7.627, last_frame_flow_loss=4.160
+batch4000, mes_loss=7.766, flow_loss=3.642, last_frame_loss=8.104, last_frame_flow_loss=4.212
+batch4500, mes_loss=7.923, flow_loss=3.607, last_frame_loss=8.322, last_frame_flow_loss=4.184
+epoch2, mes_loss=8.057, flow_loss=3.614, last_frame_loss=8.452, last_frame_flow_loss=4.166
+batch0, train_loss = 1.271
+batch500, train_loss = 3.142
+batch1000, train_loss = 2.695
+batch1500, train_loss = 2.931
+batch2000, train_loss = 3.010
+batch2500, train_loss = 3.032
+batch3000, train_loss = 3.125
+batch3500, train_loss = 3.017
+batch4000, train_loss = 3.033
+batch4500, train_loss = 3.142
+batch5000, train_loss = 3.132
+batch5500, train_loss = 3.147
+batch6000, train_loss = 3.187
+batch6500, train_loss = 3.139
+batch7000, train_loss = 3.247
+batch7500, train_loss = 3.228
+epoch3, train_loss = 3.218, time115.51659750938416
+batch0, mes_loss=0.709, flow_loss=0.927, last_frame_loss=0.728, last_frame_flow_loss=1.100
+batch500, mes_loss=6.417, flow_loss=3.154, last_frame_loss=6.301, last_frame_flow_loss=5.594
+batch1000, mes_loss=4.758, flow_loss=2.872, last_frame_loss=4.668, last_frame_flow_loss=4.625
+batch1500, mes_loss=5.978, flow_loss=3.354, last_frame_loss=5.857, last_frame_flow_loss=4.968
+batch2000, mes_loss=6.161, flow_loss=3.333, last_frame_loss=6.340, last_frame_flow_loss=4.636
+batch2500, mes_loss=6.218, flow_loss=3.356, last_frame_loss=6.368, last_frame_flow_loss=4.316
+batch3000, mes_loss=7.060, flow_loss=3.625, last_frame_loss=7.264, last_frame_flow_loss=4.395
+batch3500, mes_loss=6.938, flow_loss=3.562, last_frame_loss=7.229, last_frame_flow_loss=4.211
+batch4000, mes_loss=7.417, flow_loss=3.622, last_frame_loss=7.659, last_frame_flow_loss=4.257
+batch4500, mes_loss=7.554, flow_loss=3.583, last_frame_loss=7.832, last_frame_flow_loss=4.226
+epoch3, mes_loss=7.691, flow_loss=3.601, last_frame_loss=7.969, last_frame_flow_loss=4.204
+batch0, train_loss = 1.291
+batch500, train_loss = 3.109
+batch1000, train_loss = 2.681
+batch1500, train_loss = 2.908
+batch2000, train_loss = 2.984
+batch2500, train_loss = 3.010
+batch3000, train_loss = 3.099
+batch3500, train_loss = 2.993
+batch4000, train_loss = 3.008
+batch4500, train_loss = 3.114
+batch5000, train_loss = 3.105
+batch5500, train_loss = 3.117
+batch6000, train_loss = 3.159
+batch6500, train_loss = 3.111
+batch7000, train_loss = 3.216
+batch7500, train_loss = 3.199
+epoch4, train_loss = 3.190, time108.7296953201294
+batch0, mes_loss=0.722, flow_loss=0.938, last_frame_loss=0.755, last_frame_flow_loss=1.146
+batch500, mes_loss=6.322, flow_loss=3.208, last_frame_loss=6.261, last_frame_flow_loss=5.738
+batch1000, mes_loss=4.729, flow_loss=2.868, last_frame_loss=4.801, last_frame_flow_loss=4.669
+batch1500, mes_loss=5.792, flow_loss=3.356, last_frame_loss=5.806, last_frame_flow_loss=5.038
+batch2000, mes_loss=5.962, flow_loss=3.336, last_frame_loss=6.210, last_frame_flow_loss=4.717
+batch2500, mes_loss=6.008, flow_loss=3.379, last_frame_loss=6.207, last_frame_flow_loss=4.412
+batch3000, mes_loss=6.793, flow_loss=3.651, last_frame_loss=7.017, last_frame_flow_loss=4.492
+batch3500, mes_loss=6.686, flow_loss=3.591, last_frame_loss=6.987, last_frame_flow_loss=4.306
+batch4000, mes_loss=7.129, flow_loss=3.660, last_frame_loss=7.378, last_frame_flow_loss=4.352
+batch4500, mes_loss=7.241, flow_loss=3.616, last_frame_loss=7.506, last_frame_flow_loss=4.318
+epoch4, mes_loss=7.375, flow_loss=3.643, last_frame_loss=7.646, last_frame_flow_loss=4.295
+batch0, train_loss = 1.308
+batch500, train_loss = 3.078
+batch1000, train_loss = 2.664
+batch1500, train_loss = 2.888
+batch2000, train_loss = 2.965
+batch2500, train_loss = 2.995
+batch3000, train_loss = 3.081
+batch3500, train_loss = 2.976
+batch4000, train_loss = 2.992
+batch4500, train_loss = 3.095
+batch5000, train_loss = 3.087
+batch5500, train_loss = 3.097
+batch6000, train_loss = 3.140
+batch6500, train_loss = 3.093
+batch7000, train_loss = 3.195
+batch7500, train_loss = 3.181
+epoch5, train_loss = 3.172, time124.84669280052185
+batch0, mes_loss=0.732, flow_loss=0.947, last_frame_loss=0.766, last_frame_flow_loss=1.175
+batch500, mes_loss=6.214, flow_loss=3.224, last_frame_loss=6.197, last_frame_flow_loss=5.816
+batch1000, mes_loss=4.707, flow_loss=2.831, last_frame_loss=4.950, last_frame_flow_loss=4.679
+batch1500, mes_loss=5.650, flow_loss=3.328, last_frame_loss=5.822, last_frame_flow_loss=5.067
+batch2000, mes_loss=5.801, flow_loss=3.315, last_frame_loss=6.140, last_frame_flow_loss=4.754
+batch2500, mes_loss=5.830, flow_loss=3.374, last_frame_loss=6.102, last_frame_flow_loss=4.470
+batch3000, mes_loss=6.562, flow_loss=3.650, last_frame_loss=6.833, last_frame_flow_loss=4.557
+batch3500, mes_loss=6.466, flow_loss=3.593, last_frame_loss=6.801, last_frame_flow_loss=4.368
+batch4000, mes_loss=6.876, flow_loss=3.668, last_frame_loss=7.156, last_frame_flow_loss=4.417
+batch4500, mes_loss=6.967, flow_loss=3.622, last_frame_loss=7.243, last_frame_flow_loss=4.380
+epoch5, mes_loss=7.095, flow_loss=3.656, last_frame_loss=7.377, last_frame_flow_loss=4.358
+batch0, train_loss = 1.321
+batch500, train_loss = 3.044
+batch1000, train_loss = 2.646
+batch1500, train_loss = 2.870
+batch2000, train_loss = 2.948
+batch2500, train_loss = 2.982
+batch3000, train_loss = 3.067
+batch3500, train_loss = 2.962
+batch4000, train_loss = 2.978
+batch4500, train_loss = 3.079
+batch5000, train_loss = 3.073
+batch5500, train_loss = 3.081
+batch6000, train_loss = 3.126
+batch6500, train_loss = 3.079
+batch7000, train_loss = 3.180
+batch7500, train_loss = 3.167
+epoch6, train_loss = 3.158, time117.53660655021667
+batch0, mes_loss=0.729, flow_loss=0.946, last_frame_loss=0.756, last_frame_flow_loss=1.200
+batch500, mes_loss=6.096, flow_loss=3.223, last_frame_loss=6.110, last_frame_flow_loss=5.828
+batch1000, mes_loss=4.678, flow_loss=2.802, last_frame_loss=5.044, last_frame_flow_loss=4.667
+batch1500, mes_loss=5.538, flow_loss=3.301, last_frame_loss=5.829, last_frame_flow_loss=5.073
+batch2000, mes_loss=5.670, flow_loss=3.292, last_frame_loss=6.078, last_frame_flow_loss=4.766
+batch2500, mes_loss=5.686, flow_loss=3.360, last_frame_loss=6.007, last_frame_flow_loss=4.499
+batch3000, mes_loss=6.378, flow_loss=3.637, last_frame_loss=6.679, last_frame_flow_loss=4.594
+batch3500, mes_loss=6.287, flow_loss=3.582, last_frame_loss=6.644, last_frame_flow_loss=4.404
+batch4000, mes_loss=6.673, flow_loss=3.662, last_frame_loss=6.968, last_frame_flow_loss=4.454
+batch4500, mes_loss=6.749, flow_loss=3.616, last_frame_loss=7.028, last_frame_flow_loss=4.415
+epoch6, mes_loss=6.870, flow_loss=3.653, last_frame_loss=7.151, last_frame_flow_loss=4.395
+batch0, train_loss = 1.324
+batch500, train_loss = 3.014
+batch1000, train_loss = 2.631
+batch1500, train_loss = 2.856
+batch2000, train_loss = 2.935
+batch2500, train_loss = 2.973
+batch3000, train_loss = 3.056
+batch3500, train_loss = 2.952
+batch4000, train_loss = 2.967
+batch4500, train_loss = 3.068
+batch5000, train_loss = 3.063
+batch5500, train_loss = 3.070
+batch6000, train_loss = 3.117
+batch6500, train_loss = 3.070
+batch7000, train_loss = 3.170
+batch7500, train_loss = 3.158
+epoch7, train_loss = 3.150, time162.9050736427307
+batch0, mes_loss=0.728, flow_loss=0.946, last_frame_loss=0.737, last_frame_flow_loss=1.215
+batch500, mes_loss=5.995, flow_loss=3.220, last_frame_loss=6.030, last_frame_flow_loss=5.814
+batch1000, mes_loss=4.657, flow_loss=2.784, last_frame_loss=5.118, last_frame_flow_loss=4.646
+batch1500, mes_loss=5.460, flow_loss=3.282, last_frame_loss=5.847, last_frame_flow_loss=5.069
+batch2000, mes_loss=5.574, flow_loss=3.274, last_frame_loss=6.042, last_frame_flow_loss=4.768
+batch2500, mes_loss=5.581, flow_loss=3.348, last_frame_loss=5.945, last_frame_flow_loss=4.513
+batch3000, mes_loss=6.245, flow_loss=3.625, last_frame_loss=6.574, last_frame_flow_loss=4.615
+batch3500, mes_loss=6.157, flow_loss=3.571, last_frame_loss=6.535, last_frame_flow_loss=4.425
+batch4000, mes_loss=6.524, flow_loss=3.654, last_frame_loss=6.837, last_frame_flow_loss=4.474
+batch4500, mes_loss=6.588, flow_loss=3.606, last_frame_loss=6.878, last_frame_flow_loss=4.435
+epoch7, mes_loss=6.704, flow_loss=3.645, last_frame_loss=6.991, last_frame_flow_loss=4.417
+batch0, train_loss = 1.326
+batch500, train_loss = 2.989
+batch1000, train_loss = 2.619
+batch1500, train_loss = 2.844
+batch2000, train_loss = 2.925
+batch2500, train_loss = 2.965
+batch3000, train_loss = 3.047
+batch3500, train_loss = 2.944
+batch4000, train_loss = 2.959
+batch4500, train_loss = 3.059
+batch5000, train_loss = 3.055
+batch5500, train_loss = 3.062
+batch6000, train_loss = 3.110
+batch6500, train_loss = 3.063
+batch7000, train_loss = 3.162
+batch7500, train_loss = 3.152
+epoch8, train_loss = 3.143, time117.2791600227356
+batch0, mes_loss=0.728, flow_loss=0.953, last_frame_loss=0.719, last_frame_flow_loss=1.227
+batch500, mes_loss=5.905, flow_loss=3.216, last_frame_loss=5.958, last_frame_flow_loss=5.792
+batch1000, mes_loss=4.639, flow_loss=2.773, last_frame_loss=5.174, last_frame_flow_loss=4.625
+batch1500, mes_loss=5.400, flow_loss=3.270, last_frame_loss=5.861, last_frame_flow_loss=5.062
+batch2000, mes_loss=5.498, flow_loss=3.262, last_frame_loss=6.013, last_frame_flow_loss=4.765
+batch2500, mes_loss=5.500, flow_loss=3.339, last_frame_loss=5.894, last_frame_flow_loss=4.520
+batch3000, mes_loss=6.140, flow_loss=3.614, last_frame_loss=6.491, last_frame_flow_loss=4.627
+batch3500, mes_loss=6.054, flow_loss=3.561, last_frame_loss=6.450, last_frame_flow_loss=4.436
+batch4000, mes_loss=6.406, flow_loss=3.646, last_frame_loss=6.734, last_frame_flow_loss=4.486
+batch4500, mes_loss=6.461, flow_loss=3.598, last_frame_loss=6.761, last_frame_flow_loss=4.447
+epoch8, mes_loss=6.572, flow_loss=3.637, last_frame_loss=6.865, last_frame_flow_loss=4.431
+batch0, train_loss = 1.328
+batch500, train_loss = 2.969
+batch1000, train_loss = 2.609
+batch1500, train_loss = 2.833
+batch2000, train_loss = 2.916
+batch2500, train_loss = 2.957
+batch3000, train_loss = 3.039
+batch3500, train_loss = 2.937
+batch4000, train_loss = 2.952
+batch4500, train_loss = 3.051
+batch5000, train_loss = 3.049
+batch5500, train_loss = 3.055
+batch6000, train_loss = 3.104
+batch6500, train_loss = 3.058
+batch7000, train_loss = 3.156
+batch7500, train_loss = 3.146
+epoch9, train_loss = 3.138, time133.5036392211914
+batch0, mes_loss=0.730, flow_loss=0.963, last_frame_loss=0.703, last_frame_flow_loss=1.235
+batch500, mes_loss=5.823, flow_loss=3.212, last_frame_loss=5.895, last_frame_flow_loss=5.771
+batch1000, mes_loss=4.618, flow_loss=2.767, last_frame_loss=5.209, last_frame_flow_loss=4.608
+batch1500, mes_loss=5.347, flow_loss=3.261, last_frame_loss=5.863, last_frame_flow_loss=5.056
+batch2000, mes_loss=5.430, flow_loss=3.253, last_frame_loss=5.978, last_frame_flow_loss=4.763
+batch2500, mes_loss=5.429, flow_loss=3.333, last_frame_loss=5.843, last_frame_flow_loss=4.524
+batch3000, mes_loss=6.048, flow_loss=3.606, last_frame_loss=6.414, last_frame_flow_loss=4.636
+batch3500, mes_loss=5.963, flow_loss=3.554, last_frame_loss=6.369, last_frame_flow_loss=4.445
+batch4000, mes_loss=6.304, flow_loss=3.639, last_frame_loss=6.641, last_frame_flow_loss=4.494
+batch4500, mes_loss=6.351, flow_loss=3.591, last_frame_loss=6.656, last_frame_flow_loss=4.456
+epoch9, mes_loss=6.459, flow_loss=3.631, last_frame_loss=6.754, last_frame_flow_loss=4.443

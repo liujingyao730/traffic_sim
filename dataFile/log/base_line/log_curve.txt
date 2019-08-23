@@ -1,0 +1,40 @@
+batch0, train_loss = 1.418
+batch500, train_loss = 3.471
+batch1000, train_loss = 3.456
+batch1500, train_loss = 3.470
+epoch0, train_loss = 3.462, time55.88643717765808
+batch0, mes_loss=0.339, flow_loss=0.422, last_frame_loss=0.368, last_frame_flow_loss=0.378
+batch500, mes_loss=6.622, flow_loss=3.220, last_frame_loss=7.715, last_frame_flow_loss=3.705
+epoch0, mes_loss=7.186, flow_loss=3.281, last_frame_loss=8.124, last_frame_flow_loss=3.893
+batch0, train_loss = 0.569
+batch500, train_loss = 2.975
+batch1000, train_loss = 3.180
+batch1500, train_loss = 3.265
+epoch1, train_loss = 3.258, time52.29313111305237
+batch0, mes_loss=0.360, flow_loss=0.405, last_frame_loss=0.360, last_frame_flow_loss=0.413
+batch500, mes_loss=7.804, flow_loss=3.471, last_frame_loss=8.556, last_frame_flow_loss=4.218
+epoch1, mes_loss=8.439, flow_loss=3.512, last_frame_loss=8.915, last_frame_flow_loss=4.387
+batch0, train_loss = 0.541
+batch500, train_loss = 2.912
+batch1000, train_loss = 3.111
+batch1500, train_loss = 3.199
+epoch2, train_loss = 3.192, time52.44193410873413
+batch0, mes_loss=0.420, flow_loss=0.396, last_frame_loss=0.403, last_frame_flow_loss=0.439
+batch500, mes_loss=8.695, flow_loss=3.915, last_frame_loss=8.978, last_frame_flow_loss=4.964
+epoch2, mes_loss=9.380, flow_loss=3.906, last_frame_loss=9.492, last_frame_flow_loss=5.098
+batch0, train_loss = 0.538
+batch500, train_loss = 2.871
+batch1000, train_loss = 3.079
+batch1500, train_loss = 3.174
+epoch3, train_loss = 3.166, time59.641302824020386
+batch0, mes_loss=0.450, flow_loss=0.393, last_frame_loss=0.437, last_frame_flow_loss=0.455
+batch500, mes_loss=8.319, flow_loss=4.099, last_frame_loss=8.272, last_frame_flow_loss=5.398
+epoch3, mes_loss=8.929, flow_loss=4.062, last_frame_loss=8.745, last_frame_flow_loss=5.505
+batch0, train_loss = 0.539
+batch500, train_loss = 2.880
+batch1000, train_loss = 3.082
+batch1500, train_loss = 3.172
+epoch4, train_loss = 3.165, time51.051491498947144
+batch0, mes_loss=0.465, flow_loss=0.391, last_frame_loss=0.455, last_frame_flow_loss=0.471
+batch500, mes_loss=8.109, flow_loss=4.207, last_frame_loss=8.145, last_frame_flow_loss=5.678
+epoch4, mes_loss=8.658, flow_loss=4.150, last_frame_loss=8.596, last_frame_flow_loss=5.767

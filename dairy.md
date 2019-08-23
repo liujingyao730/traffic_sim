@@ -117,4 +117,22 @@
 > * 增加了embedding层的网络训练测试都可以了，可以根据情况做一下实验看看结果怎么样
 > * 发现两个无比低级的错误，一个是在infer函数里没有在最后的输出里加上lane_controller的影响；第二个是在输出显示里把flow的平均损失和绝对的均方误差的显示弄反了，怪不得显示的最后一帧的flow损失总比平均的小很多
 > * 从现在的情况看一个路段中不同位置的bucket的准确情况好像不太相同，在这里专门写一个test的文件用来做全方位的测试，测试这个模型在时序上和空间位置上的准确性 
-> 
+
+> ## 8-22
+> * 调整参数造成的改变很有限，不过还没有尝试对序列长度和embedding层做实验，目前实验的一个可视化效果是这样：
+> > ![baseline_500_infer](dataFile/pics/baseline_500.png)
+> > ![baseline_1000_infer](dataFile/pics/baseline_1000.png)
+> > ![baseline_2000_infer](dataFile/pics/baseline_2000.png)
+> * 需要注意的几点关键的地方在：
+> > * 路段开始与路段结束的地方预测的效果偏差
+> > * 整体预测值偏小
+> > * 在长路段中表现竟然比训练路段还要好，这个目前没有头绪是为什么
+> > * 模型的误差在时间上向后增加，在空间上向后传递
+> > * 检测了一下不采用infer模式可以得到结果：
+> > ![baseline_500_non_infer](dataFile/pics/baseline_500_ni.png)
+> > ![baseline_1000_non_infer](dataFile/pics/baseline_1000_ni.png)
+> > ![baseline_1000_non_infer](dataFile/pics/baseline_2000_ni.png)
+> > * 不采用infer模式会更加准确一些，flow_loss也会减到很少，但是整体的预测值还是偏少，路段两端不再是误差严重累积的地方
+> * 突然发现这个数据有问题……，在生成bucketid的时候长度的输入弄错了结果少了最后一个bucket的，这个地方需要重新做一下数据重新训练……真的是头疼，自己从头写一个框架都是到处是洞，防不胜防
+> * 又一个错……train.py文件里默认的delta T没有改，还是7所以选的时间间隔都不太对，一个头两个大，重新训练测试一下看看结果怎么样
+> * 我是小糊涂，传错文件了，从头来吧脑壳疼
