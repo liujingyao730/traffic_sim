@@ -1,0 +1,300 @@
+batch0, train_loss = 2.226
+batch500, train_loss = 3.824
+epoch0, train_loss = 3.769, time101.3805763721466
+batch0, mes_loss=0.645, flow_loss=1.028, last_frame_loss=0.471, last_frame_flow_loss=1.535
+batch500, mes_loss=6.080, flow_loss=2.865, last_frame_loss=6.478, last_frame_flow_loss=3.189
+epoch0, mes_loss=6.084, flow_loss=2.813, last_frame_loss=6.489, last_frame_flow_loss=3.136
+batch0, train_loss = 1.252
+batch500, train_loss = 3.562
+epoch1, train_loss = 3.594, time99.48822331428528
+batch0, mes_loss=0.639, flow_loss=1.043, last_frame_loss=0.462, last_frame_flow_loss=1.516
+batch500, mes_loss=5.743, flow_loss=2.810, last_frame_loss=6.397, last_frame_flow_loss=3.230
+epoch1, mes_loss=5.755, flow_loss=2.759, last_frame_loss=6.414, last_frame_flow_loss=3.177
+batch0, train_loss = 1.248
+batch500, train_loss = 3.531
+epoch2, train_loss = 3.568, time101.25273442268372
+batch0, mes_loss=0.636, flow_loss=1.051, last_frame_loss=0.462, last_frame_flow_loss=1.495
+batch500, mes_loss=5.600, flow_loss=2.806, last_frame_loss=6.339, last_frame_flow_loss=3.249
+epoch2, mes_loss=5.614, flow_loss=2.755, last_frame_loss=6.358, last_frame_flow_loss=3.196
+batch0, train_loss = 1.241
+batch500, train_loss = 3.514
+epoch3, train_loss = 3.554, time97.95063161849976
+batch0, mes_loss=0.634, flow_loss=1.056, last_frame_loss=0.463, last_frame_flow_loss=1.477
+batch500, mes_loss=5.497, flow_loss=2.815, last_frame_loss=6.268, last_frame_flow_loss=3.260
+epoch3, mes_loss=5.512, flow_loss=2.763, last_frame_loss=6.287, last_frame_flow_loss=3.206
+batch0, train_loss = 1.236
+batch500, train_loss = 3.501
+epoch4, train_loss = 3.544, time99.35545682907104
+batch0, mes_loss=0.632, flow_loss=1.061, last_frame_loss=0.464, last_frame_flow_loss=1.463
+batch500, mes_loss=5.405, flow_loss=2.824, last_frame_loss=6.188, last_frame_flow_loss=3.269
+epoch4, mes_loss=5.420, flow_loss=2.771, last_frame_loss=6.208, last_frame_flow_loss=3.215
+batch0, train_loss = 1.232
+batch500, train_loss = 3.491
+epoch5, train_loss = 3.536, time97.81037139892578
+batch0, mes_loss=0.632, flow_loss=1.064, last_frame_loss=0.464, last_frame_flow_loss=1.454
+batch500, mes_loss=5.316, flow_loss=2.831, last_frame_loss=6.104, last_frame_flow_loss=3.278
+epoch5, mes_loss=5.330, flow_loss=2.778, last_frame_loss=6.122, last_frame_flow_loss=3.224
+batch0, train_loss = 1.230
+batch500, train_loss = 3.481
+epoch6, train_loss = 3.528, time99.01074552536011
+batch0, mes_loss=0.633, flow_loss=1.067, last_frame_loss=0.464, last_frame_flow_loss=1.448
+batch500, mes_loss=5.226, flow_loss=2.837, last_frame_loss=6.009, last_frame_flow_loss=3.288
+epoch6, mes_loss=5.240, flow_loss=2.783, last_frame_loss=6.025, last_frame_flow_loss=3.234
+batch0, train_loss = 1.229
+batch500, train_loss = 3.472
+epoch7, train_loss = 3.521, time103.99667191505432
+batch0, mes_loss=0.635, flow_loss=1.069, last_frame_loss=0.465, last_frame_flow_loss=1.444
+batch500, mes_loss=5.144, flow_loss=2.841, last_frame_loss=5.910, last_frame_flow_loss=3.300
+epoch7, mes_loss=5.156, flow_loss=2.786, last_frame_loss=5.926, last_frame_flow_loss=3.246
+batch0, train_loss = 1.229
+batch500, train_loss = 3.463
+epoch8, train_loss = 3.513, time105.93694257736206
+batch0, mes_loss=0.638, flow_loss=1.072, last_frame_loss=0.466, last_frame_flow_loss=1.443
+batch500, mes_loss=5.063, flow_loss=2.842, last_frame_loss=5.810, last_frame_flow_loss=3.313
+epoch8, mes_loss=5.074, flow_loss=2.788, last_frame_loss=5.824, last_frame_flow_loss=3.259
+batch0, train_loss = 1.229
+batch500, train_loss = 3.455
+epoch9, train_loss = 3.505, time102.8855972290039
+batch0, mes_loss=0.641, flow_loss=1.075, last_frame_loss=0.468, last_frame_flow_loss=1.443
+batch500, mes_loss=4.992, flow_loss=2.843, last_frame_loss=5.723, last_frame_flow_loss=3.327
+epoch9, mes_loss=5.002, flow_loss=2.789, last_frame_loss=5.735, last_frame_flow_loss=3.273
+batch0, train_loss = 1.229
+batch500, train_loss = 3.447
+epoch10, train_loss = 3.498, time98.74240851402283
+batch0, mes_loss=0.644, flow_loss=1.077, last_frame_loss=0.469, last_frame_flow_loss=1.444
+batch500, mes_loss=4.933, flow_loss=2.844, last_frame_loss=5.652, last_frame_flow_loss=3.340
+epoch10, mes_loss=4.942, flow_loss=2.789, last_frame_loss=5.662, last_frame_flow_loss=3.286
+batch0, train_loss = 1.230
+batch500, train_loss = 3.439
+epoch11, train_loss = 3.491, time103.90617346763611
+batch0, mes_loss=0.648, flow_loss=1.079, last_frame_loss=0.471, last_frame_flow_loss=1.445
+batch500, mes_loss=4.882, flow_loss=2.845, last_frame_loss=5.594, last_frame_flow_loss=3.351
+epoch11, mes_loss=4.890, flow_loss=2.790, last_frame_loss=5.603, last_frame_flow_loss=3.296
+batch0, train_loss = 1.230
+batch500, train_loss = 3.432
+epoch12, train_loss = 3.484, time100.16479349136353
+batch0, mes_loss=0.651, flow_loss=1.081, last_frame_loss=0.473, last_frame_flow_loss=1.447
+batch500, mes_loss=4.834, flow_loss=2.846, last_frame_loss=5.540, last_frame_flow_loss=3.361
+epoch12, mes_loss=4.841, flow_loss=2.791, last_frame_loss=5.547, last_frame_flow_loss=3.305
+batch0, train_loss = 1.230
+batch500, train_loss = 3.425
+epoch13, train_loss = 3.478, time101.28026866912842
+batch0, mes_loss=0.655, flow_loss=1.082, last_frame_loss=0.476, last_frame_flow_loss=1.450
+batch500, mes_loss=4.787, flow_loss=2.848, last_frame_loss=5.486, last_frame_flow_loss=3.368
+epoch13, mes_loss=4.793, flow_loss=2.793, last_frame_loss=5.492, last_frame_flow_loss=3.313
+batch0, train_loss = 1.231
+batch500, train_loss = 3.418
+epoch14, train_loss = 3.472, time101.00282430648804
+batch0, mes_loss=0.659, flow_loss=1.084, last_frame_loss=0.478, last_frame_flow_loss=1.453
+batch500, mes_loss=4.746, flow_loss=2.850, last_frame_loss=5.439, last_frame_flow_loss=3.375
+epoch14, mes_loss=4.750, flow_loss=2.795, last_frame_loss=5.444, last_frame_flow_loss=3.320
+batch0, train_loss = 1.231
+batch500, train_loss = 3.411
+epoch15, train_loss = 3.466, time100.4491229057312
+batch0, mes_loss=0.663, flow_loss=1.085, last_frame_loss=0.481, last_frame_flow_loss=1.456
+batch500, mes_loss=4.708, flow_loss=2.854, last_frame_loss=5.396, last_frame_flow_loss=3.382
+epoch15, mes_loss=4.711, flow_loss=2.799, last_frame_loss=5.399, last_frame_flow_loss=3.327
+batch0, train_loss = 1.231
+batch500, train_loss = 3.405
+epoch16, train_loss = 3.460, time102.77981805801392
+batch0, mes_loss=0.667, flow_loss=1.085, last_frame_loss=0.484, last_frame_flow_loss=1.460
+batch500, mes_loss=4.674, flow_loss=2.858, last_frame_loss=5.357, last_frame_flow_loss=3.389
+epoch16, mes_loss=4.676, flow_loss=2.803, last_frame_loss=5.359, last_frame_flow_loss=3.334
+batch0, train_loss = 1.232
+batch500, train_loss = 3.399
+epoch17, train_loss = 3.454, time99.95939254760742
+batch0, mes_loss=0.671, flow_loss=1.086, last_frame_loss=0.487, last_frame_flow_loss=1.463
+batch500, mes_loss=4.644, flow_loss=2.864, last_frame_loss=5.322, last_frame_flow_loss=3.396
+epoch17, mes_loss=4.644, flow_loss=2.808, last_frame_loss=5.321, last_frame_flow_loss=3.341
+batch0, train_loss = 1.231
+batch500, train_loss = 3.393
+epoch18, train_loss = 3.448, time101.01719999313354
+batch0, mes_loss=0.674, flow_loss=1.086, last_frame_loss=0.490, last_frame_flow_loss=1.467
+batch500, mes_loss=4.616, flow_loss=2.870, last_frame_loss=5.288, last_frame_flow_loss=3.404
+epoch18, mes_loss=4.615, flow_loss=2.814, last_frame_loss=5.286, last_frame_flow_loss=3.348
+batch0, train_loss = 1.231
+batch500, train_loss = 3.387
+epoch19, train_loss = 3.443, time102.49412965774536
+batch0, mes_loss=0.678, flow_loss=1.086, last_frame_loss=0.493, last_frame_flow_loss=1.470
+batch500, mes_loss=4.590, flow_loss=2.877, last_frame_loss=5.257, last_frame_flow_loss=3.411
+epoch19, mes_loss=4.589, flow_loss=2.821, last_frame_loss=5.254, last_frame_flow_loss=3.356
+batch0, train_loss = 1.231
+batch500, train_loss = 3.381
+epoch20, train_loss = 3.437, time100.00278520584106
+batch0, mes_loss=0.681, flow_loss=1.086, last_frame_loss=0.496, last_frame_flow_loss=1.474
+batch500, mes_loss=4.567, flow_loss=2.883, last_frame_loss=5.228, last_frame_flow_loss=3.419
+epoch20, mes_loss=4.565, flow_loss=2.827, last_frame_loss=5.224, last_frame_flow_loss=3.363
+batch0, train_loss = 1.231
+batch500, train_loss = 3.376
+epoch21, train_loss = 3.432, time108.170485496521
+batch0, mes_loss=0.685, flow_loss=1.086, last_frame_loss=0.500, last_frame_flow_loss=1.477
+batch500, mes_loss=4.545, flow_loss=2.891, last_frame_loss=5.200, last_frame_flow_loss=3.426
+epoch21, mes_loss=4.542, flow_loss=2.834, last_frame_loss=5.195, last_frame_flow_loss=3.371
+batch0, train_loss = 1.230
+batch500, train_loss = 3.370
+epoch22, train_loss = 3.427, time98.06877517700195
+batch0, mes_loss=0.688, flow_loss=1.086, last_frame_loss=0.504, last_frame_flow_loss=1.480
+batch500, mes_loss=4.525, flow_loss=2.898, last_frame_loss=5.174, last_frame_flow_loss=3.433
+epoch22, mes_loss=4.521, flow_loss=2.842, last_frame_loss=5.168, last_frame_flow_loss=3.378
+batch0, train_loss = 1.230
+batch500, train_loss = 3.365
+epoch23, train_loss = 3.422, time96.69769477844238
+batch0, mes_loss=0.691, flow_loss=1.085, last_frame_loss=0.508, last_frame_flow_loss=1.484
+batch500, mes_loss=4.506, flow_loss=2.906, last_frame_loss=5.150, last_frame_flow_loss=3.440
+epoch23, mes_loss=4.502, flow_loss=2.849, last_frame_loss=5.143, last_frame_flow_loss=3.385
+batch0, train_loss = 1.229
+batch500, train_loss = 3.360
+epoch24, train_loss = 3.417, time99.86605405807495
+batch0, mes_loss=0.695, flow_loss=1.085, last_frame_loss=0.512, last_frame_flow_loss=1.487
+batch500, mes_loss=4.488, flow_loss=2.913, last_frame_loss=5.128, last_frame_flow_loss=3.447
+epoch24, mes_loss=4.484, flow_loss=2.857, last_frame_loss=5.119, last_frame_flow_loss=3.391
+batch0, train_loss = 1.229
+batch500, train_loss = 3.355
+epoch25, train_loss = 3.413, time96.2764663696289
+batch0, mes_loss=0.698, flow_loss=1.084, last_frame_loss=0.515, last_frame_flow_loss=1.490
+batch500, mes_loss=4.471, flow_loss=2.921, last_frame_loss=5.106, last_frame_flow_loss=3.453
+epoch25, mes_loss=4.466, flow_loss=2.864, last_frame_loss=5.097, last_frame_flow_loss=3.398
+batch0, train_loss = 1.228
+batch500, train_loss = 3.350
+epoch26, train_loss = 3.408, time101.13417363166809
+batch0, mes_loss=0.700, flow_loss=1.083, last_frame_loss=0.519, last_frame_flow_loss=1.493
+batch500, mes_loss=4.455, flow_loss=2.928, last_frame_loss=5.087, last_frame_flow_loss=3.459
+epoch26, mes_loss=4.450, flow_loss=2.872, last_frame_loss=5.076, last_frame_flow_loss=3.404
+batch0, train_loss = 1.227
+batch500, train_loss = 3.345
+epoch27, train_loss = 3.404, time97.55959844589233
+batch0, mes_loss=0.703, flow_loss=1.082, last_frame_loss=0.523, last_frame_flow_loss=1.496
+batch500, mes_loss=4.440, flow_loss=2.936, last_frame_loss=5.068, last_frame_flow_loss=3.466
+epoch27, mes_loss=4.434, flow_loss=2.879, last_frame_loss=5.057, last_frame_flow_loss=3.410
+batch0, train_loss = 1.227
+batch500, train_loss = 3.341
+epoch28, train_loss = 3.400, time99.99283719062805
+batch0, mes_loss=0.706, flow_loss=1.081, last_frame_loss=0.527, last_frame_flow_loss=1.500
+batch500, mes_loss=4.426, flow_loss=2.943, last_frame_loss=5.050, last_frame_flow_loss=3.472
+epoch28, mes_loss=4.419, flow_loss=2.886, last_frame_loss=5.038, last_frame_flow_loss=3.416
+batch0, train_loss = 1.226
+batch500, train_loss = 3.336
+epoch29, train_loss = 3.396, time100.66568303108215
+batch0, mes_loss=0.708, flow_loss=1.079, last_frame_loss=0.530, last_frame_flow_loss=1.503
+batch500, mes_loss=4.412, flow_loss=2.950, last_frame_loss=5.034, last_frame_flow_loss=3.478
+epoch29, mes_loss=4.405, flow_loss=2.893, last_frame_loss=5.021, last_frame_flow_loss=3.422
+batch0, train_loss = 1.226
+batch500, train_loss = 3.332
+epoch30, train_loss = 3.392, time99.43226480484009
+batch0, mes_loss=0.710, flow_loss=1.078, last_frame_loss=0.533, last_frame_flow_loss=1.506
+batch500, mes_loss=4.399, flow_loss=2.957, last_frame_loss=5.018, last_frame_flow_loss=3.483
+epoch30, mes_loss=4.391, flow_loss=2.900, last_frame_loss=5.004, last_frame_flow_loss=3.428
+batch0, train_loss = 1.225
+batch500, train_loss = 3.328
+epoch31, train_loss = 3.388, time95.2734260559082
+batch0, mes_loss=0.712, flow_loss=1.077, last_frame_loss=0.536, last_frame_flow_loss=1.508
+batch500, mes_loss=4.386, flow_loss=2.964, last_frame_loss=5.003, last_frame_flow_loss=3.489
+epoch31, mes_loss=4.378, flow_loss=2.907, last_frame_loss=4.989, last_frame_flow_loss=3.434
+batch0, train_loss = 1.224
+batch500, train_loss = 3.324
+epoch32, train_loss = 3.385, time97.97290968894958
+batch0, mes_loss=0.714, flow_loss=1.075, last_frame_loss=0.539, last_frame_flow_loss=1.511
+batch500, mes_loss=4.374, flow_loss=2.971, last_frame_loss=4.989, last_frame_flow_loss=3.494
+epoch32, mes_loss=4.366, flow_loss=2.914, last_frame_loss=4.974, last_frame_flow_loss=3.439
+batch0, train_loss = 1.224
+batch500, train_loss = 3.320
+epoch33, train_loss = 3.382, time117.08969712257385
+batch0, mes_loss=0.716, flow_loss=1.074, last_frame_loss=0.542, last_frame_flow_loss=1.514
+batch500, mes_loss=4.363, flow_loss=2.977, last_frame_loss=4.976, last_frame_flow_loss=3.500
+epoch33, mes_loss=4.354, flow_loss=2.921, last_frame_loss=4.960, last_frame_flow_loss=3.445
+batch0, train_loss = 1.223
+batch500, train_loss = 3.317
+epoch34, train_loss = 3.379, time116.99763107299805
+batch0, mes_loss=0.718, flow_loss=1.072, last_frame_loss=0.544, last_frame_flow_loss=1.517
+batch500, mes_loss=4.352, flow_loss=2.984, last_frame_loss=4.964, last_frame_flow_loss=3.505
+epoch34, mes_loss=4.343, flow_loss=2.927, last_frame_loss=4.946, last_frame_flow_loss=3.450
+batch0, train_loss = 1.223
+batch500, train_loss = 3.314
+epoch35, train_loss = 3.376, time112.30165815353394
+batch0, mes_loss=0.719, flow_loss=1.071, last_frame_loss=0.547, last_frame_flow_loss=1.519
+batch500, mes_loss=4.341, flow_loss=2.990, last_frame_loss=4.952, last_frame_flow_loss=3.510
+epoch35, mes_loss=4.332, flow_loss=2.934, last_frame_loss=4.934, last_frame_flow_loss=3.455
+batch0, train_loss = 1.222
+batch500, train_loss = 3.310
+epoch36, train_loss = 3.373, time109.51482677459717
+batch0, mes_loss=0.721, flow_loss=1.069, last_frame_loss=0.549, last_frame_flow_loss=1.521
+batch500, mes_loss=4.331, flow_loss=2.996, last_frame_loss=4.940, last_frame_flow_loss=3.514
+epoch36, mes_loss=4.321, flow_loss=2.940, last_frame_loss=4.922, last_frame_flow_loss=3.459
+batch0, train_loss = 1.222
+batch500, train_loss = 3.307
+epoch37, train_loss = 3.370, time110.20931196212769
+batch0, mes_loss=0.722, flow_loss=1.068, last_frame_loss=0.552, last_frame_flow_loss=1.523
+batch500, mes_loss=4.321, flow_loss=3.002, last_frame_loss=4.930, last_frame_flow_loss=3.519
+epoch37, mes_loss=4.311, flow_loss=2.946, last_frame_loss=4.910, last_frame_flow_loss=3.464
+batch0, train_loss = 1.221
+batch500, train_loss = 3.304
+epoch38, train_loss = 3.367, time107.22550129890442
+batch0, mes_loss=0.723, flow_loss=1.067, last_frame_loss=0.554, last_frame_flow_loss=1.525
+batch500, mes_loss=4.312, flow_loss=3.008, last_frame_loss=4.919, last_frame_flow_loss=3.523
+epoch38, mes_loss=4.301, flow_loss=2.951, last_frame_loss=4.899, last_frame_flow_loss=3.468
+batch0, train_loss = 1.221
+batch500, train_loss = 3.301
+epoch39, train_loss = 3.365, time109.83386969566345
+batch0, mes_loss=0.724, flow_loss=1.065, last_frame_loss=0.556, last_frame_flow_loss=1.526
+batch500, mes_loss=4.302, flow_loss=3.013, last_frame_loss=4.909, last_frame_flow_loss=3.527
+epoch39, mes_loss=4.291, flow_loss=2.957, last_frame_loss=4.889, last_frame_flow_loss=3.472
+batch0, train_loss = 1.220
+batch500, train_loss = 3.299
+epoch40, train_loss = 3.363, time107.66422581672668
+batch0, mes_loss=0.726, flow_loss=1.064, last_frame_loss=0.557, last_frame_flow_loss=1.528
+batch500, mes_loss=4.293, flow_loss=3.019, last_frame_loss=4.900, last_frame_flow_loss=3.530
+epoch40, mes_loss=4.281, flow_loss=2.962, last_frame_loss=4.879, last_frame_flow_loss=3.476
+batch0, train_loss = 1.220
+batch500, train_loss = 3.296
+epoch41, train_loss = 3.360, time106.72705364227295
+batch0, mes_loss=0.727, flow_loss=1.063, last_frame_loss=0.559, last_frame_flow_loss=1.529
+batch500, mes_loss=4.284, flow_loss=3.024, last_frame_loss=4.890, last_frame_flow_loss=3.534
+epoch41, mes_loss=4.272, flow_loss=2.967, last_frame_loss=4.869, last_frame_flow_loss=3.479
+batch0, train_loss = 1.220
+batch500, train_loss = 3.293
+epoch42, train_loss = 3.358, time111.1446590423584
+batch0, mes_loss=0.728, flow_loss=1.061, last_frame_loss=0.561, last_frame_flow_loss=1.529
+batch500, mes_loss=4.275, flow_loss=3.029, last_frame_loss=4.881, last_frame_flow_loss=3.537
+epoch42, mes_loss=4.263, flow_loss=2.972, last_frame_loss=4.859, last_frame_flow_loss=3.482
+batch0, train_loss = 1.219
+batch500, train_loss = 3.291
+epoch43, train_loss = 3.356, time107.65665078163147
+batch0, mes_loss=0.729, flow_loss=1.060, last_frame_loss=0.562, last_frame_flow_loss=1.530
+batch500, mes_loss=4.266, flow_loss=3.033, last_frame_loss=4.873, last_frame_flow_loss=3.540
+epoch43, mes_loss=4.254, flow_loss=2.977, last_frame_loss=4.850, last_frame_flow_loss=3.485
+batch0, train_loss = 1.219
+batch500, train_loss = 3.289
+epoch44, train_loss = 3.354, time101.02332830429077
+batch0, mes_loss=0.730, flow_loss=1.059, last_frame_loss=0.564, last_frame_flow_loss=1.530
+batch500, mes_loss=4.258, flow_loss=3.038, last_frame_loss=4.864, last_frame_flow_loss=3.542
+epoch44, mes_loss=4.245, flow_loss=2.981, last_frame_loss=4.840, last_frame_flow_loss=3.488
+batch0, train_loss = 1.219
+batch500, train_loss = 3.286
+epoch45, train_loss = 3.352, time103.60809779167175
+batch0, mes_loss=0.730, flow_loss=1.058, last_frame_loss=0.565, last_frame_flow_loss=1.531
+batch500, mes_loss=4.249, flow_loss=3.042, last_frame_loss=4.856, last_frame_flow_loss=3.545
+epoch45, mes_loss=4.236, flow_loss=2.985, last_frame_loss=4.832, last_frame_flow_loss=3.491
+batch0, train_loss = 1.218
+batch500, train_loss = 3.284
+epoch46, train_loss = 3.350, time104.4399106502533
+batch0, mes_loss=0.731, flow_loss=1.057, last_frame_loss=0.566, last_frame_flow_loss=1.531
+batch500, mes_loss=4.241, flow_loss=3.046, last_frame_loss=4.848, last_frame_flow_loss=3.547
+epoch46, mes_loss=4.228, flow_loss=2.989, last_frame_loss=4.823, last_frame_flow_loss=3.493
+batch0, train_loss = 1.218
+batch500, train_loss = 3.282
+epoch47, train_loss = 3.348, time110.09544348716736
+batch0, mes_loss=0.732, flow_loss=1.056, last_frame_loss=0.567, last_frame_flow_loss=1.531
+batch500, mes_loss=4.233, flow_loss=3.049, last_frame_loss=4.840, last_frame_flow_loss=3.549
+epoch47, mes_loss=4.219, flow_loss=2.993, last_frame_loss=4.814, last_frame_flow_loss=3.496
+batch0, train_loss = 1.218
+batch500, train_loss = 3.280
+epoch48, train_loss = 3.346, time104.56690645217896
+batch0, mes_loss=0.733, flow_loss=1.055, last_frame_loss=0.568, last_frame_flow_loss=1.531
+batch500, mes_loss=4.225, flow_loss=3.053, last_frame_loss=4.832, last_frame_flow_loss=3.551
+epoch48, mes_loss=4.211, flow_loss=2.996, last_frame_loss=4.806, last_frame_flow_loss=3.498
+batch0, train_loss = 1.217
+batch500, train_loss = 3.278
+epoch49, train_loss = 3.344, time105.35522794723511
+batch0, mes_loss=0.733, flow_loss=1.054, last_frame_loss=0.569, last_frame_flow_loss=1.530
+batch500, mes_loss=4.217, flow_loss=3.056, last_frame_loss=4.824, last_frame_flow_loss=3.553
+epoch49, mes_loss=4.203, flow_loss=3.000, last_frame_loss=4.797, last_frame_flow_loss=3.500

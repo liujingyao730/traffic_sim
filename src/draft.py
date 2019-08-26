@@ -52,8 +52,8 @@ parser.add_argument('--green_pass', type=int, default=52)
 parser.add_argument('--yellow_pass', type=int, default=55)
 
 # 模型相关
-parser.add_argument('--model_prefix', type=str, default='base_line')
-parser.add_argument('--use_epoch', type=int, default=4)
+parser.add_argument('--model_prefix', type=str, default='new_data_base')
+parser.add_argument('--use_epoch', type=int, default=49)
 parser.add_argument('--test_batchs', type=int, default=500)
 
 args = parser.parse_args()
@@ -72,7 +72,7 @@ checkpoint = torch.load(file)
 argsfile = open(os.path.join(load_directory, 'config.pkl'), 'rb')
 args = pickle.load(argsfile)
 
-dg = batchGenerator(["300", "400", "500"], args)
+dg = batchGenerator(["300", "800", "1000"], args)
 dg.generateBatchRandomForBucket()
 
 model = TP_lstm(args)

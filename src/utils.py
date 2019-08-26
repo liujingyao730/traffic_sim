@@ -22,12 +22,12 @@ class batchGenerator(object):
         self.simTimeStep = args.sim_step
         self.seqLength = args.temporal_length
         self.seqPredict = args.t_predict
-        self.predLength = self.seqLength - self.seqPredict + 1
+        self.predLength = self.seqLength - self.seqPredict
         self.cycle = args.cycle
         self.Pass = args.green_pass
         self.timeindexBoundary = (self.Pass - self.predLength * self.deltaT) / self.simTimeStep
         self.CurrentEdgePoint = 0
-        self.LaneNumber = conf.laneNumber
+        self.LaneNumber = []
         self.CarIn = {}
         self.CarOut = {}
         self.Number = {}
@@ -54,6 +54,7 @@ class batchGenerator(object):
         self.CurrentSequences = np.array([])
         self.CurrentLane = []
         self.CurrentOutputs = np.array([])
+        self.CurrentTimeOutput = []
 
     def generateNewMatrix(self):
 
@@ -61,7 +62,7 @@ class batchGenerator(object):
         self.CurrentLane = []
         self.CurrentOutputs = np.array([])
 
-        edge = self.CurrentEdgePoint + 1
+        edge = self.LaneNumber[self.CurrentEdgePoint]
         bucketL = edge * 100
         bucketH = bucketL + 100
         bucketList = []
@@ -87,14 +88,17 @@ class batchGenerator(object):
         self.CurrentOutputs = np.concatenate((In[:, self.seqPredict+1:, :], out[:, self.seqPredict+1:, :], number[:, self.seqPredict+1:, :]), axis=2)        
 
         self.CurrentLane.append(edge)
+        self.CurrentTimeOutput.append(self.CurrentTime % self.cycle)
 
 
     def generateBatchForBucket(self, laneNumber=conf.laneNumber):
         
         numberEdge = len(laneNumber)
+        self.LaneNumber = laneNumber
         self.CurrentSequences = np.array([])
         self.CurrentLane = []
         self.CurrentOutputs = np.array([])
+        self.CurrentTimeOutput = []
         batch_data = []
         tmpOutput = []
         tmpLane = []
@@ -129,16 +133,19 @@ class batchGenerator(object):
         self.CurrentOutputs = np.array(tmpOutput)
         self.CurrentSequences = np.array(batch_data)
         self.CurrentLane = np.array(tmpLane)
+        self.CurrentTimeOutput = np.array(self.CurrentTimeOutput)
 
         return True
 
     
-    def generateBatchRandomForBucket(self, lane=conf.laneNumber):
+    def generateBatchRandomForBucket(self, laneNumber=conf.laneNumber):
         
+        self.LaneNumber = laneNumber
         self.CurrentOutputs = []
         self.CurrentSequences = []
         self.CurrentLane = []
-        number = len(lane) - 1
+        self.CurrentTimeOutput = []
+        number = len(laneNumber) - 1
         batch_data = []
         tmpOutput = []
         tmpLane = []
@@ -155,6 +162,7 @@ class batchGenerator(object):
         self.CurrentOutputs = np.array(tmpOutput)
         self.CurrentSequences = np.array(batch_data)
         self.CurrentLane = np.array(tmpLane)
+        self.CurrentTimeOutput = np.array(self.CurrentTimeOutput)
         
 
 
@@ -205,13 +213,13 @@ class batchGenerator(object):
 
     def isTimePassable(self):
 
-        outStartTime = self.CurrentTime + self.seqPredict * self.deltaT
+        outStartTime = self.CurrentTime + (self.seqPredict + 1) * self.deltaT
         outEndTime = self.CurrentTime + (self.seqLength + 1) * self.deltaT
         return outStartTime % self.cycle <= self.Pass and outEndTime % self.cycle <= self.Pass
 
     def isTimeStartBeforeGreen(self):
 
-        return (self.CurrentTime + self.seqPredict * self.deltaT) % self.cycle > self.Pass
+        return (self.CurrentTime + (self.seqPredict + 1) * self.deltaT) % self.cycle > self.Pass
 
     def isTimeEndAfterGreen(self):
 

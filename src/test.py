@@ -30,7 +30,7 @@ def main():
     parser = argparse.ArgumentParser()
 
     # 模型相关
-    parser.add_argument('--model_prefix', type=str, default='base_line')
+    parser.add_argument('--model_prefix', type=str, default='new_data_base')
     parser.add_argument('--use_epoch', type=int, default=49)
 
     # 测试相关
@@ -39,7 +39,7 @@ def main():
     args = parser.parse_args()
     visualization(args)
 
-def visualization(args):
+def visualization(args, laneNumber=conf.laneNumber):
 
     model_prefix = args.model_prefix
     test_batchs = args.test_batchs
@@ -59,7 +59,7 @@ def visualization(args):
 
     test_prefix = conf.args["test_prefix"]
     test_generator = batchGenerator(test_prefix, args)
-    test_generator.generateBatchRandomForBucket()
+    test_generator.generateBatchRandomForBucket(laneNumber)
     spatial_length = test_generator.CurrentSequences.shape[1]
 
     model = TP_lstm(args)
@@ -83,7 +83,7 @@ def visualization(args):
 
     for batch in range(test_batchs):
 
-        test_generator.generateBatchRandomForBucket()
+        test_generator.generateBatchRandomForBucket(laneNumber)
 
         data = torch.tensor(test_generator.CurrentSequences).float()
         init_data = data[:, :, :args.t_predict, :]
