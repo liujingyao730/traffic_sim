@@ -7,6 +7,7 @@ import torch.optim as optim
 import torch.nn as nn
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 import argparse
 import os
@@ -17,7 +18,6 @@ import conf
 from utils import batchGenerator
 from model import MD_lstm_cell
 from model import TP_lstm
-from model import embedding_TP_lstm
 import dataProcess as dp 
 import train
 
@@ -34,7 +34,7 @@ parser.add_argument('--temporal_length', type=int, default=11)
 parser.add_argument('--spatial_length', type=int, default=5)
 
 # 训练参数
-parser.add_argument('--batch_size', type=int, default=1)
+parser.add_argument('--batch_size', type=int, default=20)
 parser.add_argument('--num_epochs', type=int, default=3)
 parser.add_argument('--save_every', type=int, default=500)
 parser.add_argument('--learing_rate', type=float, default=0.003)
@@ -52,32 +52,68 @@ parser.add_argument('--green_pass', type=int, default=52)
 parser.add_argument('--yellow_pass', type=int, default=55)
 
 # 模型相关
-parser.add_argument('--model_prefix', type=str, default='8-17')
+parser.add_argument('--model_prefix', type=str, default='base_line')
+parser.add_argument('--use_epoch', type=int, default=4)
+parser.add_argument('--test_batchs', type=int, default=500)
 
 args = parser.parse_args()
 
-dg = batchGenerator(["300", "400", "500"], args)
-f = dg.generateBatchRandomForBucket()
+model_prefix = args.model_prefix
+test_batchs = args.test_batchs
+use_epoch = args.use_epoch
 
-model_prefix = '8-21'
+load_directory = os.path.join(conf.logPath, model_prefix)
+    
+def checkpath(epoch):
+    return os.path.join(load_directory, str(epoch)+'.tar')
 
-save_directory = os.path.join(conf.logPath, model_prefix)
-
-def checkpoint_path(x):
-    return os.path.join(save_directory, str(x)+'.tar')
-
-file = checkpoint_path(0)
+file = checkpath(use_epoch)
 checkpoint = torch.load(file)
+argsfile = open(os.path.join(load_directory, 'config.pkl'), 'rb')
+args = pickle.load(argsfile)
+
+dg = batchGenerator(["300", "400", "500"], args)
+dg.generateBatchRandomForBucket()
+
 model = TP_lstm(args)
 model.load_state_dict(checkpoint['state_dict'])
-model.eval()
+if args.use_cuda:
+    model = model.cuda()
 
-data = torch.tensor(dg.CurrentSequences).float()
-init_data = data[:, :, :args.t_predict, :].contiguous()
-temporal_data = data[:, 0, args.t_predict:, :].contiguous()
-laneT = torch.tensor(dg.CurrentLane).float()
-target = torch.tensor(dg.CurrentOutputs).float()
+number = []
 
-output = model.infer(temporal_data, init_data, laneT)
-print(output)
-print(target[:, :, :, 0])
+for i in range(13):
+    number.append(np.array([]))
+
+for i in range(test_batchs):
+    
+    dg.generateBatchRandomForBucket()
+
+    data = torch.Tensor(dg.CurrentSequences)
+    laneT = torch.Tensor(dg.CurrentLane)
+    target = torch.Tensor(dg.CurrentOutputs)
+
+    if args.use_cuda:
+        data = data.cuda()
+        laneT = laneT.cuda()
+        target = target.cuda()
+
+    output = model(data, laneT)
+
+    output = output.view(-1)
+    target = target[:, :, :, 0].view(-1)
+
+    for i in range(13):
+        number[i] = np.concatenate((number[i], output[torch.eq(target, i)].cpu().detach().numpy()))
+
+for i in range(13):
+    print("target {}, median value: {:.3f}, mean value: {:.3f}, std: {:.3f}".format(i, np.median(number[i]), np.mean(number[i]), np.std(number[i])))
+'''
+x = np.array(range(13))
+y = np.array([number0, number1, number2, number3, number4, number5,
+             number6, number7, number8, number9, number10, number11, number12])
+plt.figure()
+plt.title('输入输出分布', fontproperties='SimHei')
+plt.boxplot(y, labels=x)
+plt.show()
+'''

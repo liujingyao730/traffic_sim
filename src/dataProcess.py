@@ -237,7 +237,7 @@ def resetBucketData(prefix, detalT=conf.args["deltaT"], simStep=conf.args["train
     reset_car_in.to_csv(car_in_file)
     reset_car_out.to_csv(car_out_file)
 
-    print("car in and out file have been reset")
+    print(prefix + " car in and out file have been reset")
 
 
 def dataCheck(carInFile, carOutFile, numberFile):

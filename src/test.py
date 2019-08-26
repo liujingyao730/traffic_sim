@@ -31,7 +31,7 @@ def main():
 
     # 模型相关
     parser.add_argument('--model_prefix', type=str, default='base_line')
-    parser.add_argument('--use_epoch', type=int, default=0)
+    parser.add_argument('--use_epoch', type=int, default=49)
 
     # 测试相关
     parser.add_argument('--test_batchs', type=int, default=100)

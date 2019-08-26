@@ -251,11 +251,11 @@ class TP_lstm(nn.Module):
             hidden_state_after = torch.cat((hidden_state[:, 1:, :], zero_hidden), 1)
             hidden_state_before = torch.cat((zero_hidden, hidden_state[:, :spatial_length-1, :]), 1)
 
-        output = output.view(batch_size, -1) * lane_controller
+        output = output.view(batch_size, -1) / lane_controller
         output = output.view(batch_size, spatial_length, self.temporal_length-self.t_predict)
         return output
 
-class flow_loss_function(nn.Module):
+class loss_function(nn.Module):
 
     def __init__(self):
 
@@ -274,7 +274,7 @@ class flow_loss_function(nn.Module):
 
         return loss
         
-class loss_function(nn.Module):
+class f_loss_function(nn.Module):
 
     def __init__(self, flow_loss_weight=1, epslion=0.05, alpha=0.8):
 

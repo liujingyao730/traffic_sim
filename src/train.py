@@ -17,7 +17,6 @@ import pickle
 
 from utils import batchGenerator
 from model import TP_lstm
-from model import embedding_TP_lstm
 from model import loss_function
 import conf
 
@@ -88,7 +87,7 @@ def train(args):
         net = TP_lstm(args)
         
         # 初始化不同的损失指标
-        criterion = loss_function()
+        flow_criterion = loss_function()
         mes_criterion = torch.nn.MSELoss()
         
         # 学习率的设置
@@ -96,7 +95,7 @@ def train(args):
         
         if args.use_cuda:
             net = net.cuda()
-            criterion = criterion.cuda()
+            flow_criterion = flow_criterion.cuda()
             mes_criterion = mes_criterion.cuda()
         
         # 初始化优化器
@@ -158,7 +157,7 @@ def train(args):
                 In = data[:, 0, args.t_predict:, 1].view(-1, 1, predict_preiod)
                 
                 #t7 = time.time()
-                flow_loss = criterion(number_current, number_before, In, output)
+                flow_loss = flow_criterion(number_current, number_before, In, output)
                 mes_loss = mes_criterion(target[:, :, :, 0], output)
                 loss = args.flow_loss_weight * flow_loss + mes_loss
 
@@ -219,10 +218,10 @@ def train(args):
                 number_current = target[:, :, :, 2]
                 number_before = data[:, :, args.t_predict:, 2]
                 In = data[:, 0, args.t_predict:, 1].view(-1, 1, predict_preiod)
-                flow_loss = criterion(number_current, number_before, In, output)
+                flow_loss = flow_criterion(number_current, number_before, In, output)
                 mes_loss = mes_criterion(target[:, :, :, 0], output)
                 last_frame_loss = mes_criterion(target[:, :, -1, 0], output[:, :, -1])
-                last_frame_flow_loss = criterion(number_before[:, :, -1].unsqueeze(2), number_current[:, :, -1].unsqueeze(2), In[:, :, -1].unsqueeze(1), output[:, :, -1].unsqueeze(2))
+                last_frame_flow_loss = flow_criterion(number_before[:, :, -1].unsqueeze(2), number_current[:, :, -1].unsqueeze(2), In[:, :, -1].unsqueeze(1), output[:, :, -1].unsqueeze(2))
                 loss_meter.add(mes_loss.item())
                 flow_loss_meter.add(flow_loss.item())
                 last_loss_meter.add(last_frame_loss.item())
