@@ -124,5 +124,5 @@ dmypy.json
 *.tar
 *.pkl
 src/draft.py
-dataFile/log/*.txt
+dataFile/log/*/log_curve.txt
 src/feature.py
