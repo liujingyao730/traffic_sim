@@ -30,8 +30,8 @@ def main():
     parser = argparse.ArgumentParser()
 
     # 模型相关
-    parser.add_argument('--model_prefix', type=str, default='new_data_base')
-    parser.add_argument('--use_epoch', type=int, default=49)
+    parser.add_argument('--model_prefix', type=str, default='flow_loss_0')
+    parser.add_argument('--use_epoch', type=int, default=9)
 
     # 测试相关
     parser.add_argument('--test_batchs', type=int, default=100)

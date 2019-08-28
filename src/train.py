@@ -30,8 +30,8 @@ def main():
     parser.add_argument('--hidden_size', type=int, default=64)
     parser.add_argument('--lane_gate_size', type=int, default=4)
     parser.add_argument('--output_hidden_size', type=int, default=16)
-    parser.add_argument('--t_predict', type=int, default=20)
-    parser.add_argument('--temporal_length', type=int, default=24)
+    parser.add_argument('--t_predict', type=int, default=4)
+    parser.add_argument('--temporal_length', type=int, default=8)
     parser.add_argument('--spatial_length', type=int, default=5)
 
     # 训练参数
@@ -86,20 +86,20 @@ def train(args):
         # 初始化模型对象
         net = TP_lstm(args)
         
-        # 初始化不同的损失指标
-        flow_criterion = loss_function()
-        mes_criterion = torch.nn.MSELoss()
+        # 初始化损失函数
+        criterion = loss_function()
         
         # 学习率的设置
         learing_rate = args.learing_rate
         
         if args.use_cuda:
             net = net.cuda()
-            flow_criterion = flow_criterion.cuda()
-            mes_criterion = mes_criterion.cuda()
+            criterion = criterion.cuda()
         
         # 初始化优化器
         optimizer = torch.optim.Adagrad(net.parameters(), weight_decay=args.lambda_param)
+        #optimizer = torch.optim.Adam(net.parameters(), weight_decay=args.lambda_param)
+        #optimizer = torch.optim.RMSprop(net.parameters(), lr=args.decay_rate)
         
         # 训练过程中衡量的损失
         loss_meter = meter.AverageValueMeter()
@@ -141,6 +141,7 @@ def train(args):
                 data = Variable(torch.Tensor(data_generator.CurrentSequences))
                 laneT = Variable(torch.Tensor(data_generator.CurrentLane))
                 target = Variable(torch.Tensor(data_generator.CurrentOutputs))
+                spatial_size = data.shape[1]
 
                 #t4 = time.time()
                 if args.use_cuda:
@@ -155,11 +156,14 @@ def train(args):
                 number_before = data[:, :, args.t_predict:, 2]
                 number_current = target[:, :, :, 2]
                 In = data[:, 0, args.t_predict:, 1].view(-1, 1, predict_preiod)
+                inflow = torch.cat((In, output[:, :spatial_size-1,:]), 1)
+                number_caculate = number_before + inflow - output
                 
                 #t7 = time.time()
-                flow_loss = flow_criterion(number_current, number_before, In, output)
-                mes_loss = mes_criterion(target[:, :, :, 0], output)
-                loss = args.flow_loss_weight * flow_loss + mes_loss
+                
+                flow_loss = criterion(number_current, number_caculate)
+                mes_loss = criterion(target[:, :, :, 0], output)
+                loss = args.flow_loss_weight * flow_loss + (2 - args.flow_loss_weight) * mes_loss
 
                 #t8 = time.time()
                 loss.backward()
@@ -215,13 +219,18 @@ def train(args):
                     target = target.cuda()
 
                 output = net.infer(temporal_data, init_data, laneT)
+                
                 number_current = target[:, :, :, 2]
                 number_before = data[:, :, args.t_predict:, 2]
                 In = data[:, 0, args.t_predict:, 1].view(-1, 1, predict_preiod)
-                flow_loss = flow_criterion(number_current, number_before, In, output)
-                mes_loss = mes_criterion(target[:, :, :, 0], output)
-                last_frame_loss = mes_criterion(target[:, :, -1, 0], output[:, :, -1])
-                last_frame_flow_loss = flow_criterion(number_before[:, :, -1].unsqueeze(2), number_current[:, :, -1].unsqueeze(2), In[:, :, -1].unsqueeze(1), output[:, :, -1].unsqueeze(2))
+                inflow = torch.cat((In, output[:, :spatial_size-1,:]), 1)
+                number_caculate = number_before + inflow - output
+
+                flow_loss = criterion(number_current, number_caculate)
+                mes_loss = criterion(target[:, :, :, 0], output)
+                last_frame_loss = criterion(target[:, :, -1, 0], output[:, :, -1])
+                last_frame_flow_loss = criterion(number_before[:, :, -1], number_caculate[:, :, -1])
+                
                 loss_meter.add(mes_loss.item())
                 flow_loss_meter.add(flow_loss.item())
                 last_loss_meter.add(last_frame_loss.item())

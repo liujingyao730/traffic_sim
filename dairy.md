@@ -173,3 +173,23 @@
 > > ![new data 400](dataFile/pics/new_data_400_ni.png)
 > > ![new data 500](dataFile/pics/new_data_500_ni.png)
 > > ![new data 700](dataFile/pics/new_data_700_ni.png)
+
+> ## 8-27
+> * 昨天调整了一下数据生成的时间，目前的效果已经好了很多，但是还是有整体偏小的问题，导致整体的准确率还是不太高：
+> > ![new time 500](dataFile/pics/new_time_500_ni.png)
+> > ![new time 1000](dataFile/pics/new_time_1000_ni.png)
+> > ![new time 2000](dataFile/pics/new_time_2000_ni.png)
+> * 今天试验几个不同的训练方式：
+> > * 降低flow_loss直到0
+> > * 增加额外一项专门检验最后一个bucket误差的损失项
+> > * 损失函数不采用mes采用mape
+> > * 更换优化器
+> * 好多人用显卡……好慢
+> * 16:05 正在训练flow_loss_weight降低的模型，感觉flow_loss_weight会让训练的结果变差？？这个有点迷，另外还是小batch可以取得明显好的效果……不知道为什么
+
+> ## 8-28
+> 哎……今天半价烧烤吃不到了
+> * 昨天训练的把flow降到0的模型整体上的测试误差减少了，但是forward的误差增大了一些，无可避免的flow loss比之前差了一些，看来之前的损失函数有问题，现在的想法是这样，目前整体上在损失函数上动一下手脚，多试几种损失函数看一看是不是会好一些
+> > ![flow loss 0 500](dataFile/pics/flow_loss_0_500_ni.png)
+> > ![flow loss 0 1000](dataFile/pics/flow_loss_0_1000_ni.png)
+> > ![flow loss 0 2000](dataFile/pics/flow_loss_0_2000_ni.png)

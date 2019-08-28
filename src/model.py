@@ -257,40 +257,15 @@ class TP_lstm(nn.Module):
 
 class loss_function(nn.Module):
 
-    def __init__(self):
-
-        super(loss_function, self).__init__()
-
-        self.mes_criterion = nn.MSELoss()
-
-    def forward(self, number_current, number_before, In, outflow):
-
-        [batch_size, spatial_size, temporal_size] = number_current.shape
-
-        inflow = torch.cat((In, outflow[:, :spatial_size-1,:]), 1)
-        number_caculate = number_before + inflow - outflow
-
-        loss = self.mes_criterion(number_current, number_caculate)
-
-        return loss
-        
-class f_loss_function(nn.Module):
-
-    def __init__(self, flow_loss_weight=1, epslion=0.05, alpha=0.8):
+    def __init__(self, epsilon=0.003):
 
         super().__init__()
 
-        self.epslion = epslion
-        self.flow_loss_weight = flow_loss_weight
+        self.criterion = nn.MSELoss()
+        #self.criterion = nn.SmoothL1Loss()
 
-        self.mes_criterion = nn.MSELoss()
-        self.flow_criterion = flow_loss_function()
+    def forward(self, target, output):
 
-    def forward(self, target, output, data):
+        loss = self.criterion(target, output)
 
-        number_before = data[:, :, args.t_predict:, 2]
-        number_current = target[:, :, :, 2]
-        In = data[:, 0, args.t_predict:, 1].view(-1, 1, predict_preiod)
-
-        mes_loss = self.mes_criterion(target, output)
-        flow_loss = self.flow_loss_function(number_current, number_before, In, output)
+        return loss

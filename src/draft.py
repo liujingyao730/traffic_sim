@@ -52,7 +52,7 @@ parser.add_argument('--green_pass', type=int, default=52)
 parser.add_argument('--yellow_pass', type=int, default=55)
 
 # 模型相关
-parser.add_argument('--model_prefix', type=str, default='new_data_base')
+parser.add_argument('--model_prefix', type=str, default='new_data_new_time')
 parser.add_argument('--use_epoch', type=int, default=49)
 parser.add_argument('--test_batchs', type=int, default=500)
 
@@ -72,7 +72,7 @@ checkpoint = torch.load(file)
 argsfile = open(os.path.join(load_directory, 'config.pkl'), 'rb')
 args = pickle.load(argsfile)
 
-dg = batchGenerator(["300", "800", "1000"], args)
+dg = batchGenerator(["500", "1000", "2000"], args)
 dg.generateBatchRandomForBucket()
 
 model = TP_lstm(args)
@@ -108,12 +108,10 @@ for i in range(test_batchs):
 
 for i in range(13):
     print("target {}, median value: {:.3f}, mean value: {:.3f}, std: {:.3f}".format(i, np.median(number[i]), np.mean(number[i]), np.std(number[i])))
-'''
+
 x = np.array(range(13))
-y = np.array([number0, number1, number2, number3, number4, number5,
-             number6, number7, number8, number9, number10, number11, number12])
+y = np.array(number)
 plt.figure()
 plt.title('输入输出分布', fontproperties='SimHei')
 plt.boxplot(y, labels=x)
 plt.show()
-'''
