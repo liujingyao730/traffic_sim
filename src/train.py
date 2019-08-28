@@ -35,14 +35,14 @@ def main():
     parser.add_argument('--spatial_length', type=int, default=5)
 
     # 训练参数
-    parser.add_argument('--batch_size', type=int, default=30)
+    parser.add_argument('--batch_size', type=int, default=50)
     parser.add_argument('--num_epochs', type=int, default=3)
     parser.add_argument('--save_every', type=int, default=500)
     parser.add_argument('--learing_rate', type=float, default=0.003)
     parser.add_argument('--decay_rate', type=float, default=0.95)
     parser.add_argument('--lambda_param', type=float, default=0.0005)
     parser.add_argument('--use_cuda', action='store_true', default=True)
-    parser.add_argument('--flow_loss_weight', type=float, default=1)
+    parser.add_argument('--flow_loss_weight', type=float, default=0)
     parser.add_argument('--grad_clip', type=float, default=10.)
 
     # 数据参数
@@ -112,6 +112,12 @@ def train(args):
         # 预测的时段长
         predict_preiod = args.temporal_length - args.t_predict
         
+        # 记录最优epoch
+        best_mes_epoch = 0
+        best_mes_loss = float('inf')
+        best_flow_epoch = 0
+        best_flow_loss = float('inf')
+
         for epoch in range(args.num_epochs):
             
             loss_meter.reset()
@@ -177,7 +183,7 @@ def train(args):
                     print("batch{}, train_loss = {:.3f}".format(i, loss_meter.value()[0]))
                     log_file_curve.write("batch{}, train_loss = {:.3f}\n".format(i, loss_meter.value()[0]))
                 #if i > 30:
-                #break
+                break
                 i += 1
             
             t = time.time()
@@ -206,6 +212,7 @@ def train(args):
                         continue
 
                 data = torch.tensor(test_generator.CurrentSequences).float()
+                spatial_size = data.shape[1]
                 init_data = data[:, :, :args.t_predict, :]
                 temporal_data = data[:, 0, args.t_predict:, :]
                 laneT = torch.tensor(test_generator.CurrentLane).float()
@@ -240,8 +247,16 @@ def train(args):
                     print("batch{}, mes_loss={:.3f}, flow_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}".format(i, loss_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0], flow_last_loss_meter.value()[0]))
                     log_file_curve.write("batch{}, mes_loss={:.3f}, flow_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}\n".format(i, loss_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0], flow_last_loss_meter.value()[0]))
                 #if i > 5:
-                #break
+                break
                 i += 1
+
+            if loss_meter.value()[0] < best_mes_loss:
+                best_mes_epoch = i
+                best_mes_loss = loss_meter.value()[0]
+
+            if flow_loss_meter.value()[0] < best_flow_loss:
+                best_flow_epoch = i
+                best_flow_loss = flow_loss_meter.value()[0]
 
             print("epoch{}, mes_loss={:.3f}, flow_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}".format(epoch, loss_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0], flow_last_loss_meter.value()[0]))
             log_file_curve.write("epoch{}, mes_loss={:.3f}, flow_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}\n".format(epoch, loss_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0], flow_last_loss_meter.value()[0]))
@@ -252,6 +267,7 @@ def train(args):
                 'optimizer_state_dict': optimizer.state_dict()
             }, checkpoint_path(epoch))   
         
+        log_file_curve.write("best mes epoch {}, best mes loss {:.3f}, best flow epoch{}, best flow loss{:.3f}".format(best_mes_epoch, best_mes_loss, best_flow_epoch, best_flow_loss))
         log_file_curve.close()
 
         return 
