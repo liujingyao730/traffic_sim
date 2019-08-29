@@ -190,6 +190,10 @@
 > ## 8-28
 > 哎……今天半价烧烤吃不到了
 > * 昨天训练的把flow降到0的模型整体上的测试误差减少了，但是forward的误差增大了一些，无可避免的flow loss比之前差了一些，看来之前的损失函数有问题，现在的想法是这样，目前整体上在损失函数上动一下手脚，多试几种损失函数看一看是不是会好一些
+> > ![flow loss 0 500](dataFile/pics/flow_loss_0_500.png)
+> > ![flow loss 0 1000](dataFile/pics/flow_loss_0_1000.png)
+> > ![flow loss 0 2000](dataFile/pics/flow_loss_0_2000.png)
 > > ![flow loss 0 500](dataFile/pics/flow_loss_0_500_ni.png)
 > > ![flow loss 0 1000](dataFile/pics/flow_loss_0_1000_ni.png)
 > > ![flow loss 0 2000](dataFile/pics/flow_loss_0_2000_ni.png)
+> * 损失函数换成smoothl1之后看着训练过程中的输出会好一些，明天可以看一下最终的可视化结果怎么样，另外可以准备一下其他不同构造的损失函数的设计

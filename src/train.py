@@ -183,7 +183,7 @@ def train(args):
                     print("batch{}, train_loss = {:.3f}".format(i, loss_meter.value()[0]))
                     log_file_curve.write("batch{}, train_loss = {:.3f}\n".format(i, loss_meter.value()[0]))
                 #if i > 30:
-                break
+                #break
                 i += 1
             
             t = time.time()

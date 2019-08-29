@@ -108,10 +108,11 @@ for i in range(test_batchs):
 
 for i in range(13):
     print("target {}, median value: {:.3f}, mean value: {:.3f}, std: {:.3f}".format(i, np.median(number[i]), np.mean(number[i]), np.std(number[i])))
-
+'''
 x = np.array(range(13))
 y = np.array(number)
 plt.figure()
 plt.title('输入输出分布', fontproperties='SimHei')
 plt.boxplot(y, labels=x)
 plt.show()
+'''

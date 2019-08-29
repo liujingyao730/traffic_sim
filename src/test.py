@@ -30,8 +30,8 @@ def main():
     parser = argparse.ArgumentParser()
 
     # 模型相关
-    parser.add_argument('--model_prefix', type=str, default='flow_loss_0')
-    parser.add_argument('--use_epoch', type=int, default=9)
+    parser.add_argument('--model_prefix', type=str, default='smoothl1')
+    parser.add_argument('--use_epoch', type=int, default=49)
 
     # 测试相关
     parser.add_argument('--test_batchs', type=int, default=100)
@@ -98,8 +98,8 @@ def visualization(args, laneNumber=conf.laneNumber):
             laneT = laneT.cuda()
             target = target.cuda()
 
-        #output = model.infer(temporal_data, init_data, laneT)
-        output = model(data, laneT)
+        output = model.infer(temporal_data, init_data, laneT)
+        #output = model(data, laneT)
 
         number_current = target[:, :, :, 2]
         number_before = data[:, :, args.t_predict:, 2]

@@ -257,15 +257,20 @@ class TP_lstm(nn.Module):
 
 class loss_function(nn.Module):
 
-    def __init__(self, epsilon=0.003):
+    def __init__(self, epsilon=1):
 
         super().__init__()
 
+        self.epsilon = epsilon
+
         self.criterion = nn.MSELoss()
         #self.criterion = nn.SmoothL1Loss()
-
+        
     def forward(self, target, output):
 
-        loss = self.criterion(target, output)
+        loss = torch.abs(target - output)
+        loss = loss / torch.clamp(target, min=self.epsilon)
+        
+        loss = torch.norm(loss)
 
         return loss
