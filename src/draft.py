@@ -8,6 +8,7 @@ import torch.nn as nn
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 import argparse
 import os
@@ -52,9 +53,9 @@ parser.add_argument('--green_pass', type=int, default=52)
 parser.add_argument('--yellow_pass', type=int, default=55)
 
 # 模型相关
-parser.add_argument('--model_prefix', type=str, default='new_data_new_time')
+parser.add_argument('--model_prefix', type=str, default='flow_loss_0_h128')
 parser.add_argument('--use_epoch', type=int, default=49)
-parser.add_argument('--test_batchs', type=int, default=500)
+parser.add_argument('--test_batchs', type=int, default=100)
 
 args = parser.parse_args()
 
@@ -108,11 +109,8 @@ for i in range(test_batchs):
 
 for i in range(13):
     print("target {}, median value: {:.3f}, mean value: {:.3f}, std: {:.3f}".format(i, np.median(number[i]), np.mean(number[i]), np.std(number[i])))
-'''
-x = np.array(range(13))
-y = np.array(number)
-plt.figure()
-plt.title('输入输出分布', fontproperties='SimHei')
-plt.boxplot(y, labels=x)
+
+sns.violinplot(data=np.array(number[:6]))
 plt.show()
-'''
+sns.violinplot(data=np.array(number[6:]))
+plt.show()

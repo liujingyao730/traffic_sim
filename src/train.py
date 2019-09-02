@@ -183,7 +183,7 @@ def train(args):
                     print("batch{}, train_loss = {:.3f}".format(i, loss_meter.value()[0]))
                     log_file_curve.write("batch{}, train_loss = {:.3f}\n".format(i, loss_meter.value()[0]))
                 #if i > 30:
-                #break
+                break
                 i += 1
             
             t = time.time()
@@ -247,15 +247,15 @@ def train(args):
                     print("batch{}, mes_loss={:.3f}, flow_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}".format(i, loss_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0], flow_last_loss_meter.value()[0]))
                     log_file_curve.write("batch{}, mes_loss={:.3f}, flow_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}\n".format(i, loss_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0], flow_last_loss_meter.value()[0]))
                 #if i > 5:
-                break
+                #break
                 i += 1
 
             if loss_meter.value()[0] < best_mes_loss:
-                best_mes_epoch = i
+                best_mes_epoch = epoch
                 best_mes_loss = loss_meter.value()[0]
 
             if flow_loss_meter.value()[0] < best_flow_loss:
-                best_flow_epoch = i
+                best_flow_epoch = epoch
                 best_flow_loss = flow_loss_meter.value()[0]
 
             print("epoch{}, mes_loss={:.3f}, flow_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}".format(epoch, loss_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0], flow_last_loss_meter.value()[0]))

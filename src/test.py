@@ -30,11 +30,11 @@ def main():
     parser = argparse.ArgumentParser()
 
     # 模型相关
-    parser.add_argument('--model_prefix', type=str, default='smoothl1')
+    parser.add_argument('--model_prefix', type=str, default='h_128_smoothl1')
     parser.add_argument('--use_epoch', type=int, default=49)
 
     # 测试相关
-    parser.add_argument('--test_batchs', type=int, default=100)
+    parser.add_argument('--test_batchs', type=int, default=50)
 
     args = parser.parse_args()
     visualization(args)

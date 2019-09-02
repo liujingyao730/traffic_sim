@@ -268,9 +268,11 @@ class loss_function(nn.Module):
         
     def forward(self, target, output):
 
-        loss = torch.abs(target - output)
-        loss = loss / torch.clamp(target, min=self.epsilon)
+        #loss = torch.abs(target - output)
+        #loss = loss / torch.clamp(target, min=self.epsilon)
         
-        loss = torch.norm(loss)
+        #loss = torch.norm(loss)
+
+        loss = self.criterion(target, output)
 
         return loss

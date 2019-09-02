@@ -197,3 +197,49 @@
 > > ![flow loss 0 1000](dataFile/pics/flow_loss_0_1000_ni.png)
 > > ![flow loss 0 2000](dataFile/pics/flow_loss_0_2000_ni.png)
 > * 损失函数换成smoothl1之后看着训练过程中的输出会好一些，明天可以看一下最终的可视化结果怎么样，另外可以准备一下其他不同构造的损失函数的设计
+
+> ## 8-29
+> * 昨天把损失函数换成smoothl1之后结果略好一些：
+> > ![smoothl1 0 500](dataFile/pics/smoothl1_500.png)
+> > ![smoothl1 0 1000](dataFile/pics/smoothl1_1000.png)
+> > ![smoothl1 0 2000](dataFile/pics/smoothl1_2000.png)
+> > ![smoothl1 0 500](dataFile/pics/smoothl1_500_ni.png)
+> > ![smoothl1 0 1000](dataFile/pics/smoothl1_1000_ni.png)
+> > ![smoothl1 0 2000](dataFile/pics/smoothl1_2000_ni.png)
+> * 今天还尝试了新的损失函数，不过结果很差，还比不上baseline的模式，就不贴图了，现在尝试一下hidden state的修改 明天训练一下不同的seq length的差距
+
+> ## 9-1
+> * 上次的有两个主要的问题：第一个是靠近路段末端的预测效果会比较差；第二是整体预测值偏小。上一周集中做了一些数据分析和实验验证：
+> > * 针对临近路口出现的预测偏差，重新检查了一下整体的时间序列，之前样本选取的时间约束有一点问题，有一部分时间是可以作为通行的样本使用的，这样拓展了一下输出样本中的多样性：
+> > ![通行时间](dataFile/pics/通行时间.png)
+> > ![base line](dataFile/pics/new_data_1000.png)
+> > ![new time](dataFile/pics/new_time_1000.png)
+> > * 同时尝试了不采用lanegate的方式进行了训练
+> > ![new time](dataFile/pics/non_gate_1000.png)
+> > * 之后根据对结果的分析，发现整体上flow的误差要远远小于预测值与实际值之间的误差，因此尝试了减少flow损失所占的权重，得到更好的效果：
+> > ![0.5 flow loss](dataFile/pics/flow_loss_0.5_1000.png)
+> > ![0 flow loss](dataFile/pics/flow_loss_0_1000.png)
+> > * 随后进行了对损失函数的实验，尝试了额外的两种不同的损失函数，第一种是smoothl1函数，第二中是mape损失函数，得到的效果如下：
+> > ![smoothl1](dataFile/pics/smoothl1_1000.png)
+> > ![new_loss_function](dataFile/pics/new_loss_function_1000.png)
+> > * 整体上更换损失函数类型没有特别的改善，另外做了对时间序列长度和网络结构的实验测试：
+> > ![12t loss](dataFile/pics/12t_1000.png)
+> > ![24t loss](dataFile/pics/24t_1000.png)
+> > ![128h loss](dataFile/pics/h_128.png)
+> > * 整体上时间长度的增长不会带来预测结果的改善，反而会因为序列更长导致模型的学习更加困难
+> ## 整体上的结果：
+> * 通过调整样本选取的原则，去掉flow loss项等方式相比较于之前的baseline有了很大程度上的改善，在路段末尾上误差偏大的问题得到了一定程度上的缓解，相比于路段中其他位置上的误差并没有特别大的差异
+> * 损失函数上的修改并不能够使得结果得到更近一步的改善，需要再做仔细的设计
+> * 由于每一个小段长度并不长，所以更长的时间序列并不能带来更好的预测效果，这一点上需要再做一些关于更短时间序列的实验，这可以帮助我们将问题重新规范
+> * 对模型的预测结果分布做可视化的效果是这样的：
+> > ![0-5](dataFile/pics/smoothl1_0-5.png)
+> > ![6-12](dataFile/pics/smoothl1_6-12.png)
+> ## 论文阅读的一点启发
+> * 在阅读AAAI 2019年论文 Attention Based Spatial-Temporal Graph Convolutional Networks for Traffic Flow
+> ![spatial temporal gcn](dataFile/pics/aaai2019.png)
+> * 这篇论文的方法不一定对我们的问题有效，但是他的问题定义与我们十分相似，根据这个方向，查到类似的这一类问题在图神经网络中可以被分类称为动态图问题：在一个图中，图的结构固定，但是随着时间的变化每个节点的输入是变化的。
+> * 可以调研一下相关的文章对我们模型的构建可能会有一些帮助
+> ## 进一步工作
+> * 通过对目前最好结果的模型预测分析可以发现，模型是对中间部分没有较强的分辨能力，接下来的实验需要对模型cell内部做出调整
+> * 开始着手构建一个大规模路网，只包含红路灯路口和普通路段，以准备在模型结果足够好的时候直接开始测试
+> * 可以调研一下动态图的图网络模型论文
