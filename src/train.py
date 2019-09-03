@@ -167,7 +167,7 @@ def train(args):
                 
                 #t7 = time.time()
                 
-                flow_loss = criterion(number_current, number_caculate)
+                flow_loss = criterion(number_current[:, 0, :], number_caculate[:, 0, :])
                 mes_loss = criterion(target[:, :, :, 0], output)
                 loss = args.flow_loss_weight * flow_loss + (2 - args.flow_loss_weight) * mes_loss
 
@@ -183,7 +183,7 @@ def train(args):
                     print("batch{}, train_loss = {:.3f}".format(i, loss_meter.value()[0]))
                     log_file_curve.write("batch{}, train_loss = {:.3f}\n".format(i, loss_meter.value()[0]))
                 #if i > 30:
-                break
+                #break
                 i += 1
             
             t = time.time()

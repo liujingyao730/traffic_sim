@@ -30,7 +30,7 @@ def main():
     parser = argparse.ArgumentParser()
 
     # 模型相关
-    parser.add_argument('--model_prefix', type=str, default='h_128_smoothl1')
+    parser.add_argument('--model_prefix', type=str, default='with_gate')
     parser.add_argument('--use_epoch', type=int, default=49)
 
     # 测试相关
