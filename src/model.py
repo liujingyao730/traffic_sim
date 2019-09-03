@@ -63,7 +63,9 @@ class MD_lstm_cell(nn.Module):
         
         self.sigma = torch.nn.Sigmoid()
 
-        self.spatial_embedding = torch.nn.Linear(2*hidden_size, hidden_size)
+        #self.spatial_embedding = torch.nn.Linear(2*hidden_size, hidden_size)
+        self.after_embedding = torch.nn.Linear(hidden_size, hidden_size)
+        self.before_embedding = torch.nn.Linear(hidden_size, hidden_size)
          
 
     def forward(self, inputs, h_s_t, c_s_t, h_after_t, h_before_t):
@@ -76,18 +78,20 @@ class MD_lstm_cell(nn.Module):
         '''
         [batch_size, spatial_size, hidden_size] = h_s_t.shape
 
-        spatial_gate = torch.cat((h_after_t, h_before_t), dim=2)
+        #spatial_gate = torch.cat((h_after_t, h_before_t), dim=2)
         
         #处理batch 因为batch内部的不同路段的不同节点在这里都是独立的，所以可以分开来
-        spatial_gate = spatial_gate.view(-1, 2*hidden_size)
+        #spatial_gate = spatial_gate.view(-1, 2*hidden_size)
         h_s_t = h_s_t.view(-1, hidden_size)
         c_s_t = c_s_t.view(-1, hidden_size)
         h_after_t = h_after_t.view(-1, hidden_size)
         h_before_t = h_before_t.view(-1, hidden_size)
         inputs = inputs.view(-1, self.input_size)
 
-        spatial_gate = self.spatial_embedding(spatial_gate)
-        spatial_gate = self.sigma(spatial_gate)
+        #spatial_gate = self.spatial_embedding(spatial_gate)
+        #spatial_gate = self.sigma(spatial_gate)
+        h_hat_after = self.after_embedding(h_after_t)
+        h_hat_before = self.before_embedding(h_before_t)
 
         h_hat, c_s_tp = self.cell(inputs, (h_s_t, c_s_t))
 
@@ -97,7 +101,10 @@ class MD_lstm_cell(nn.Module):
         h_hat = h_hat.view(batch_size, spatial_size, hidden_size)
         
         #空间门
-        h_s_tp = h_hat * spatial_gate
+        #h_s_tp = h_hat * spatial_gate
+
+        #输出结果
+        h_s_tp = h_hat + h_hat_after + h_before_t
 
         return h_s_tp, c_s_tp
 
