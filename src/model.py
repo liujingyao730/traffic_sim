@@ -96,15 +96,17 @@ class MD_lstm_cell(nn.Module):
         h_hat, c_s_tp = self.cell(inputs, (h_s_t, c_s_t))
 
         #还原
-        spatial_gate = spatial_gate.view(batch_size, spatial_size, hidden_size)
+        #spatial_gate = spatial_gate.view(batch_size, spatial_size, hidden_size)
         c_s_tp = c_s_tp.view(batch_size, spatial_size, hidden_size)
         h_hat = h_hat.view(batch_size, spatial_size, hidden_size)
+        h_hat_after = h_hat_after.view(batch_size, spatial_size, hidden_size)
+        h_hat_before = h_hat_before.view(batch_size, spatial_size, hidden_size)
         
         #空间门
         #h_s_tp = h_hat * spatial_gate
 
         #输出结果
-        h_s_tp = h_hat + h_hat_after + h_before_t
+        h_s_tp = h_hat + h_hat_after + h_hat_before
 
         return h_s_tp, c_s_tp
 
