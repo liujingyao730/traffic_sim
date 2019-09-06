@@ -118,7 +118,6 @@ dmypy.json
 # some datafile may be too big to push to origin 
 *.csv
 *.xml
-*.png
 *.pth
 *.npy
 *.tar
