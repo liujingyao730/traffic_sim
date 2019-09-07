@@ -165,9 +165,12 @@ def train(args):
                 inflow = torch.cat((In, output[:, :spatial_size-1,:]), 1)
                 number_caculate = number_before + inflow - output
                 
+                number_current = torch.sum(number_current, dim=1, keepdim=True)
+                number_caculate = torch.sum(number_caculate, dim=1, keepdim=True)
+
                 #t7 = time.time()
                 
-                flow_loss = criterion(number_current[:, 0, :], number_caculate[:, 0, :])
+                flow_loss = criterion(number_current, number_caculate)
                 mes_loss = criterion(target[:, :, :, 0], output)
                 loss = args.flow_loss_weight * flow_loss + (2 - args.flow_loss_weight) * mes_loss
 
