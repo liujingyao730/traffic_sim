@@ -30,6 +30,7 @@ fcdDefualt = firstStageFcd + "/0.5_0.5_7200.xml"
 carInDefualt = midDataPath + "/defualtCarIn.csv"
 carOutDefualt = midDataPath + "/defualtCarOut.csv"
 numberDefualt = midDataPath + "/defualtNumber.csv"
+speedDefualt = midDataPath + "/defualtSpeed.csv"
 laneNumberDefualt = midDataPath + "/defualtLaneNumeber.csv"
 modelDefualt = modelPath + "/defualtModel.pth"
 

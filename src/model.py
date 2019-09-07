@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import numpy as np
 from torch.autograd import Variable
-from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
 import conf
 
@@ -164,6 +163,7 @@ class MD_lstm_cell(nn.Module):
         h_s_tp = h_hat + spatial_info 
 
         return h_s_tp, c_s_tp
+
 '''
 class MD_lstm_cell(nn.Module):
 

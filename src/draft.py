@@ -53,7 +53,7 @@ parser.add_argument('--green_pass', type=int, default=52)
 parser.add_argument('--yellow_pass', type=int, default=55)
 
 # 模型相关
-parser.add_argument('--model_prefix', type=str, default='flow_loss_0_h128')
+parser.add_argument('--model_prefix', type=str, default='cell2_flow_0.5')
 parser.add_argument('--use_epoch', type=int, default=49)
 parser.add_argument('--test_batchs', type=int, default=100)
 
