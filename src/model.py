@@ -165,6 +165,7 @@ class MD_lstm_cell(nn.Module):
         return h_s_tp, c_s_tp
 
 '''
+'''
 class MD_lstm_cell(nn.Module):
 
     #cell3
@@ -220,7 +221,69 @@ class MD_lstm_cell(nn.Module):
         h_s_tp = h_s_tp.view(batch_size, spatial_size, hidden_size)
 
         return h_s_tp, c_s_tp
+'''
 
+class MD_lstm_cell(nn.Module):
+
+    #cell4
+    #处理时间和路段长度两个维度的lstm变体cell
+
+    def __init__(self, input_size, hidden_size):
+
+        #目前的结构是在传统LSTM cell之外，对隐层状态施加一个门控制，这里我们叫做空间门，后续可能会要改
+        #input_size: int 输入的维度
+        #hidden_size: int 隐层状态的维度
+
+        super().__init__()
+
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+
+        self.cell = torch.nn.LSTMCell(input_size, hidden_size)
+        
+        self.sigma = torch.nn.Sigmoid()
+
+        self.after_gate = torch.nn.Linear(input_size+hidden_size, hidden_size)
+        self.before_gate = torch.nn.Linear(input_size+hidden_size, hidden_size)
+         
+
+    def forward(self, inputs, h_s_t, c_s_t, h_after_t, h_before_t):
+
+        #inputs: tensor [batch_size, spatial_size, input_size] 当前节点此时刻的输入
+        #h_s_t: tensor [batch_size, spatial_size, hidden_size] 当前节点前一个时刻的隐层状态
+        #c_s_t: tensor [batch_size, spatial_size, hidden_size] 当前节点前一个时刻的细胞状态
+        #h_after_t: tensor [batch_size, spatial_size, hidden_size] 下一个节点前一个时刻的隐层状态
+        #h_before_t: tensor [batch_size, spatial_size, hidden_size] 前一个节点前一个时刻的隐层状态
+
+        [batch_size, spatial_size, hidden_size] = h_s_t.shape
+        [_, _, input_size] = inputs.shape
+
+        cell_input = torch.cat((h_s_t, inputs), dim=2)
+        
+        #处理batch 因为batch内部的不同路段的不同节点在这里都是独立的，所以可以分开来
+        cell_input = cell_input.view(-1, input_size+hidden_size)
+        h_s_t = h_s_t.view(-1, hidden_size)
+        c_s_t = c_s_t.view(-1, hidden_size)
+        inputs = inputs.view(-1, self.input_size)
+
+        i_after = self.after_gate(cell_input)
+        i_before = self.before_gate(cell_input)
+        i_after = self.sigma(i_after)
+        i_before = self.sigma(i_before)
+
+        h_hat, c_s_tp = self.cell(inputs, (h_s_t, c_s_t))
+
+        #还原
+        #spatial_gate = spatial_gate.view(batch_size, spatial_size, hidden_size)
+        c_s_tp = c_s_tp.view(batch_size, spatial_size, hidden_size)
+        h_hat = h_hat.view(batch_size, spatial_size, hidden_size)
+        i_after = i_after.view(batch_size, spatial_size, hidden_size)
+        i_before = i_before.view(batch_size, spatial_size, hidden_size)
+
+        #输出结果
+        h_s_tp = h_hat + h_after_t * i_after + h_before_t * i_before
+
+        return h_s_tp, c_s_tp
 
 class TP_lstm(nn.Module):
     '''
