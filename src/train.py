@@ -51,6 +51,7 @@ def main():
     parser.add_argument('--cycle', type=int, default=100)
     parser.add_argument('--green_pass', type=int, default=52)
     parser.add_argument('--yellow_pass', type=int, default=55)
+    parser.add_argument('--mask_level', type=int, default=3)
 
     # 模型相关
     parser.add_argument('--model_prefix', type=str, default='multi_dimension')
@@ -147,7 +148,6 @@ def train(args):
                 data = Variable(torch.Tensor(data_generator.CurrentSequences))
                 laneT = Variable(torch.Tensor(data_generator.CurrentLane))
                 target = Variable(torch.Tensor(data_generator.CurrentOutputs))
-                spatial_size = data.shape[1]
 
                 #t4 = time.time()
                 if args.use_cuda:
@@ -161,16 +161,17 @@ def train(args):
                 #t6 = time.time()
                 number_before = data[:, :, args.t_predict:, 2]
                 number_current = target[:, :, :, 2]
+                [batch_size, spatial_size, temporal_size] = number_current.shape
                 In = data[:, 0, args.t_predict:, 1].view(-1, 1, predict_preiod)
                 inflow = torch.cat((In, output[:, :spatial_size-1,:]), 1)
                 number_caculate = number_before + inflow - output
-                
-                number_current = torch.sum(number_current, dim=1, keepdim=True)
-                number_caculate = torch.sum(number_caculate, dim=1, keepdim=True)
-
+                all_one = torch.ones(batch_size, spatial_size, temporal_size)
+                if args.use_cuda:
+                    all_one = all_one.cuda()
+                mask = torch.where(number_caculate > args.mask_level, number_caculate, all_one)
                 #t7 = time.time()
                 
-                flow_loss = criterion(number_current, number_caculate)
+                flow_loss = criterion(number_current, number_caculate, mask)
                 mes_loss = criterion(target[:, :, :, 0], output)
                 loss = args.flow_loss_weight * flow_loss + (2 - args.flow_loss_weight) * mes_loss
 

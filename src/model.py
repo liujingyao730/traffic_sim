@@ -110,7 +110,7 @@ class MD_lstm_cell(nn.Module):
 
         return h_s_tp, c_s_tp
 '''
-'''
+
 class MD_lstm_cell(nn.Module):
 
     # cell2
@@ -164,7 +164,7 @@ class MD_lstm_cell(nn.Module):
 
         return h_s_tp, c_s_tp
 
-'''
+
 '''
 class MD_lstm_cell(nn.Module):
 
@@ -222,7 +222,7 @@ class MD_lstm_cell(nn.Module):
 
         return h_s_tp, c_s_tp
 '''
-
+'''
 class MD_lstm_cell(nn.Module):
 
     #cell4
@@ -284,6 +284,7 @@ class MD_lstm_cell(nn.Module):
         h_s_tp = h_hat + h_after_t * i_after + h_before_t * i_before
 
         return h_s_tp, c_s_tp
+'''
 
 class TP_lstm(nn.Module):
     '''
@@ -446,16 +447,17 @@ class loss_function(nn.Module):
 
         self.epsilon = epsilon
 
-        self.criterion = nn.MSELoss()
+        self.criterion = nn.MSELoss(reduction='mean')
         #self.criterion = nn.SmoothL1Loss()
         
-    def forward(self, target, output):
+    def forward(self, target, output, mask=None):
 
-        #loss = torch.abs(target - output)
-        #loss = loss / torch.clamp(target, min=self.epsilon)
-        
-        #loss = torch.norm(loss)
-
-        loss = self.criterion(target, output)
+        if mask is None:
+            loss = self.criterion(target, output)
+        else :
+            loss = target - output
+            loss = loss * mask
+            loss = torch.pow(loss, 2)
+            loss = torch.mean(loss)
 
         return loss
