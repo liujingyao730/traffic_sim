@@ -168,11 +168,11 @@ def train(args):
                 all_one = torch.ones(batch_size, spatial_size, temporal_size)
                 if args.use_cuda:
                     all_one = all_one.cuda()
-                mask = torch.where(number_caculate > args.mask_level, number_caculate, all_one)
+                mask = torch.where(target[:, :, :, 0] > args.mask_level, target[:, :, :, 0], all_one)
                 #t7 = time.time()
                 
-                flow_loss = criterion(number_current, number_caculate, mask)
-                mes_loss = criterion(target[:, :, :, 0], output)
+                flow_loss = criterion(number_current, number_caculate)
+                mes_loss = criterion(target[:, :, :, 0], output, mask)
                 loss = args.flow_loss_weight * flow_loss + (2 - args.flow_loss_weight) * mes_loss
 
                 #t8 = time.time()
