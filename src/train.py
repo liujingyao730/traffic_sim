@@ -158,17 +158,15 @@ def train(args):
                 #t5 = time.time()
                 output = net(data, laneT)
 
-                #t6 = time.time()
                 number_before = data[:, :, args.t_predict:, 2]
                 number_current = target[:, :, :, 2]
                 [batch_size, spatial_size, temporal_size] = number_current.shape
                 In = data[:, 0, args.t_predict:, 1].view(-1, 1, predict_preiod)
                 inflow = torch.cat((In, output[:, :spatial_size-1,:]), 1)
                 number_caculate = number_before + inflow - output
-                all_one = torch.ones(batch_size, spatial_size, temporal_size)
-                if args.use_cuda:
-                    all_one = all_one.cuda()
-                mask = torch.where(target[:, :, :, 0] > args.mask_level, target[:, :, :, 0], all_one)
+
+                #t6 = time.time()
+                mask = get_mask(target[:, :, :, 0])
                 #t7 = time.time()
                 
                 flow_loss = criterion(number_current, number_caculate)
@@ -192,7 +190,7 @@ def train(args):
             
             t = time.time()
             #print("生成样本时间：", t1-t0)
-            #print("前向传播时间：", t6-t5)
+            #print("前向传播时间：", t7-t6)
             #print("计算损失时间：", t8-t7)
             #print("反向传播时间：", t9-t8)
             print("epoch{}, train_loss = {:.3f}, time{}".format(epoch, loss_meter.value()[0], t-start))
@@ -275,6 +273,28 @@ def train(args):
         log_file_curve.close()
 
         return 
+
+def get_mask(target):
+
+    [batch_size, spatial_size, temporal_size] = target.shape
+    mask = target.data.new(batch_size, spatial_size, temporal_size).fill_(0).float()
+    all_ones = target.data.new(batch_size, spatial_size, temporal_size).fill_(1).float()
+
+    mask = torch.where(mask==0, conf.args['mask'][0]*all_ones, mask)
+    mask = torch.where(mask==1, conf.args['mask'][1]*all_ones, mask)
+    mask = torch.where(mask==2, conf.args['mask'][2]*all_ones, mask)
+    mask = torch.where(mask==3, conf.args['mask'][3]*all_ones, mask)
+    mask = torch.where(mask==4, conf.args['mask'][4]*all_ones, mask)
+    mask = torch.where(mask==5, conf.args['mask'][5]*all_ones, mask)
+    mask = torch.where(mask==6, conf.args['mask'][6]*all_ones, mask)
+    mask = torch.where(mask==7, conf.args['mask'][7]*all_ones, mask)
+    mask = torch.where(mask==8, conf.args['mask'][8]*all_ones, mask)
+    mask = torch.where(mask==9, conf.args['mask'][9]*all_ones, mask)
+    mask = torch.where(mask==10, conf.args['mask'][10]*all_ones, mask)
+    mask = torch.where(mask==11, conf.args['mask'][11]*all_ones, mask)
+    mask = torch.where(mask==12, conf.args['mask'][12]*all_ones, mask)
+    
+    return mask
 
 if __name__ == '__main__':
     main()
