@@ -9,6 +9,7 @@ from tqdm import tqdm
 import torchvision.models as models
 import pyecharts as pe
 import pandas as pd
+import random
 
 import argparse
 import os
@@ -35,8 +36,8 @@ def main():
     parser.add_argument('--spatial_length', type=int, default=5)
 
     # 训练参数
-    parser.add_argument('--batch_size', type=int, default=50)
-    parser.add_argument('--num_epochs', type=int, default=3)
+    parser.add_argument('--batch_size', type=int, default=100)
+    parser.add_argument('--num_epochs', type=int, default=50)
     parser.add_argument('--save_every', type=int, default=500)
     parser.add_argument('--learing_rate', type=float, default=0.003)
     parser.add_argument('--decay_rate', type=float, default=0.95)
@@ -44,6 +45,8 @@ def main():
     parser.add_argument('--use_cuda', action='store_true', default=True)
     parser.add_argument('--flow_loss_weight', type=float, default=0)
     parser.add_argument('--grad_clip', type=float, default=10.)
+    parser.add_argument('--sample_rate', type=float, default=0)
+    parser.add_argument('--sample_decay', type=float, default=0.02)
 
     # 数据参数
     parser.add_argument('--sim_step', type=float, default=0.1)
@@ -148,6 +151,7 @@ def train(args):
                 data = Variable(torch.Tensor(data_generator.CurrentSequences))
                 laneT = Variable(torch.Tensor(data_generator.CurrentLane))
                 target = Variable(torch.Tensor(data_generator.CurrentOutputs))
+                [batch_size, spatial_size, temporal_size, _] = data.shape
 
                 #t4 = time.time()
                 if args.use_cuda:
@@ -156,30 +160,54 @@ def train(args):
                     target = target.cuda()
 
                 #t5 = time.time()
-                output = net(data, laneT)
+                if random.random() < args.sample_rate:
+                    output = net(data, laneT)
+                    number_before = data[:, :, args.t_predict:, 2]
+                    number_current = target[:, :, :, 2]
+                    In = data[:, 0, args.t_predict:, 1].view(-1, 1, predict_preiod)
+                    inflow = torch.cat((In, output[:, :spatial_size-1,:]), 1)
+                    number_caculate = number_before + inflow - output
 
-                number_before = data[:, :, args.t_predict:, 2]
-                number_current = target[:, :, :, 2]
-                [batch_size, spatial_size, temporal_size] = number_current.shape
-                In = data[:, 0, args.t_predict:, 1].view(-1, 1, predict_preiod)
-                inflow = torch.cat((In, output[:, :spatial_size-1,:]), 1)
-                number_caculate = number_before + inflow - output
-
-                #t6 = time.time()
-                mask = get_mask(target[:, :, :, 0])
-                #t7 = time.time()
+                    mask = get_mask(target[:, :, :, 0])
                 
-                flow_loss = criterion(number_current, number_caculate)
-                mes_loss = criterion(target[:, :, :, 0], output, mask)
-                loss = args.flow_loss_weight * flow_loss + (2 - args.flow_loss_weight) * mes_loss
+                    flow_loss = criterion(number_current, number_caculate)
+                    mes_loss = criterion(target[:, :, :, 0], output, mask)
+                    loss = args.flow_loss_weight * flow_loss + (2 - args.flow_loss_weight) * mes_loss
 
-                #t8 = time.time()
+                else:
+                    hidden_state = None
+                    cell_state = None
+                    for t in range(args.t_predict):
+                        input_data = data[:, :, t, :]
+                        output, [hidden_state, cell_state] = net.train_infer(input_data, hidden_state, cell_state)
+
+                    input_data = data[:, :, args.t_predict]
+                    loss = 0
+
+                    for t in range(args.temporal_length-args.t_predict):
+                        
+                        output, [hidden_state, cell_state] = net.train_infer(input_data, hidden_state, cell_state)
+
+                        number_before = data[:, :, args.t_predict+t, 2].view(batch_size, spatial_size, 1)
+                        number_current = target[:, :, t, 2].view(batch_size, spatial_size, 1)
+                        inflow = torch.cat((data[:, 0, args.t_predict+t, 1].view(batch_size, 1, 1), output[:, :-1]), 1)
+                        number_caculate = number_before + inflow - output
+                        input_data = torch.cat((output, inflow, number_caculate), 2)
+
+                        mask = get_mask(target[:, :, t, 0].view(batch_size, spatial_size, 1))
+
+                        flow_loss = criterion(number_current, number_caculate)
+                        mes_loss = criterion(target[:, :, t, 0].view(batch_size, spatial_size, 1), output, mask)
+                        loss += args.flow_loss_weight * flow_loss + (2 - args.flow_loss_weight) * mes_loss
+
+                    loss = loss / args.temporal_length-args.t_predict
+                    
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(net.parameters(), args.grad_clip)
                 optimizer.step()
 
-                #t9 = time.time()
                 loss_meter.add(loss.item())
+
                 
                 if i % args.save_every == 0:
                     print("batch{}, train_loss = {:.3f}".format(i, loss_meter.value()[0]))
@@ -188,6 +216,7 @@ def train(args):
                 #break
                 i += 1
             
+            args.sample_rate -= args.sample_decay
             t = time.time()
             #print("生成样本时间：", t1-t0)
             #print("前向传播时间：", t7-t6)
@@ -276,9 +305,9 @@ def train(args):
 
 def get_mask(target):
 
-    [batch_size, spatial_size, temporal_size] = target.shape
-    mask = target.data.new(batch_size, spatial_size, temporal_size).fill_(0).float()
-    all_ones = target.data.new(batch_size, spatial_size, temporal_size).fill_(1).float()
+    shape = target.shape
+    mask = target.data.new(shape).fill_(0).float()
+    all_ones = target.data.new(shape).fill_(1).float()
 
     mask = torch.where(mask==0, conf.args['mask'][0]*all_ones, mask)
     mask = torch.where(mask==1, conf.args['mask'][1]*all_ones, mask)

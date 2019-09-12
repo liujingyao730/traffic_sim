@@ -377,6 +377,27 @@ class TP_lstm(nn.Module):
 
         return output    
 
+    def train_infer(self, init_data, hidden_state=None, cell_state=None):
+        
+        [batch_size, spatial_length, _] = init_data.shape
+
+        if hidden_state is None:
+            cell_state = init_data.data.new(batch_size, spatial_length, self.hidden_size).fill_(0).float()
+            hidden_state = init_data.data.new(batch_size, spatial_length, self.hidden_size).fill_(0).float()
+            hidden_state_after = init_data.data.new(batch_size, spatial_length, self.hidden_size).fill_(0).float()
+            hidden_state_before = init_data.data.new(batch_size, spatial_length, self.hidden_size).fill_(0).float()
+        else:
+            zero_hidden = init_data.data.new(batch_size, 1, self.hidden_size).fill_(0).float()
+            hidden_state_after = torch.cat((hidden_state[:, 1:, :], zero_hidden), 1)
+            hidden_state_before = torch.cat((zero_hidden, hidden_state[:, :spatial_length-1, :]), 1)
+
+        hidden_state, cell_state = self.cell(init_data, hidden_state, cell_state, hidden_state_after, hidden_state_before)
+        output = self.output_layer(hidden_state)
+
+        return output, [hidden_state, cell_state]
+
+
+
     def forward(self, input_data, lane):
         '''
         训练过程中的前向函数
