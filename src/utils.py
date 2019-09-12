@@ -27,7 +27,7 @@ class batchGenerator(object):
         self.Pass = args.green_pass
         self.timeindexBoundary = (self.Pass - self.predLength * self.deltaT) / self.simTimeStep
         self.CurrentEdgePoint = 0
-        self.LaneNumber = []
+        self.LaneNumber = conf.laneNumber
         self.CarIn = {}
         self.CarOut = {}
         self.Number = {}
@@ -80,9 +80,9 @@ class batchGenerator(object):
         spatial = len(bucketList)
         temporal = len(timeList)
 
-        In = np.array(self.CarIn[self.prefixPoint].loc[timeList, bucketList].T).reshape(spatial, temporal, 1)
-        out = np.array(self.CarOut[self.prefixPoint].loc[timeList, bucketList].T).reshape(spatial, temporal, 1)
-        number = np.array(self.Number[self.prefixPoint].loc[timeList, bucketList].T).reshape(spatial, temporal, 1)
+        In = np.array(self.CarIn[self.prefixPoint][bucketList].loc[timeList].T).reshape(spatial, temporal, 1)
+        out = np.array(self.CarOut[self.prefixPoint][bucketList].loc[timeList].T).reshape(spatial, temporal, 1)
+        number = np.array(self.Number[self.prefixPoint][bucketList].loc[timeList].T).reshape(spatial, temporal, 1)
 
         self.CurrentSequences = np.concatenate((In[:, :-1, :], out[:, :-1, :], number[:, :-1, :]), axis=2)
         self.CurrentOutputs = np.concatenate((In[:, self.seqPredict+1:, :], out[:, self.seqPredict+1:, :], number[:, self.seqPredict+1:, :]), axis=2)        

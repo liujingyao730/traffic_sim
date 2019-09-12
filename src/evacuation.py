@@ -9,6 +9,7 @@ from tqdm import tqdm
 import torchvision.models as models
 import pyecharts as pe
 import pandas as pd
+import matplotlib.pyplot as plt
 
 import argparse
 import os
@@ -21,6 +22,75 @@ from model import MD_lstm_cell
 from model import FCNet
 from model import loss_function
 import conf
+
+def main():
+    
+    parser = argparse.ArgumentParser()
+    
+    # 网络结构
+    parser.add_argument('--input_size', type=int, default=3)
+    parser.add_argument('--embedding_size', type=int, default=8)
+    parser.add_argument('--hidden_size', type=int, default=64)
+    parser.add_argument('--lane_gate_size', type=int, default=4)
+    parser.add_argument('--output_hidden_size', type=int, default=16)
+    parser.add_argument('--t_predict', type=int, default=4)
+    parser.add_argument('--temporal_length', type=int, default=240)
+    parser.add_argument('--spatial_length', type=int, default=30)
+
+    # 训练参数
+    parser.add_argument('--batch_size', type=int, default=50)
+    parser.add_argument('--use_cuda', action='store_true', default=True)
+
+    # 数据参数
+    parser.add_argument('--sim_step', type=float, default=0.1)
+    parser.add_argument('--delta_T', type=int, default=10)
+    parser.add_argument('--cycle', type=int, default=100)
+    parser.add_argument('--green_pass', type=int, default=52)
+    parser.add_argument('--yellow_pass', type=int, default=55)
+    parser.add_argument('--mask_level', type=int, default=3)
+
+    # 模型相关
+    parser.add_argument('--model_prefix', type=str, default='cell_2')
+    parser.add_argument('--use_epoch', type=int, default=49)
+    args = parser.parse_args()
+    eva(args)
+
+def eva(args):
+
+    model_prefix = args.model_prefix
+    use_epoch = args.use_epoch
+    
+    load_directory = os.path.join(conf.logPath, args.model_prefix)
+    eva_prefix = conf.args["eva_prefix"]
+    eva_generator = batchGenerator(eva_prefix, args)
+    eva_generator.CurrentTime = 11
+    eva_generator.CurrentEdgePoint = 1
+
+    eva_generator.generateNewMatrix()
+
+    data = torch.tensor(eva_generator.CurrentSequences).float()
+    init_data = data[:, :args.t_predict, :]
+    input_data = data[0, args.t_predict:, :]
+    target = torch.tensor(eva_generator.CurrentOutputs)[:, :, 2].float()
+
+    seg = segment(args, init_data=init_data)
+    output = seg.simulation(input_data)
+
+    number_before = data[:, args.t_predict:, 2]
+    In = data[0, args.t_predict:, 1].view(1, args.temporal_length-args.t_predict)
+    inflow = torch.cat((In, output[:args.spatial_length-1,:]), 0)
+    number_caculate = number_before + inflow - output
+    
+    real_flow = torch.sum(target, dim=0).numpy()
+    target_flow = torch.sum(number_caculate, dim=0).detach().numpy()
+    x = range(len(real_flow))
+    plt.plot(x, real_flow, 's-', color='r', label='real')
+    #plt.plot(x, target_flow, 'o-', color='g', label='predict')
+    plt.xlabel('time')
+    plt.ylabel('accuracy')
+    plt.legend(loc='best')
+    plt.show()
+
 
 class sim_cell(nn.Module):
 
@@ -72,10 +142,10 @@ class segment:
         self.use_epoch = args.use_epoch
         self.model_prefix = args.model_prefix
         self.spatial_length = args.spatial_length
-
-        load_directory = os.path.join(conf.logPath, self.model_prefix)
-
-        file = os.path.join(load_directory, str(self.use_epoch)+'.tar')
+        
+        
+        load_directory = os.path.join(conf.logPath, args.model_prefix)
+        file = os.path.join(load_directory, str(args.use_epoch)+'.tar')
         checkpoint = torch.load(file)
         argsfile = open(os.path.join(load_directory, 'config.pkl'), 'rb')
         args = pickle.load(argsfile)
@@ -159,62 +229,11 @@ class segment:
         outflow = self.output_layer(hidden_state)
         output[:, -1] = outflow.view(self.spatial_length)
 
+        if self.use_cuda:
+            output = output.cpu()
+
         return output
             
 
-    
-parser = argparse.ArgumentParser()
-    
-# 网络结构
-parser.add_argument('--input_size', type=int, default=3)
-parser.add_argument('--embedding_size', type=int, default=8)
-parser.add_argument('--hidden_size', type=int, default=64)
-parser.add_argument('--lane_gate_size', type=int, default=4)
-parser.add_argument('--output_hidden_size', type=int, default=16)
-parser.add_argument('--t_predict', type=int, default=4)
-parser.add_argument('--temporal_length', type=int, default=8)
-parser.add_argument('--spatial_length', type=int, default=5)
-
-# 训练参数
-parser.add_argument('--batch_size', type=int, default=50)
-parser.add_argument('--num_epochs', type=int, default=3)
-parser.add_argument('--save_every', type=int, default=500)
-parser.add_argument('--learing_rate', type=float, default=0.003)
-parser.add_argument('--decay_rate', type=float, default=0.95)
-parser.add_argument('--lambda_param', type=float, default=0.0005)
-parser.add_argument('--use_cuda', action='store_true', default=True)
-parser.add_argument('--flow_loss_weight', type=float, default=0)
-parser.add_argument('--grad_clip', type=float, default=10.)
-
-# 数据参数
-parser.add_argument('--sim_step', type=float, default=0.1)
-parser.add_argument('--delta_T', type=int, default=10)
-parser.add_argument('--cycle', type=int, default=100)
-parser.add_argument('--green_pass', type=int, default=52)
-parser.add_argument('--yellow_pass', type=int, default=55)
-parser.add_argument('--mask_level', type=int, default=3)
-
-# 模型相关
-parser.add_argument('--model_prefix', type=str, default='multi_dimension')
-
-args = parser.parse_args()
-
-dg = batchGenerator(['300'], args)
-dg.generateBatchForBucket()
-init_data = torch.Tensor(dg.CurrentSequences)[1, :, :4, :]
-
-parser = argparse.ArgumentParser()
-
-# 模型相关
-parser.add_argument('--model_prefix', type=str, default='cell_2')
-parser.add_argument('--spatial_length', type=int, default=6)
-parser.add_argument('--use_epoch', type=int, default=49)
-
-# 测试相关
-parser.add_argument('--test_batchs', type=int, default=50)
-
-args = parser.parse_args()
-
-seg = segment(args, init_data)
-input_data = torch.Tensor(dg.CurrentSequences)[1, 0, 4:, :]
-print(seg.simulation(input_data))
+if __name__ == "__main__":
+    main()

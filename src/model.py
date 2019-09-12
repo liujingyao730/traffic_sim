@@ -164,7 +164,6 @@ class MD_lstm_cell(nn.Module):
 
         return h_s_tp, c_s_tp
 
-
 '''
 class MD_lstm_cell(nn.Module):
 
@@ -319,22 +318,7 @@ class TP_lstm(nn.Module):
         '''
         # 获取长度信息
         predict_input_length = temporal_data.shape[1]
-        [batch_size, spatial_length, input_temporal, input_size]= init_input.shape
-        
-
-        # 处理batch
-        #temporal_data = temporal_data.view(batch_size, -1)
-        #init_input = init_input.view(batch_size, -1)
-
-        # lane_gate
-        #lane_controller = self.lane_gate(lane)
-        #lane_controller = self.sigma(lane_controller)
-        #temporal_data = temporal_data * lane_controller
-        #init_input = init_input * lane_controller
-
-        # 还原
-        #temporal_data = temporal_data.view(batch_size, predict_input_length, input_size)
-        #init_input = init_input.view(batch_size, spatial_length, input_temporal, input_size)
+        [batch_size, spatial_length, input_temporal, input_size] = init_input.shape
 
         # 开始时序的推演 创建一些初始变量
         
@@ -391,9 +375,6 @@ class TP_lstm(nn.Module):
         outflow = self.output_layer(hidden_state)
         output[:, :, predict_input_length-1] = outflow.view(batch_size, spatial_length)
 
-        #output = output.view(batch_size, -1) / lane_controller
-        #output = output.view(batch_size, spatial_length, predict_input_length)
-
         return output    
 
     def forward(self, input_data, lane):
@@ -412,17 +393,6 @@ class TP_lstm(nn.Module):
         zero_hidden = input_data.data.new(batch_size, 1, self.hidden_size).fill_(0).float()
         output = input_data.data.new(batch_size, spatial_length, temporal_length-self.t_predict)
 
-        # 处理batch
-        #input_data = input_data.view(batch_size, -1)
-
-        # lane_gate
-        #lane_controller = self.lane_gate(lane)
-        #lane_controller = self.sigma(lane_controller)
-        #input_data = input_data * lane_controller
-
-        # 还原
-        #input_data = input_data.view(batch_size, spatial_length, temporal_length, input_size)
-
         for time in range(temporal_length):
 
             # 计算每个时刻的输出，在预测时刻之后开始保存下来每个时刻的输出    
@@ -435,8 +405,6 @@ class TP_lstm(nn.Module):
             hidden_state_after = torch.cat((hidden_state[:, 1:, :], zero_hidden), 1)
             hidden_state_before = torch.cat((zero_hidden, hidden_state[:, :spatial_length-1, :]), 1)
 
-        #output = output.view(batch_size, -1) / lane_controller
-        #output = output.view(batch_size, spatial_length, self.temporal_length-self.t_predict)
         return output
 
 class loss_function(nn.Module):
@@ -447,7 +415,7 @@ class loss_function(nn.Module):
 
         self.epsilon = epsilon
 
-        self.criterion = nn.MSELoss(reduction='mean')
+        self.criterion = nn.MSELoss(reduction='sum')
         #self.criterion = nn.SmoothL1Loss()
         
     def forward(self, target, output, mask=None):

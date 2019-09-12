@@ -276,3 +276,41 @@
 > > ![6-12](dataFile/pics/cell_2_6-12.png)
 > > ![0-5](dataFile/pics/cell_2_500.png)
 > > ![6-12](dataFile/pics/cell_2_1000.png)
+
+> ## 9-7
+> * 按部就班进行cell3的测试
+> * 今天想到一个不一样的flow loss的计算方式，通过滑动窗口的方式计算不同窗口下的flow loss：
+> \[ \mathcal{L}=\sum_{k=1}^{s-ker+1}(\sum_{i=1}^{ker}\hat{x}_i -\sum_{i=1}^{ker}x_i)^2\]
+> * 以ker取3为例，这样对于一个$ \hat{x}_i$ 的梯度从原本的$\frac{\partial \mathcal{L}}{\partial\hat{x}_i}=2(\hat{x}_i-x_i)$转变为了：
+> \[\frac{\partial \mathcal{L}}{\partial\hat{x}_i}=2(3\hat{x}_i-3x_i-2(x_{i-1}+x_{i+1})-(x_{i-2}+x_{i+2}))\]
+> * 这意味着每个节点的计算需要参考更多节点之间的影响，要与空间上更大范围内的节点之间保持同步
+
+> ## 9-9
+> * cell4的测试完成了
+> * 整体上cell2的绝对误差最小，相对偏小的情况也最好，预测值也比其他模型更加聚拢，但是对应的flow loss却变得比其他模型大很多：
+> 
+> > ![cell1](dataFile/pics/new_cell_1_1000.png)
+> > ![cell2](dataFile/pics/cell_2_1000.png)
+> > ![cell1 6-12](dataFile/pics/cell4_6-12.png)
+> > ![cell2 6-12](dataFile/pics/cell_2_6-12.png)
+> * 另外观察了一下数据样本的分布，果然分布及其不均匀，大目标值的数据样本远少于小目标值的样本，这显然是一个造成整体结果偏小的原因，今天添加了对不同目标值的样本增加权重的部分程序，等到晚上进行一下测试
+> > ![distribute](dataFile/pics/target_dis.png)
+> * 今天开始写长时间路段预测的程序，不加红绿灯
+> * 21:02测试完成人群疏散的代码，明天数据做好之后可以进行测试验证
+
+> ## 9-10
+> * 对数据添加了mask的权重之后，预测值偏小的问题变成偏大的问题了：
+> > ![mask](dataFile/pics/cell2_with_mask_1000.png)
+> > ![mask 6-12](dataFile/pics/cell2_with_mask_6-12.png)
+> > ![mask 6-12](dataFile/pics/cell2_with_mask_0-5.png)
+> * 这个说明整体偏小的原因是由于数据分布不均匀所导致的，后面所需的就是根据数据的分布详细设置一下mask的权重，这样就可以进一步改善模型的预测结果
+> * 另外整理了一下整体大模型的架构：
+> > ![frame work](dataFile/pics/framework.png)
+> > ![graph type](dataFile/pics/graph_type.png)
+
+> ## 9-11
+> * 长时间的推演已经完成了，结果有点奇怪，明天要改一改bug
+
+> ## 9-12
+> * 就是找不到一个合适的mask，脑壳疼
+> * 完了个蛋……找到问题了竟然是一个数据生成的大问题，可能之前训练的东西都不太对……GG

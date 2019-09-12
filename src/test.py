@@ -30,8 +30,8 @@ def main():
     parser = argparse.ArgumentParser()
 
     # 模型相关
-    parser.add_argument('--model_prefix', type=str, default='cell_2')
-    parser.add_argument('--use_epoch', type=int, default=0)
+    parser.add_argument('--model_prefix', type=str, default='cell2_with_mask_2')
+    parser.add_argument('--use_epoch', type=int, default=49)
 
     # 测试相关
     parser.add_argument('--test_batchs', type=int, default=50)
@@ -49,8 +49,6 @@ def visualization(args, laneNumber=conf.laneNumber):
     
     def checkpath(epoch):
         return os.path.join(load_directory, str(epoch)+'.tar')
-
-    result_file = os.path.join(conf.resultPath, model_prefix, '.txt')
 
     file = checkpath(use_epoch)
     checkpoint = torch.load(file)

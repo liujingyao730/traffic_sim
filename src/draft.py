@@ -53,7 +53,7 @@ parser.add_argument('--green_pass', type=int, default=52)
 parser.add_argument('--yellow_pass', type=int, default=55)
 
 # 模型相关
-parser.add_argument('--model_prefix', type=str, default='cell2_flow_0.5')
+parser.add_argument('--model_prefix', type=str, default='cell2_with_mask4')
 parser.add_argument('--use_epoch', type=int, default=49)
 parser.add_argument('--test_batchs', type=int, default=100)
 
@@ -108,7 +108,7 @@ for i in range(test_batchs):
         number[i] = np.concatenate((number[i], output[torch.eq(target, i)].cpu().detach().numpy()))
 
 for i in range(13):
-    print("target {}, median value: {:.3f}, mean value: {:.3f}, std: {:.3f}".format(i, np.median(number[i]), np.mean(number[i]), np.std(number[i])))
+    print("target {}, median value: {:.2f}, mean value: {:.2f}, std: {:.2f}, len {}".format(i, np.median(number[i]), np.mean(number[i]), np.std(number[i]), len(number[i])))
 
 sns.violinplot(data=np.array(number[:6]))
 plt.show()
