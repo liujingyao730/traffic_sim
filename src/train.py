@@ -47,6 +47,7 @@ def main():
     parser.add_argument('--grad_clip', type=float, default=10.)
     parser.add_argument('--sample_rate', type=float, default=0)
     parser.add_argument('--sample_decay', type=float, default=0.02)
+    parser.add_argument('--use_pool', type=bool, default=True)
 
     # 数据参数
     parser.add_argument('--sim_step', type=float, default=0.1)
@@ -92,6 +93,7 @@ def train(args):
         
         # 初始化损失函数
         criterion = loss_function()
+        pool = torch.nn.AvgPool1d(3, stride=1, padding=1)
         
         # 学习率的设置
         learing_rate = args.learing_rate
@@ -99,6 +101,7 @@ def train(args):
         if args.use_cuda:
             net = net.cuda()
             criterion = criterion.cuda()
+            pool = pool.cuda()
         
         # 初始化优化器
         optimizer = torch.optim.Adagrad(net.parameters(), weight_decay=args.lambda_param)
@@ -169,6 +172,13 @@ def train(args):
                     number_caculate = number_before + inflow - output
 
                     mask = get_mask(target[:, :, :, 0])
+                    if args.use_pool:
+                        number_caculate = number_caculate.transpose(1, 2)
+                        number_current = number_current.transpose(1, 2)
+                        number_caculate = pool(number_caculate)
+                        number_current = pool(number_current)
+                        number_caculate = number_caculate.transpose(1, 2)
+                        number_current = number_current.transpose(1, 2)
                 
                     flow_loss = criterion(number_current, number_caculate)
                     mes_loss = criterion(target[:, :, :, 0], output, mask)
@@ -195,6 +205,13 @@ def train(args):
                         input_data = torch.cat((output, inflow, number_caculate), 2)
 
                         mask = get_mask(target[:, :, t, 0].view(batch_size, spatial_size, 1))
+                        if args.use_pool:
+                            number_caculate = number_caculate.transpose(1, 2)
+                            number_current = number_current.transpose(1, 2)
+                            number_caculate = pool(number_caculate)
+                            number_current = pool(number_current)
+                            number_caculate = number_caculate.transpose(1, 2)
+                            number_current = number_current.transpose(1, 2)
 
                         flow_loss = criterion(number_current, number_caculate)
                         mes_loss = criterion(target[:, :, t, 0].view(batch_size, spatial_size, 1), output, mask)
