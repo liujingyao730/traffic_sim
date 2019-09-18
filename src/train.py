@@ -45,9 +45,9 @@ def main():
     parser.add_argument('--use_cuda', action='store_true', default=True)
     parser.add_argument('--flow_loss_weight', type=float, default=0)
     parser.add_argument('--grad_clip', type=float, default=10.)
-    parser.add_argument('--sample_rate', type=float, default=0)
+    parser.add_argument('--sample_rate', type=float, default=1)
     parser.add_argument('--sample_decay', type=float, default=0.02)
-    parser.add_argument('--use_pool', type=bool, default=True)
+    parser.add_argument('--use_pool', type=bool, default=False)
 
     # 数据参数
     parser.add_argument('--sim_step', type=float, default=0.1)
@@ -217,7 +217,7 @@ def train(args):
                         mes_loss = criterion(target[:, :, t, 0].view(batch_size, spatial_size, 1), output, mask)
                         loss += args.flow_loss_weight * flow_loss + (2 - args.flow_loss_weight) * mes_loss
 
-                    loss = loss / args.temporal_length-args.t_predict
+                    loss = loss / (args.temporal_length-args.t_predict)
                     
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(net.parameters(), args.grad_clip)
