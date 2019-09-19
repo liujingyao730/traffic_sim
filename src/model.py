@@ -110,7 +110,7 @@ class MD_lstm_cell(nn.Module):
 
         return h_s_tp, c_s_tp
 '''
-
+'''
 class MD_lstm_cell(nn.Module):
 
     # cell2
@@ -163,8 +163,8 @@ class MD_lstm_cell(nn.Module):
         h_s_tp = h_hat + spatial_info 
 
         return h_s_tp, c_s_tp
-
 '''
+
 class MD_lstm_cell(nn.Module):
 
     #cell3
@@ -220,7 +220,7 @@ class MD_lstm_cell(nn.Module):
         h_s_tp = h_s_tp.view(batch_size, spatial_size, hidden_size)
 
         return h_s_tp, c_s_tp
-'''
+
 '''
 class MD_lstm_cell(nn.Module):
 

@@ -53,8 +53,8 @@ parser.add_argument('--green_pass', type=int, default=52)
 parser.add_argument('--yellow_pass', type=int, default=55)
 
 # 模型相关
-parser.add_argument('--model_prefix', type=str, default='cell2_with_mask4')
-parser.add_argument('--use_epoch', type=int, default=49)
+parser.add_argument('--model_prefix', type=str, default='cell2_sp_1')
+parser.add_argument('--use_epoch', type=int, default=16)
 parser.add_argument('--test_batchs', type=int, default=100)
 
 args = parser.parse_args()

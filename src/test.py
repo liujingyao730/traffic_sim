@@ -30,8 +30,8 @@ def main():
     parser = argparse.ArgumentParser()
 
     # 模型相关
-    parser.add_argument('--model_prefix', type=str, default='cell2_with_mask_2')
-    parser.add_argument('--use_epoch', type=int, default=49)
+    parser.add_argument('--model_prefix', type=str, default='cell2_with_mask6')
+    parser.add_argument('--use_epoch', type=int, default=16)
 
     # 测试相关
     parser.add_argument('--test_batchs', type=int, default=50)
