@@ -321,10 +321,10 @@
 
 > ## 9-16
 > * 上次修改过之后的mask还是不能很好地避免过小的问题，准确性还可以，同时测了一下几个不同cell的长时间撤离推演下的结果:
-> > ![cell1](dataFile/pics/cell1_eva.png)
-> > ![cell2](dataFile/pics/cell2_eva.png)
-> > ![cell3](dataFile/pics/cell3_eva.png)
-> > ![cell4](dataFile/pics/cell4_eva.png)
+> > ![cell1](dataFile/pics/up_cell1_eva.png)
+> > ![cell2](dataFile/pics/up_cell2_eva.png)
+> > ![cell3](dataFile/pics/up_cell3_eva.png)
+> > ![cell4](dataFile/pics/up_cell4_eva.png)
 > * 表现最好的是cell3，cell1与cell4都出现了完全失真的抖动，cell在局部出现了剧烈的抖动，但是大多数情况下都可以很好地拟合实际的路段中的存量变化的规律，而cell3在仿真的四种情况下（1500-2000路段 1-2车道数）都没有出现剧烈的抖动情况
 > * 另外一点，整体运算速度很快，虽然没有直接的测量，但是整体上感觉会比sumo仿真的结果要快一些
 
@@ -357,14 +357,14 @@
 
 > * 总结一下，目前来看，至少在两千米的路段上cell3的拟合能力已经足够好，接下来可以进一步的做一些实验看看有没有进一步的进步，但是整体上需要开始考虑下一步路网的构建
 > * 构建路网（目前不考虑红绿灯）所需要的一个关键的部件就是匝道，现在构想的模型输入输出是这样的：
-> > ![ramp struct](dataFile/pics/ramp_struct.png)
+> > ![ramp struct](dataFile/pics/up_ramp_struct.png)
 > > * 每一个路口固定成某个固定的图结构，节点$u$在时间$t$对于的输入为$x_t^u=[i_t^u,o^t_u,n_t^u]^T与隐层状态h_{t-1}^u$；输入的是这个图中所有节点的对应输入
 > > * 输出是路口相关节点的隐层状态$h_t^u$，不与路口直接相连的节点通过之前所训练的模型进行预测仿真
 > > * 为了保证整体仿真的一致性，输出的隐层状态同样应该使用前一阶段的模型中的outputlayer对实际流出量做出预测，在训练阶段需要与前面阶段的模型进行联合训练，以确保两者的隐层状态可以通用
 
 > ## 9-19
 > * cell3_sp
-> > ![cell3](dataFile/pics/cell3_sp_2000_2_eva.png)
+> > ![cell3](dataFile/pics/up_cell3_sp_2000_2_eva.png)
 
 ||20|40|200|  
 |:--:|:--:|:--:|:--:|
@@ -373,7 +373,7 @@
 |Median|1.72|1.85|3.78|
 
 > * cell2_sp
-> > ![cell2](dataFile/pics/cell2_sp_2000_2_eva.png)
+> > ![cell2](dataFile/pics/up_cell2_sp_2000_2_eva.png)
 
 ||20|40|200|  
 |:--:|:--:|:--:|:--:|
@@ -383,4 +383,34 @@
 
 > * 和毛老师讨论了一下进一步要做的事情：
 > > * 第一个要做的就是做一个热力图，热力图做出来的结果是这样的：
-> > ![cell3 eva heat](dataFile/pics/cell3_eva_heat_fake.png)
+> > ![cell3 eva error](dataFile/pics/up_cell3_eva_error.png)
+> > ![cell3 eva heat](dataFile/pics/up_cell3_eva_heat_fake.png)
+> > * 进一步地加入了新的flow loss的情况下对cell3进行训练，然后再做另外一种结果进行对比
+> > * 同时需要做一下路口的拓扑的确定，这个方面比之前想的要复杂一些，这里可能会有主次道路的区分，这一点要根据sumo内部的设计来做相应的不同的拓扑
+
+> ## 9-20
+> * 可以看到新加损失函数之后整体上训练速度大概慢了六分之一左右，应该是由于pool操作与反向传播过程带来的
+> * 在这里我们做一些简单的数学上面的分析：
+> > * 将问题整体简化一下，对于一个机器学习模型$\mathcal{M}$，可以完成从输入到输出的映射，即$x\stackrel{\mathcal{M}}{\rightarrow}\hat{y}$，我们把这个模型造成的误差记做$y-\hat{y}=\mathcal{E}_1(M,x)$  
+> > * 我们采用这个模型进行仿真过程就可以描述成$x_0\stackrel{\mathcal{M}}{\rightarrow}\hat{y}_0,\hat{y}_0\stackrel{\mathcal{P}}{\rightarrow}\hat{x}_1; x_1\stackrel{\mathcal{M}}{\rightarrow}\hat{y}_1, \hat{y}_0\stackrel{\mathcal{P}}{\rightarrow}\hat{x}_1;......$这样的过程,其中$\mathcal{P}$是给定的从预测的输出转换成下一个时刻的输入函数，与$\mathcal{M}$无关，因为$\mathcal{P}$是预先根据仿真的条件而给定的，所以我们可以将每个时刻的输入与实际输入产生的误差归结为由于机器学习模型而产生的，记做$x_t-\hat{x}_t=\mathcal{E}_2(\mathcal{M},\hat{x}_{t-1})$
+> > * 那么任意时刻的模型预测值与实际之间的误差可以表示成：
+> > $$\begin{aligned}
+> >   x_t - \hat{x}_t &= \mathcal{E}_2(\mathcal{M},\hat{x}_{t})\\
+> >                     &= \mathcal{E}_2(\mathcal{M},x_t+\mathcal{E}_2(\mathcal{M}, \hat{x}_{t-1})) 
+> > \end{aligned}$$ 
+> > * 这里我们做出一个假设，就是从输出转换到输入的转换函数是严格正确的，而且越接近实际输出值$\hat{y}$，经过转换之后与下一个时刻的实际输入越接近，即若$|\hat{y}-y_t| \leq |\hat{y}'-y_t|$则$|\mathcal{P}(\hat{y})-x_{t+1}|\leq|\mathcal{P}(\hat{y}')-x_{t+1}|$。由于仿真函数是严格正确的，所以我们可以选择比较$\{\hat{x}_t\}与\{x_t\}$之间的差异
+> > * 首先我们加一个比较强的条件，就是模型$\mathcal{M}$可以永续的对过程进行模拟，也就是说始终存在一个误差的上界$\epsilon_{upper}$，使得$\forall t,|x_t-\hat{x}_t|\leq\epsilon_{upper}$，在有限的仿真时长里某一个时刻的误差$e_{u}=x_t-\hat{x}_t$，下一个时刻的损失就可以记做：
+> > $$e_n=\mathcal{E}_2(\mathcal{M},x_t+e_{u}) $$
+
+> ## 9-23
+> * 规范的数学上的分析还是有点困难，今天继续整理一下
+> > * 问题还是描述成，对于一个机器学习模型$\mathcal{M}$，可以完成从输入到输出的映射，即$x\stackrel{\mathcal{M}}{\rightarrow}\hat{y}$，另外给定一个从输出到下一个时刻输入的映射函数$\mathcal{P}$，采用这个模型进行仿真过程就可以描述成$x_0\stackrel{\mathcal{M}}{\rightarrow}\hat{y}_0,\hat{y}_0\stackrel{\mathcal{P}}{\rightarrow}\hat{x}_1; x_1\stackrel{\mathcal{M}}{\rightarrow}\hat{y}_1, \hat{y}_0\stackrel{\mathcal{P}}{\rightarrow}\hat{x}_1;......$这样的过程
+> > * 因为我们可以假设映射函数$\mathcal{P}$是基于现实世界可以显式表示的规律而确定的（例如在我们仿真的例子中前一阶段的输出就是下一段的输入，bucket内部车辆数等于前一个时刻的车辆数加上流入量减去流出量等）所以整体上造成误差的就是由模型本身带来的，我们关注$\{\hat{y}_t\}$随时间变化的规律
+> > $$e_{t}=\hat{y}_t-y_t=\mathcal{E}(\mathcal{P}(y_{t-1}+e_{t-1});\mathcal{M})$$
+> > * 这里要降低模型的仿真误差的方式，可以尝试以下的方式调整损失函数：
+> > $$\mathcal{Loss}=(\hat{y_t}-y_t)^2 + \gamma ReLU(e_{t-1}(\hat{y}_t-y_t))$$
+> > * 损失函数后加的一项只有在现在偏差与之前累积偏差同号时才会有误差值，而且累积偏差值越大，损失就越大。损失函数中这一项在sampling的过程中再加上
+> * 另外对比了一下几个不同的实验结果发现：
+>   + mask的使用会改善乱流的现象
+>   + flow loss的减少也会减少乱流的现象
+>   + pool的增加并没有改善效果反而加重了局部的乱流现象

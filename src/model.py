@@ -436,7 +436,7 @@ class loss_function(nn.Module):
 
         self.epsilon = epsilon
 
-        self.criterion = nn.MSELoss(reduction='sum')
+        self.criterion = nn.MSELoss()
         #self.criterion = nn.SmoothL1Loss()
         
     def forward(self, target, output, mask=None):

@@ -48,6 +48,9 @@ def main():
     parser.add_argument('--sample_rate', type=float, default=1)
     parser.add_argument('--sample_decay', type=float, default=0.02)
     parser.add_argument('--use_pool', type=bool, default=False)
+    parser.add_argument('--use_mask', type=bool, default=False)
+    parser.add_argument('--use_simerror', type=bool, default=False)
+    parser.add_argument('--gamma', type=float, default=0.5)
 
     # 数据参数
     parser.add_argument('--sim_step', type=float, default=0.1)
@@ -55,7 +58,6 @@ def main():
     parser.add_argument('--cycle', type=int, default=100)
     parser.add_argument('--green_pass', type=int, default=52)
     parser.add_argument('--yellow_pass', type=int, default=55)
-    parser.add_argument('--mask_level', type=int, default=3)
 
     # 模型相关
     parser.add_argument('--model_prefix', type=str, default='multi_dimension')
@@ -93,6 +95,7 @@ def train(args):
         
         # 初始化损失函数
         criterion = loss_function()
+        sim_error_criterion = torch.nn.ReLU()
         pool = torch.nn.AvgPool1d(3, stride=1, padding=1)
         
         # 学习率的设置
@@ -171,7 +174,6 @@ def train(args):
                     inflow = torch.cat((In, output[:, :spatial_size-1,:]), 1)
                     number_caculate = number_before + inflow - output
 
-                    mask = get_mask(target[:, :, :, 0])
                     if args.use_pool:
                         number_caculate = number_caculate.transpose(1, 2)
                         number_current = number_current.transpose(1, 2)
@@ -179,9 +181,14 @@ def train(args):
                         number_current = pool(number_current)
                         number_caculate = number_caculate.transpose(1, 2)
                         number_current = number_current.transpose(1, 2)
-                
+
+                    if args.use_mask:
+                        mask = get_mask(target[:, :, :, 0])
+                        mes_loss = criterion(target[:, :, :, 0], output, mask)
+                    else:
+                        mes_loss = criterion(target[:, :, :, 0], output)
+
                     flow_loss = criterion(number_current, number_caculate)
-                    mes_loss = criterion(target[:, :, :, 0], output, mask)
                     loss = args.flow_loss_weight * flow_loss + (2 - args.flow_loss_weight) * mes_loss
 
                 else:
@@ -192,6 +199,7 @@ def train(args):
                         output, [hidden_state, cell_state] = net.train_infer(input_data, hidden_state, cell_state)
 
                     input_data = data[:, :, args.t_predict]
+                    last_error = [0]
                     loss = 0
 
                     for t in range(args.temporal_length-args.t_predict):
@@ -204,7 +212,6 @@ def train(args):
                         number_caculate = number_before + inflow - output
                         input_data = torch.cat((output, inflow, number_caculate), 2)
 
-                        mask = get_mask(target[:, :, t, 0].view(batch_size, spatial_size, 1))
                         if args.use_pool:
                             number_caculate = number_caculate.transpose(1, 2)
                             number_current = number_current.transpose(1, 2)
@@ -213,9 +220,22 @@ def train(args):
                             number_caculate = number_caculate.transpose(1, 2)
                             number_current = number_current.transpose(1, 2)
 
+                        if args.use_mask:
+                            mask = get_mask(target[:, :, t, 0].view(batch_size, spatial_size, 1))
+                            mes_loss = criterion(target[:, :, t, 0].view(batch_size, spatial_size, 1), output, mask)
+                        else:
+                            mes_loss = criterion(target[:, :, t, 0].view(batch_size, spatial_size, 1), output)
+
+                        if args.use_simerror:
+                            current_error = target[:, :, t, 0].view(batch_size, spatial_size, 1) - output
+                            sim_error = sim_error_criterion(last_error[t]*(current_error))
+                            sim_error = torch.mean(sim_error)
+                            last_error.append(current_error)
+                        else:
+                            sim_error = 0
+
                         flow_loss = criterion(number_current, number_caculate)
-                        mes_loss = criterion(target[:, :, t, 0].view(batch_size, spatial_size, 1), output, mask)
-                        loss += args.flow_loss_weight * flow_loss + (2 - args.flow_loss_weight) * mes_loss
+                        loss += args.flow_loss_weight * flow_loss + (2 - args.flow_loss_weight) * mes_loss + args.gamma * sim_error
 
                     loss = loss / (args.temporal_length-args.t_predict)
                     
