@@ -414,3 +414,19 @@
 >   + mask的使用会改善乱流的现象
 >   + flow loss的减少也会减少乱流的现象
 >   + pool的增加并没有改善效果反而加重了局部的乱流现象
+
+> ## 9-24
+> * 昨天工作进展完成了新添加的sim_error部分，同时整理了一下代码，让几个添加的结构：mask、pool、sim_error可以通过命令行参数控制，这样方便对应起来，之前的测试有点乱，重新做测试
+> * 今天读了GAT 和Structure-aware convolutional neural network的工作，感觉很有帮助，这两篇要好好整理一下
+
+> ## 9-25
+> * 昨天完成了对有mask和有pool的对比，这里先只放出来热力图的对比，差异比较明显：
+> * 这是cell作为baseline，什么额外的参数都没有改变的结果：
+> ![cell3 baseline](dataFile/pics/up_base_line_heat.png)
+> * 这是将flow loss的比重调至0的结果：
+> ![flow loss 0](dataFile/pics/up_flow0_eva_heat.png)
+> * 这是加入了mask的结果：
+> ![cell3 with mask](dataFile/pics/up_with_mask_heat.png)
+> * 这是加入了[pool](#new_loss)的结果：
+> ![cell3 with pool](dataFile/pics/up_with_pool_heat.png)
+> * 考虑一下自定义pytorch中的dataset类，这样可以在训练过程中更有方便一点，之前测试步骤的utilts相关代码先不改
