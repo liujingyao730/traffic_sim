@@ -220,20 +220,21 @@ def train(args):
                             number_caculate = number_caculate.transpose(1, 2)
                             number_current = number_current.transpose(1, 2)
 
-                        if args.use_mask:
-                            mask = get_mask(target[:, :, t, 0].view(batch_size, spatial_size, 1))
-                            mes_loss = criterion(target[:, :, t, 0].view(batch_size, spatial_size, 1), output, mask)
-                        else:
-                            mes_loss = criterion(target[:, :, t, 0].view(batch_size, spatial_size, 1), output)
-
                         if args.use_simerror:
                             current_error = target[:, :, t, 0].view(batch_size, spatial_size, 1) - output
                             sim_error = sim_error_criterion(last_error[t]*(current_error))
-                            sim_error = torch.mean(sim_error)
                             last_error.append(current_error)
                         else:
                             sim_error = 0
 
+                        if args.use_mask:
+                            mask = get_mask(target[:, :, t, 0].view(batch_size, spatial_size, 1))
+                            mes_loss = criterion(target[:, :, t, 0].view(batch_size, spatial_size, 1), output, mask)
+                            sim_error = sim_error * mask
+                        else:
+                            mes_loss = criterion(target[:, :, t, 0].view(batch_size, spatial_size, 1), output)
+
+                        sim_error = torch.mean(sim_error)
                         flow_loss = criterion(number_current, number_caculate)
                         loss += args.flow_loss_weight * flow_loss + (2 - args.flow_loss_weight) * mes_loss + args.gamma * sim_error
 
