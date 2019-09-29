@@ -407,7 +407,7 @@
 > > * 问题还是描述成，对于一个机器学习模型$\mathcal{M}$，可以完成从输入到输出的映射，即$x\stackrel{\mathcal{M}}{\rightarrow}\hat{y}$，另外给定一个从输出到下一个时刻输入的映射函数$\mathcal{P}$，采用这个模型进行仿真过程就可以描述成$x_0\stackrel{\mathcal{M}}{\rightarrow}\hat{y}_0,\hat{y}_0\stackrel{\mathcal{P}}{\rightarrow}\hat{x}_1; x_1\stackrel{\mathcal{M}}{\rightarrow}\hat{y}_1, \hat{y}_0\stackrel{\mathcal{P}}{\rightarrow}\hat{x}_1;......$这样的过程
 > > * 因为我们可以假设映射函数$\mathcal{P}$是基于现实世界可以显式表示的规律而确定的（例如在我们仿真的例子中前一阶段的输出就是下一段的输入，bucket内部车辆数等于前一个时刻的车辆数加上流入量减去流出量等）所以整体上造成误差的就是由模型本身带来的，我们关注$\{\hat{y}_t\}$随时间变化的规律
 > > $$e_{t}=\hat{y}_t-y_t=\mathcal{E}(\mathcal{P}(y_{t-1}+e_{t-1});\mathcal{M})$$
-> > * 这里要降低模型的仿真误差的方式，可以尝试以下的方式调整损失函数：
+> > * 这里要降低模型的仿真误差的方式，可以尝试以下的方式调整损失函数：<span id="sim_error">
 > > $$\mathcal{Loss}=(\hat{y_t}-y_t)^2 + \gamma ReLU(e_{t-1}(\hat{y}_t-y_t))$$
 > > * 损失函数后加的一项只有在现在偏差与之前累积偏差同号时才会有误差值，而且累积偏差值越大，损失就越大。损失函数中这一项在sampling的过程中再加上
 > * 另外对比了一下几个不同的实验结果发现：
@@ -429,4 +429,36 @@
 > ![cell3 with mask](dataFile/pics/up_with_mask_heat.png)
 > * 这是加入了[pool](#new_loss)的结果：
 > ![cell3 with pool](dataFile/pics/up_with_pool_heat.png)
-> * 考虑一下自定义pytorch中的dataset类，这样可以在训练过程中更有方便一点，之前测试步骤的utilts相关代码先不改
+> * ~~考虑一下自定义pytorch中的dataset类，这样可以在训练过程中更有方便一点，之前测试步骤的utilts相关代码先不改~~好像不能改……如果要改的话需要把模型中处理batch和spatial差异的部分也一块改了
+
+> ## 9-26
+> * 今天完成了单独添加[sim_error](#sim_error)的测试以及增加了[pool](#new_loss)与mask权重的模型，从热力图上看，sim_error的加入并没有使过慢流的情形减缓，但是从整体路段上的误差来看发生了比较明显的减少,而且和baseline相比显著减少了过慢流的情况：
+> * 热力图
+> with mask and pool
+> ![cell3 with mask and pool](dataFile/pics/up_with_pool_with_mask_heat.png)
+> with sim error
+> ![cell3 with sim_error](dataFile/pics/up_with_simerror_heat.png)
+> * 路段损失图
+> ![cell3 base line error](dataFile/pics/up_base_line_error.png)
+> ![cell3 with sim_error error](dataFile/pics/up_with_simerror_error.png)
+
+|模型|baseline|with mask|with pool|with simerror|
+|:-:|:-:|:-:|:-:|:-:|
+|路段损失均值|4.14|3.69|4.46|3.49|
+> * 发现一点可以改进的地方，就是在sim error中，可以同样加上mask，不然的话可能和没有加mask的绝对损失相冲突，导致训练损失的动荡。
+
+> ## 9-27
+> * 今天完成了添加sim_error和mask，sim_error和pool的测试，结果并不好，目前实验上看似乎只添加mask的仿真效果最好：
+> with mask and sim error
+> ![cell3 with mask and simerror](dataFile/pics/up_with_mask_with_simerror_heat.png)
+> with pool and sim error
+> ![cell3 with pool and sim_error](dataFile/pics/up_with_pool_with_simerror_heat.png)
+
+> ## 9-29
+> * 昨天做完了全加上的模型结果一如既往并不好：
+> with all
+> ![celle with all](dataFile/pics/up_with_all_heat.png)
+> * 接下来做两个实验，第一个是继续调整mask的权重，可能要想一下要根据一定的概率分布的形式进行数据增强；第二个是新的sim error，之前是根据之前的误差，但是和实际我们想解决的问题有一点差异，我们可以把
+>  $$\mathcal{Loss}=(\hat{y_t}-y_t)^2 + \gamma ReLU(e_{t-1}(\hat{y}_t-y_t))$$
+> * 中的$e_{t-1}=\hat{y}_{t-1}-y_{t-1}$变为$e_{t-1}=number_{pred}-number_{gt}$，这就是要求当之前累积的预测值是偏小时，下次预测偏小的代价比较大，下次预测偏大的代价比较小.
+> * 另外需要看情况做一些新的数据，更多长时段通行的仿真数据用于训练

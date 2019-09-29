@@ -223,7 +223,7 @@ def train(args):
                         if args.use_simerror:
                             current_error = target[:, :, t, 0].view(batch_size, spatial_size, 1) - output
                             sim_error = sim_error_criterion(last_error[t]*(current_error))
-                            last_error.append(current_error)
+                            last_error.append(number_current - number_caculate)
                         else:
                             sim_error = 0
 
