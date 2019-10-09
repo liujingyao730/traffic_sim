@@ -125,3 +125,4 @@ dmypy.json
 src/draft.py
 dataFile/log/*/log_curve.txt
 src/feature.py
+*.sumocfg
