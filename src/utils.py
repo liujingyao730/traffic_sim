@@ -84,8 +84,8 @@ class batchGenerator(object):
         out = np.array(self.CarOut[self.prefixPoint][bucketList].loc[timeList].T).reshape(spatial, temporal, 1)
         number = np.array(self.Number[self.prefixPoint][bucketList].loc[timeList].T).reshape(spatial, temporal, 1)
 
-        self.CurrentSequences = np.concatenate((In[:, :-1, :], out[:, :-1, :], number[:, :-1, :]), axis=2)
-        self.CurrentOutputs = np.concatenate((In[:, self.seqPredict+1:, :], out[:, self.seqPredict+1:, :], number[:, self.seqPredict+1:, :]), axis=2)        
+        self.CurrentSequences = np.concatenate((out[:, :-1, :], In[:, :-1, :], number[:, :-1, :]), axis=2)
+        self.CurrentOutputs = np.concatenate((out[:, self.seqPredict+1:, :], In[:, self.seqPredict+1:, :], number[:, self.seqPredict+1:, :]), axis=2)        
 
         self.CurrentLane.append(edge)
         self.CurrentTimeOutput.append(self.CurrentTime % self.cycle)
