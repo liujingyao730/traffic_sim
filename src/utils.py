@@ -13,18 +13,18 @@ class batchGenerator(object):
 
     def __init__(self, prefix, args):
 
-        self.deltaT = args.delta_T 
+        self.deltaT = args["delta_T"] 
         self.filePrefixList = prefix
         self.prefixPoint = 0
         self.prefix = self.filePrefixList[0]
         self.fileNumber = len(prefix) - 1 #因为后面转换文件的时候的索引是从0开始的
-        self.batchSize = args.batch_size
-        self.simTimeStep = args.sim_step
-        self.seqLength = args.temporal_length
-        self.seqPredict = args.t_predict
+        self.batchSize = args["batch_size"]
+        self.simTimeStep = args["sim_step"]
+        self.seqLength = args["temporal_length"]
+        self.seqPredict = args["t_predict"]
         self.predLength = self.seqLength - self.seqPredict
-        self.cycle = args.cycle
-        self.Pass = args.green_pass
+        self.cycle = args["cycle"]
+        self.Pass = args["green_pass"]
         self.timeindexBoundary = (self.Pass - self.predLength * self.deltaT) / self.simTimeStep
         self.CurrentEdgePoint = 0
         self.LaneNumber = conf.laneNumber
