@@ -15,6 +15,7 @@ import argparse
 import os
 import time
 import pickle
+import yaml
 
 from utils import batchGenerator
 from model import TP_lstm
@@ -27,41 +28,21 @@ def main():
     
     parser = argparse.ArgumentParser()
     
-    # 网络结构
-    parser.add_argument('--input_size', type=int, default=3)
-    parser.add_argument('--embedding_size', type=int, default=8)
-    parser.add_argument('--hidden_size', type=int, default=64)
-    parser.add_argument('--lane_gate_size', type=int, default=4)
-    parser.add_argument('--output_hidden_size', type=int, default=16)
-    parser.add_argument('--t_predict', type=int, default=4)
-    parser.add_argument('--temporal_length', type=int, default=204)
+    parser.add_argument("--config", type=str, default="eva")
 
-    # 训练参数
-    parser.add_argument('--batch_size', type=int, default=50)
-    parser.add_argument('--use_cuda', action='store_true', default=True)
-
-    # 数据参数
-    parser.add_argument('--sim_step', type=float, default=0.1)
-    parser.add_argument('--delta_T', type=int, default=10)
-    parser.add_argument('--cycle', type=int, default=100)
-    parser.add_argument('--green_pass', type=int, default=52)
-    parser.add_argument('--yellow_pass', type=int, default=55)
-    parser.add_argument('--mask_level', type=int, default=3)
-
-    # 模型相关
-    parser.add_argument('--spatial_length', type=int, default=40)
-    parser.add_argument('--model_prefix', type=str, default='cell3_sp')
-    parser.add_argument('--use_epoch', type=int, default=49)
     args = parser.parse_args()
     eva(args)
 
 def eva(args):
 
-    model_prefix = args.model_prefix
-    use_epoch = args.use_epoch
+    with open(os.path.join(conf.configPath, args.config+'.yaml'), encoding='UTF-8') as config:
+        args = yaml.load(config)
+
+    model_prefix = args["model_prefix"]
+    use_epoch = args["use_epoch"]
     
-    load_directory = os.path.join(conf.logPath, args.model_prefix)
-    eva_prefix = conf.args["eva_prefix"]
+    load_directory = os.path.join(conf.logPath, args["model_prefix"])
+    eva_prefix = args["eva_prefix"]
     eva_generator = batchGenerator(eva_prefix, args)
     eva_generator.CurrentTime = 0
     eva_generator.CurrentEdgePoint = 1
@@ -69,23 +50,23 @@ def eva(args):
     eva_generator.generateNewMatrix()
 
     data = torch.tensor(eva_generator.CurrentSequences).float()
-    init_data = data[:, :args.t_predict, :]
-    input_data = data[0, args.t_predict:, :]
+    init_data = data[:, :args["t_predict"], :]
+    input_data = data[0, args["t_predict"]:, :]
     target = torch.tensor(eva_generator.CurrentOutputs)[:, :, 2].float()
 
     seg = segment(args, init_data=init_data)
     output = seg.simulation(input_data)
 
-    number_before = data[:, args.t_predict:, 2]
-    In = data[0, args.t_predict:, 1].view(1, args.temporal_length-args.t_predict)
-    inflow = torch.cat((In, output[:args.spatial_length-1,:]), 0)
+    number_before = data[:, args["t_predict"]:, 2]
+    In = data[0, args["t_predict"]:, 1].view(1, args["temporal_length"]-args["t_predict"])
+    inflow = torch.cat((In, output[:args["spatial_length"]-1,:]), 0)
     number_caculate = number_before + inflow - output
     
     real_flow = torch.sum(target, dim=0).numpy()
     target_flow = torch.sum(number_caculate, dim=0).detach().numpy()
     print(metrics.explained_variance_score(real_flow, target_flow))
     print(metrics.r2_score(real_flow, target_flow))
-    print(metrics.median_absolute_error(real_flow, target_flow))
+    print(metrics.mean_absolute_error(real_flow, target_flow))
     x = range(len(real_flow))
     plt.plot(x, real_flow, 's-', color='r', label='real')
     plt.plot(x, target_flow, 'o-', color='g', label='predict')
@@ -95,6 +76,13 @@ def eva(args):
     plt.ylim(ymin=0)
     plt.ylim(ymax=200)
     plt.show()
+
+    plt.plot(x, real_flow-target_flow)
+    plt.xlabel('time')
+    plt.ylabel('error')
+    plt.title('error with time')
+    plt.show()
+
     fig = plt.figure()
     ax = fig.add_subplot(311)
     im = ax.imshow((target-number_caculate).detach().numpy(), cmap=plt.cm.hot_r)
@@ -300,27 +288,25 @@ class segment:
 
     def __init__(self, args, init_data=None):
 
-        self.use_epoch = args.use_epoch
-        self.model_prefix = args.model_prefix
-        self.spatial_length = args.spatial_length
+        self.use_epoch = args["use_epoch"]
+        self.model_prefix = args["model_prefix"]
+        self.spatial_length = args["spatial_length"]
         
         
-        load_directory = os.path.join(conf.logPath, args.model_prefix)
-        file = os.path.join(load_directory, str(args.use_epoch)+'.tar')
+        load_directory = os.path.join(conf.logPath, args["model_prefix"])
+        file = os.path.join(load_directory, str(args["use_epoch"])+'.tar')
         checkpoint = torch.load(file)
-        argsfile = open(os.path.join(load_directory, 'config.pkl'), 'rb')
-        args = pickle.load(argsfile)
         
-        self.use_cuda = args.use_cuda
-        self.hidden_size = args.hidden_size
+        self.use_cuda = args["use_cuda"]
+        self.hidden_size = args["hidden_size"]
         tp_lstm = TP_lstm(args)
         tp_lstm.load_state_dict(checkpoint['state_dict'])
-        self.model = sim_cell(args.input_size, args.hidden_size)
+        self.model = sim_cell(args["input_size"], args["hidden_size"])
         self.model.load_state_dict(tp_lstm.cell.state_dict())
-        self.output_layer = FCNet(layerSize=[args.hidden_size, args.output_hidden_size, 1])
+        self.output_layer = FCNet(layerSize=[args["hidden_size"], args["output_hidden_size"], 1])
         self.output_layer.load_state_dict(tp_lstm.output_layer.state_dict())
-        self.hidden_state = torch.zeros(self.spatial_length, args.hidden_size)
-        self.predict_input = torch.zeros(self.spatial_length, args.input_size)
+        self.hidden_state = torch.zeros(self.spatial_length, args["hidden_size"])
+        self.predict_input = torch.zeros(self.spatial_length, args["input_size"])
 
         if self.use_cuda:
             self.model = self.model.cuda()
@@ -333,12 +319,12 @@ class segment:
                 init_data = init_data.cuda()
             
             self.predict_input = init_data[:, -1, :]
-            cell_state = init_data.data.new(self.spatial_length, args.hidden_size).fill_(0).float()
-            hidden_state = init_data.data.new(self.spatial_length, args.hidden_size).fill_(0).float()
-            hidden_state_after = init_data.data.new(self.spatial_length, args.hidden_size).fill_(0).float()
-            hidden_state_before = init_data.data.new(self.spatial_length, args.hidden_size).fill_(0).float()
+            cell_state = init_data.data.new(self.spatial_length, args["hidden_size"]).fill_(0).float()
+            hidden_state = init_data.data.new(self.spatial_length, args["hidden_size"]).fill_(0).float()
+            hidden_state_after = init_data.data.new(self.spatial_length, args["hidden_size"]).fill_(0).float()
+            hidden_state_before = init_data.data.new(self.spatial_length, args["hidden_size"]).fill_(0).float()
         
-            zero_hidden = init_data.data.new(1, args.hidden_size).fill_(0).float()
+            zero_hidden = init_data.data.new(1, args["hidden_size"]).fill_(0).float()
             [spatial, temporal, _] = init_data.shape
             for time in range(temporal):
                 hidden_state, cell_state = self.model(init_data[:, time, :], 
@@ -346,7 +332,7 @@ class segment:
                 hidden_state_after = torch.cat((hidden_state[1:, :], zero_hidden))
                 hidden_state_before = torch.cat((zero_hidden, hidden_state[:self.spatial_length-1, :]))
         else:
-            virtual_input = torch.zeros(self.spatial_length, args.input_size)
+            virtual_input = torch.zeros(self.spatial_length, args["input_size"])
             if self.use_cuda:
                 virtual_input = virtual_input.cuda()
             hidden_state, cell_state = self.model(virtual_input,

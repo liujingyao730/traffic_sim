@@ -1,0 +1,92 @@
+#model:
+input_size: 3
+embedding_size: 8
+hidden_size: 64
+output_hidden_size: 16
+t_predict: 4
+temporal_length: 8
+lane_gate_size: 4
+
+# train
+batch_size: 100
+num_epochs: 50
+show_every: 50
+learing_rate: 0.003
+decay_rate: 0.95
+lambda_param: 0.0005
+use_cuda: true
+flow_loss_weight: 0
+grad_clip: 10
+sample_rate: 1
+sample_decay: 0.02
+use_pool: true
+use_mask: true
+use_simerror: true
+gamma: 0.5
+
+# data
+sim_step: 0.1
+delta_T: 10
+cycle: 100
+green_pass: 52
+
+model_prefix: multi_dimension
+
+prefix:
+  - !!str 300
+  - !!str 400
+  - !!str 500
+  - !!str 600
+  - !!str 700
+  - !!str 800
+  - !!str 900
+  - !!str 1000
+  - !!str 1100
+  - !!str 1200
+  - !!str 1300
+  - !!str 1400
+  - !!str 1500
+
+test_prefix:
+  - !!str 300_1
+  - !!str 400_1
+  - !!str 500_1
+  - !!str 600_1
+  - !!str 700_1
+  - !!str 800_1
+  - !!str 900_1
+  - !!str 1000_1
+  - !!str 1100_1
+  - !!str 1200_1
+  - !!str 1300_1
+  - !!str 1400_1
+
+mask:
+  - 0.6
+  - 0.85
+  - 0.9
+  - 0.58
+  - 0.54
+  - 0.91
+  - 1.15
+  - 1.25
+  - 1.36
+  - 6.45
+  - 13.35
+  - 48.75
+  - 890
+
+# 拓扑结构是写死的
+topology:
+  seg:
+    - 1
+    - 2
+  inter:
+    - major: 2
+      minor: 4
+      inter: 6 
+      end: 7
+    - major: 3
+      minor: 1
+      inter: 5
+      end: 8

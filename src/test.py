@@ -18,6 +18,7 @@ import argparse
 import os
 import time
 import pickle
+import yaml
 
 from utils import batchGenerator
 from model import TP_lstm
@@ -28,22 +29,21 @@ import conf
 def main():
     
     parser = argparse.ArgumentParser()
-
-    # 模型相关
-    parser.add_argument('--model_prefix', type=str, default='cell2_with_mask6')
-    parser.add_argument('--use_epoch', type=int, default=16)
-
-    # 测试相关
-    parser.add_argument('--test_batchs', type=int, default=50)
+    
+    parser.add_argument("--config", type=str, default="test")
 
     args = parser.parse_args()
+
     visualization(args)
 
 def visualization(args, laneNumber=conf.laneNumber):
 
-    model_prefix = args.model_prefix
-    test_batchs = args.test_batchs
-    use_epoch = args.use_epoch
+    with open(os.path.join(conf.configPath, args.config+'.yaml'), encoding='UTF-8') as config:
+        args = yaml.load(config)
+
+    model_prefix = args["model_prefix"]
+    test_batchs = args["test_batchs"]
+    use_epoch = args["use_epoch"]
 
     load_directory = os.path.join(conf.logPath, model_prefix)
     
@@ -52,10 +52,8 @@ def visualization(args, laneNumber=conf.laneNumber):
 
     file = checkpath(use_epoch)
     checkpoint = torch.load(file)
-    argsfile = open(os.path.join(load_directory, 'config.pkl'), 'rb')
-    args = pickle.load(argsfile)
 
-    test_prefix = conf.args["test_prefix"]
+    test_prefix = args["test_prefix"]
     test_generator = batchGenerator(test_prefix, args)
     test_generator.generateBatchRandomForBucket(laneNumber)
     spatial_length = test_generator.CurrentSequences.shape[1]
@@ -65,12 +63,12 @@ def visualization(args, laneNumber=conf.laneNumber):
 
     flow_loss_meter = loss_function()
     mes_loss_meter = torch.nn.MSELoss()
-    result = torch.zeros(spatial_length, args.temporal_length-args.t_predict)
-    flow_result = torch.zeros(spatial_length, args.temporal_length-args.t_predict)
-    abs_result = torch.zeros(spatial_length, args.temporal_length-args.t_predict)
-    abs_flow_result = torch.zeros(spatial_length, args.temporal_length-args.t_predict)
+    result = torch.zeros(spatial_length, args["temporal_length"]-args["t_predict"])
+    flow_result = torch.zeros(spatial_length, args["temporal_length"]-args["t_predict"])
+    abs_result = torch.zeros(spatial_length, args["temporal_length"]-args["t_predict"])
+    abs_flow_result = torch.zeros(spatial_length, args["temporal_length"]-args["t_predict"])
 
-    if args.use_cuda:
+    if args["use_cuda"]:
         model = model.cuda()
         flow_loss_meter = flow_loss_meter.cuda()
         mes_loss_meter = mes_loss_meter.cuda()
@@ -84,12 +82,12 @@ def visualization(args, laneNumber=conf.laneNumber):
         test_generator.generateBatchRandomForBucket(laneNumber)
 
         data = torch.tensor(test_generator.CurrentSequences).float()
-        init_data = data[:, :, :args.t_predict, :]
-        temporal_data = data[:, 0, args.t_predict:, :]
+        init_data = data[:, :, :args["t_predict"], :]
+        temporal_data = data[:, 0, args["t_predict"]:, :]
         laneT = torch.tensor(test_generator.CurrentLane).float()
         target = torch.tensor(test_generator.CurrentOutputs).float()
 
-        if args.use_cuda:
+        if args["use_cuda"]:
             data = data.cuda()
             init_data = init_data.cuda()
             temporal_data = temporal_data.cuda()
@@ -100,8 +98,8 @@ def visualization(args, laneNumber=conf.laneNumber):
         #output = model(data, laneT)
 
         number_current = target[:, :, :, 2]
-        number_before = data[:, :, args.t_predict:, 2]
-        In = data[:, 0, args.t_predict:, 1].view(-1, 1, args.temporal_length-args.t_predict)
+        number_before = data[:, :, args["t_predict"]:, 2]
+        In = data[:, 0, args["t_predict"]:, 1].view(-1, 1, args["temporal_length"]-args["t_predict"])
         inflow = torch.cat((In, output[:, :spatial_length-1,:]), 1)
         number_caculate = number_before + inflow - output
         

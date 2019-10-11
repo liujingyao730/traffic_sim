@@ -295,14 +295,13 @@ class TP_lstm(nn.Module):
 
         self.args = args
         #网络相关参数
-        self.input_size = args.input_size
-        self.hidden_size = args.hidden_size
-        self.lane_gate_size = args.lane_gate_size
-        self.output_hidden_size = args.output_hidden_size
+        self.input_size = args["input_size"]
+        self.hidden_size = args["hidden_size"]
+        self.lane_gate_size = args["lane_gate_size"]
+        self.output_hidden_size = args["output_hidden_size"]
         self.output_size = 1 # 这里先写死
-        self.t_predict = args.t_predict # 开始预测的时间
-        self.temporal_length = args.temporal_length # 整个输入的时间长
-        self.spatial_length = args.spatial_length # 路段长……好像没什么用可能需要以后改改
+        self.t_predict = args["t_predict"] # 开始预测的时间
+        self.temporal_length = args["temporal_length"] # 整个输入的时间长
         #网络结构
         self.cell = MD_lstm_cell(self.input_size, self.hidden_size)
         self.sigma = torch.nn.Sigmoid()

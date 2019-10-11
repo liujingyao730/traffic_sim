@@ -1,0 +1,26 @@
+# test
+test_batchs: 30
+batch_size: 100
+use_epoch: 49
+model_prefix: with_new_simerror
+t_predict: 4
+temporal_length: 8
+use_cuda: true
+
+test_prefix:
+  - !!str 1000_1
+
+# eva
+hidden_size: 64
+input_size: 3
+lane_gate_size: 4
+output_hidden_size: 16
+eva_prefix: 
+  - 2000_nosignal
+spatial_length: 40
+
+#data
+sim_step: 0.1
+delta_T: 10
+cycle: 100
+green_pass: 52
