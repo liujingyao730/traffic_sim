@@ -74,6 +74,21 @@ class data_generator(Dataset):
             print("wrong mod to generate data !")
             raise RuntimeError('MOD ERROR')
 
+    def reload(self, data_prefix='default', fold=fold, mod='seg', topology=topology):
+
+        self.mod = mod
+        self.topology = topology
+
+        self.car_in_file = os.path.join(fold, data_prefix+'CarIn.csv')
+        self.car_out_file = os.path.join(fold, data_prefix+'CarOut.csv')
+        self.number_file = os.path.join(fold, data_prefix+'Number.csv')
+
+        self.all_car_in = pd.read_csv(self.car_in_file, index_col=0).dropna(axis=0)
+        self.all_car_out = pd.read_csv(self.car_out_file, index_col=0).dropna(axis=0)
+        self.all_number = pd.read_csv(self.number_file, index_col=0)
+
+        self.filter_data()
+
     def __getitem__(self, index):
         
         if mod == "seg":

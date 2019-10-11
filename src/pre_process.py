@@ -98,5 +98,43 @@ def data_record(file, lane_edge=lane_edge, length=length, prefix='default',
 
     return True
 
+
+def reset_data(prefix, fold=conf.midDataPath, deltaT=conf.args["deltaT"], 
+                sim_step=conf.args["trainSimStep"]):
+
+    car_in_file = os.path.join(fold, prefix+'CarIn.csv')
+    car_out_file = os.path.join(fold, prefix+'CarOut.csv')
+
+    car_in = pd.read_csv(car_in_file, index_col=0)
+    car_out = pd.read_csv(car_out_file, index_col=0)
+    max_time = len(car_in.index)
+    max_time -= int(deltaT / sim_step)
+
+    reset_car_in = pd.DataFrame(columns=car_in.columns, index=car_in.index)
+    reset_car_out = pd.DataFrame(columns=car_out.columns, index=car_in.index)
+
+    reset_car_in.loc[0] = 0
+    reset_car_out.loc[0] = 0
+    t = 0
+
+    for i in range(int(deltaT / sim_step)):
+        reset_car_in.loc[0] += car_in.loc[t]
+        reset_car_out.loc[0] += car_out.loc[t]
+        t = round(t+sim_step, 1)
+
+    for i in range(1, max_time+1):
+        time = round(i*sim_step, 1)
+        minus_time = round(time-sim_step, 1)
+        plus_time = round(time+deltaT-sim_step, 1)
+        reset_car_in.loc[time] = reset_car_in.loc[minus_time] - car_in.loc[minus_time] + car_in.loc[plus_time]
+        reset_car_out.loc[time] = reset_car_out.loc[minus_time] - car_out.loc[minus_time] + car_out.loc[plus_time]
+
+    reset_car_in.to_csv(car_in_file)
+    reset_car_out.to_csv(car_out_file)
+    
+    print(prefix + "car in and out file have been reset")
+
+
 if __name__ == "__main__":
-    data_record(merge_fcd_path)
+    #data_record(merge_fcd_path)
+    reset_data('default')
