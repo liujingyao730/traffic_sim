@@ -42,128 +42,7 @@ class FCNet(nn.Module):
             outputs = self.fc3(outputs)
 
         return outputs
-'''
-class MD_lstm_cell(nn.Module):
 
-    #cell1
-    #处理时间和路段长度两个维度的lstm变体cell
-
-    def __init__(self, input_size, hidden_size):
-
-        #目前的结构是在传统LSTM cell之外，对隐层状态施加一个门控制，这里我们叫做空间门，后续可能会要改
-        #input_size: int 输入的维度
-        #hidden_size: int 隐层状态的维度
-
-        super().__init__()
-
-        self.input_size = input_size
-        self.hidden_size = hidden_size
-
-        self.cell = torch.nn.LSTMCell(input_size, hidden_size)
-        
-        self.sigma = torch.nn.Sigmoid()
-
-        #self.spatial_embedding = torch.nn.Linear(2*hidden_size, hidden_size)
-        self.after_embedding = torch.nn.Linear(hidden_size, hidden_size)
-        self.before_embedding = torch.nn.Linear(hidden_size, hidden_size)
-         
-
-    def forward(self, inputs, h_s_t, c_s_t, h_after_t, h_before_t):
-
-        #inputs: tensor [batch_size, spatial_size, input_size] 当前节点此时刻的输入
-        #h_s_t: tensor [batch_size, spatial_size, hidden_size] 当前节点前一个时刻的隐层状态
-        #c_s_t: tensor [batch_size, spatial_size, hidden_size] 当前节点前一个时刻的细胞状态
-        #h_after_t: tensor [batch_size, spatial_size, hidden_size] 下一个节点前一个时刻的隐层状态
-        #h_before_t: tensor [batch_size, spatial_size, hidden_size] 前一个节点前一个时刻的隐层状态
-
-        [batch_size, spatial_size, hidden_size] = h_s_t.shape
-
-        #spatial_gate = torch.cat((h_after_t, h_before_t), dim=2)
-        
-        #处理batch 因为batch内部的不同路段的不同节点在这里都是独立的，所以可以分开来
-        #spatial_gate = spatial_gate.view(-1, 2*hidden_size)
-        h_s_t = h_s_t.view(-1, hidden_size)
-        c_s_t = c_s_t.view(-1, hidden_size)
-        h_after_t = h_after_t.view(-1, hidden_size)
-        h_before_t = h_before_t.view(-1, hidden_size)
-        inputs = inputs.view(-1, self.input_size)
-
-        #spatial_gate = self.spatial_embedding(spatial_gate)
-        #spatial_gate = self.sigma(spatial_gate)
-        h_hat_after = self.after_embedding(h_after_t)
-        h_hat_before = self.before_embedding(h_before_t)
-
-        h_hat, c_s_tp = self.cell(inputs, (h_s_t, c_s_t))
-
-        #还原
-        #spatial_gate = spatial_gate.view(batch_size, spatial_size, hidden_size)
-        c_s_tp = c_s_tp.view(batch_size, spatial_size, hidden_size)
-        h_hat = h_hat.view(batch_size, spatial_size, hidden_size)
-        h_hat_after = h_hat_after.view(batch_size, spatial_size, hidden_size)
-        h_hat_before = h_hat_before.view(batch_size, spatial_size, hidden_size)
-        
-        #空间门
-        #h_s_tp = h_hat * spatial_gate
-
-        #输出结果
-        h_s_tp = h_hat + h_hat_after + h_hat_before
-
-        return h_s_tp, c_s_tp
-'''
-'''
-class MD_lstm_cell(nn.Module):
-
-    # cell2
-
-    def __init__(self, input_size, hidden_size):
-
-        super().__init__()
-
-        self.input_size = input_size
-        self.hidden_size = hidden_size
-
-        self.cell = torch.nn.LSTMCell(input_size, hidden_size)
-        
-        self.sigma = torch.nn.Sigmoid()
-
-        self.spatial_gate = torch.nn.Linear(2*hidden_size, hidden_size)
-        self.spatial_embedding = torch.nn.Linear(2*hidden_size, hidden_size)
-
-    def forward(self, inputs, h_s_t, c_s_t, h_after_t, h_before_t):
-
-        #inputs: tensor [batch_size, spatial_size, input_size] 当前节点此时刻的输入
-        #h_s_t: tensor [batch_size, spatial_size, hidden_size] 当前节点前一个时刻的隐层状态
-        #c_s_t: tensor [batch_size, spatial_size, hidden_size] 当前节点前一个时刻的细胞状态
-        #h_after_t: tensor [batch_size, spatial_size, hidden_size] 下一个节点前一个时刻的隐层状态
-        #h_before_t: tensor [batch_size, spatial_size, hidden_size] 前一个节点前一个时刻的隐层状态
-       
-        [batch_size, spatial_size, hidden_size] = h_s_t.shape
-
-        spatial_info = torch.cat((h_after_t, h_before_t), dim=2)
-        
-        #处理batch 因为batch内部的不同路段的不同节点在这里都是独立的，所以可以分开来
-        spatial_info = spatial_info.view(-1, 2*hidden_size)
-        gate_controller = spatial_info.clone()
-        spatial_info = self.spatial_embedding(spatial_info)
-        gate_controller = self.spatial_gate(gate_controller)
-        spatial_info = spatial_info * gate_controller
-        spatial_info = spatial_info.view(batch_size, spatial_size, hidden_size)
-
-        h_s_t = h_s_t.view(-1, hidden_size)
-        c_s_t = c_s_t.view(-1, hidden_size)
-        inputs = inputs.view(-1, self.input_size)
-
-        h_hat, c_s_tp = self.cell(inputs, (h_s_t, c_s_t))
-
-        #还原
-        c_s_tp = c_s_tp.view(batch_size, spatial_size, hidden_size)
-        h_hat = h_hat.view(batch_size, spatial_size, hidden_size)
-        
-        #空间门
-        h_s_tp = h_hat + spatial_info 
-
-        return h_s_tp, c_s_tp
-'''
 
 class MD_lstm_cell(nn.Module):
 
@@ -221,69 +100,6 @@ class MD_lstm_cell(nn.Module):
 
         return h_s_tp, c_s_tp
 
-'''
-class MD_lstm_cell(nn.Module):
-
-    #cell4
-    #处理时间和路段长度两个维度的lstm变体cell
-
-    def __init__(self, input_size, hidden_size):
-
-        #目前的结构是在传统LSTM cell之外，对隐层状态施加一个门控制，这里我们叫做空间门，后续可能会要改
-        #input_size: int 输入的维度
-        #hidden_size: int 隐层状态的维度
-
-        super().__init__()
-
-        self.input_size = input_size
-        self.hidden_size = hidden_size
-
-        self.cell = torch.nn.LSTMCell(input_size, hidden_size)
-        
-        self.sigma = torch.nn.Sigmoid()
-
-        self.after_gate = torch.nn.Linear(input_size+hidden_size, hidden_size)
-        self.before_gate = torch.nn.Linear(input_size+hidden_size, hidden_size)
-         
-
-    def forward(self, inputs, h_s_t, c_s_t, h_after_t, h_before_t):
-
-        #inputs: tensor [batch_size, spatial_size, input_size] 当前节点此时刻的输入
-        #h_s_t: tensor [batch_size, spatial_size, hidden_size] 当前节点前一个时刻的隐层状态
-        #c_s_t: tensor [batch_size, spatial_size, hidden_size] 当前节点前一个时刻的细胞状态
-        #h_after_t: tensor [batch_size, spatial_size, hidden_size] 下一个节点前一个时刻的隐层状态
-        #h_before_t: tensor [batch_size, spatial_size, hidden_size] 前一个节点前一个时刻的隐层状态
-
-        [batch_size, spatial_size, hidden_size] = h_s_t.shape
-        [_, _, input_size] = inputs.shape
-
-        cell_input = torch.cat((h_s_t, inputs), dim=2)
-        
-        #处理batch 因为batch内部的不同路段的不同节点在这里都是独立的，所以可以分开来
-        cell_input = cell_input.view(-1, input_size+hidden_size)
-        h_s_t = h_s_t.view(-1, hidden_size)
-        c_s_t = c_s_t.view(-1, hidden_size)
-        inputs = inputs.view(-1, self.input_size)
-
-        i_after = self.after_gate(cell_input)
-        i_before = self.before_gate(cell_input)
-        i_after = self.sigma(i_after)
-        i_before = self.sigma(i_before)
-
-        h_hat, c_s_tp = self.cell(inputs, (h_s_t, c_s_t))
-
-        #还原
-        #spatial_gate = spatial_gate.view(batch_size, spatial_size, hidden_size)
-        c_s_tp = c_s_tp.view(batch_size, spatial_size, hidden_size)
-        h_hat = h_hat.view(batch_size, spatial_size, hidden_size)
-        i_after = i_after.view(batch_size, spatial_size, hidden_size)
-        i_before = i_before.view(batch_size, spatial_size, hidden_size)
-
-        #输出结果
-        h_s_tp = h_hat + h_after_t * i_after + h_before_t * i_before
-
-        return h_s_tp, c_s_tp
-'''
 
 class TP_lstm(nn.Module):
     '''
@@ -450,7 +266,7 @@ class loss_function(nn.Module):
 
         return loss
 
-class seg_model(nn.Module):
+class inter_model(nn.Module):
     '''
     全连接式的路口形式
     '''
@@ -461,27 +277,86 @@ class seg_model(nn.Module):
         self.input_feature = args["input_size"]
         self.hidden_size = args["hidden_size"]
 
-        self.RNNlayer = nn.LSTM(self.input_feature*self.n_unit, self.hidden_size, batch_first=True)
-        self.outputlayer = nn.Linear(self.hidden_size, self.input_feature*self.n_unit)
+        self.cell = nn.LSTMCell(self.input_feature*self.n_unit, self.hidden_size*self.n_unit)        
 
     def forward(self, inputs, hidden=None):
         
-        [batch_size, temporal_lenghth, n_unit, input_feature] = inputs.shape
+        [batch_size, n_unit, input_feature] = inputs.shape
 
-        inputs = inputs.view(batch_size, temporal_lenghth, n_unit*input_feature)
+        assert n_unit == self.n_unit and input_feature == self.input_feature
+
+        inputs = inputs.view(batch_size, n_unit*input_feature)
 
         if hidden is None:
-            h_0 = inputs.data.new(1, batch_size, self.hidden_size).fill_(0).float()
-            c_0 = inputs.data.new(1, batch_size, self.hidden_size).fill_(0).float()
+            h_0 = inputs.data.new(batch_size, self.hidden_size*self.n_unit).fill_(0).float()
+            c_0 = inputs.data.new(batch_size, self.hidden_size*self.n_unit).fill_(0).float()
         else:
             h_0 = hidden[0]
             c_0 = hidden[0]
 
-        output, _ =self.RNNlayer(inputs, (h_0, c_0))
-        
-        output = self.outputlayer(output)
+        h, c = self.cell(inputs, (h_0, c_0))
 
-        output = output.view(batch_size, temporal_lenghth, n_unit, input_feature)
+        c = c.view(batch_size, n_unit, self.hidden_size)
+        h = h.view(batch_size, n_unit, self.hidden_size)
+        
+        return h, c
+
+
+class seg_model(nn.Module):
+    '''使用到的路段模型
+    '''
+
+    def __init__(self, args):
+        
+        super().__init__()
+
+        self.input_size = args["input_size"]
+        self.hidden_size = args["hidden_size"]
+        self.t_predict = args["t_predict"]
+
+        self.cell = MD_lstm_cell(self.input_size, self.hidden_size)
+
+    def forward(self, inputs, hidden=None):
+        
+        [batch_size, spatial_size, input_size] = inputs.shape
+
+        assert input_size == self.input_size
+
+        if hidden is None:
+            h_0 = inputs.data.new(batch_size, spatial_size, self.hidden_size).fill_(0).float()
+            c_0 = inputs.data.new(batch_size, spatial_size-2, self.hidden_size).fill_(0).float()
+        else:
+            h_0 = hidden[0]
+            c_0 = hidden[1]
+
+        h_s_t = h_0[:, 1:-1, :].contiguous()
+        h_after_t = h_0[:, 2:, :].contiguous()
+        h_before_t = h_0[:, :-2, :].contiguous()
+        
+        h_s_tp, c_s_tp = self.cell(inputs[:, 1:-1, :].contiguous(), h_s_t, c_0, h_after_t, h_before_t)
+
+        return h_s_tp, c_s_tp
+
+
+
+class network(nn.Module):
+
+    def __init__(self, args):
+        
+        super().__init__()
+
+        self.input_size = args["input_size"]
+        self.hidden_size = args["hidden_size"]
+        self.output_hidden_size = args["output_hidden_size"]
+        self.output_size = 1
+
+        self.segment_model = seg_model(args)
+        self.intersection_model = inter_model(args)
+        self.outputlayer = FCNet([self.hidden_size, self.output_hidden_size, self.output_size])
+
+    def forward(self, seg_data, topology):
+        
+        raise NotImplementedError
 
         return output
 
@@ -492,6 +367,7 @@ if __name__ == "__main__":
     args["n_unit"] = 7
     args["input_size"] = 3
     args["hidden_size"] = 64
-    inputs = torch.randn(5, 8, 7, 3)
+    args["t_predict"] = 4
+    inputs = torch.randn(5, 7, 3)
     model = seg_model(args)
-    print(model(inputs).shape)
+    print(model(inputs)[1].shape)

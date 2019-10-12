@@ -14,6 +14,7 @@ import conf
 
 seg_topology = [1, 2]
 inter_topology = {"major":2, "minor":4, "end":7, "inter":6}
+co_toplogy ={'inter1':{"major":2, "minor":4, "end":7, "inter":6}, 'inter2':{"major":3, "minor":1, "end":8, "inter":5}}
 fold = conf.midDataPath
 
 class traffic_data(Dataset):
@@ -78,6 +79,8 @@ class traffic_data(Dataset):
             self.car_in = self.all_car_in[bucketlist]
             self.car_out = self.all_car_out[bucketlist]
             self.number = self.all_number[bucketlist]
+        elif self.mod == 'cooperate':
+            return
         else:
             print("wrong mod to generate data !")
             raise RuntimeError('MOD ERROR')
@@ -131,6 +134,27 @@ class traffic_data(Dataset):
             outputs = torch.Tensor(np.concatenate((out[self.seqPredict+1:, :, :], In[self.seqPredict+1:, :, :], number[self.seqPredict+1:, :, :]), axis=2)).float()
 
             return inputs,outputs
+
+        elif self.mod == "cooperate":
+            
+            seg_data = {}
+            time = index * self.sim_step
+            timelist = [i*self.delta_T+time for i in range(self.temporal_length+1)]
+            
+            for intersect_topology in self.topology.values():
+                for edge in intersect_topology.values():
+                    bucketlist = [item for item in self.all_car_in.columns if int(int(item)/100)==edge]
+                    In = np.array(self.all_car_in.loc[timelist, bucketlist])[:, :, np.newaxis]
+                    out = np.array(self.all_car_out.loc[timelist, bucketlist])[:, :, np.newaxis]
+                    number = np.array(self.all_number.loc[timelist, bucketlist])[:, :, np.newaxis]
+
+                    inputs = torch.Tensor(np.concatenate((out[:-1, :, :], In[:-1, :, :], number[:-1, :, :]), axis=2)).float()
+                    outputs = torch.Tensor(np.concatenate((out[self.seqPredict+1:, :, :], In[self.seqPredict+1:, :, :], number[self.seqPredict+1:, :, :]), axis=2)).float()
+
+                    seg_data[edge] = [inputs, outputs]
+
+            return seg_data
+
         else:
             print("wrong mod to generate data !")
             raise RuntimeError('MOD ERROR')
@@ -139,7 +163,7 @@ class traffic_data(Dataset):
 
         if self.mod == 'seg':
             length = self.edge_number * (len(self.car_in.index) - self.temporal_length * self.delta_T * self.sim_step)
-        elif self.mod == 'inter':
+        elif self.mod == 'inter' or self.mod == 'cooperate':
             length = len(self.car_in.index) - self.temporal_length * self.delta_T * self.sim_step
         else:
             print("wrong mod to generate data !")
@@ -159,7 +183,6 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
 
-    dataset = traffic_data(mod='inter', topology=inter_topology, args=args)
-    inputs,outputs = dataset[4]
-    print(inputs.shape)
-    print(outputs.shape)
+    dataset = traffic_data(mod='cooperate', topology=co_toplogy, args=args)
+    seg_data = dataset[4]
+    print(seg_data)
