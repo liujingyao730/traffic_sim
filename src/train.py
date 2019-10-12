@@ -26,7 +26,7 @@ def main():
     
     parser = argparse.ArgumentParser()
     
-    parser.add_argument("--config", type=str, default="default")
+    parser.add_argument("--config", type=str, default="train")
 
     args = parser.parse_args()
     train(args)
@@ -190,7 +190,7 @@ def train(args):
                         sim_error = sim_error_criterion(last_error[t]*(current_error))
                         last_error.append(number_current - number_caculate)
                     else:
-                        sim_error = 0
+                        sim_error = Variable(data.data.new(1).fill_(0).float())
 
                     if args["use_mask"]:
                         mask = get_mask(target[:, :, t, 0].view(batch_size, spatial_size, 1), args["mask"])
@@ -215,8 +215,8 @@ def train(args):
             if i % args["show_every"] == 0:
                 print("batch{}, train_loss = {:.3f}".format(i, loss_meter.value()[0]))
                 log_file_curve.write("batch{}, train_loss = {:.3f}\n".format(i, loss_meter.value()[0]))
-            if i > 30:
-               break
+            #if i > 30:
+            #   break
             i += 1
             
         args["sample_rate"] -= args["sample_decay"]
@@ -280,8 +280,8 @@ def train(args):
             if i % args["show_every"] == 0:
                 print("batch{}, mes_loss={:.3f}, flow_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}".format(i, loss_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0], flow_last_loss_meter.value()[0]))
                 log_file_curve.write("batch{}, mes_loss={:.3f}, flow_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}\n".format(i, loss_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0], flow_last_loss_meter.value()[0]))
-            if i > 5:
-                break
+            #if i > 5:
+            #    break
             i += 1
 
         if loss_meter.value()[0] < best_mes_loss:

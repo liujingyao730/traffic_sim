@@ -12,18 +12,16 @@ import argparse
 
 import conf 
 
-topology = [1, 2]
-mod = 'seg'
-#topology = {"major":2, "minor":4, "end":7, "inter":6}
-#mod = 'inter'
+seg_topology = [1, 2]
+inter_topology = {"major":2, "minor":4, "end":7, "inter":6}
 fold = conf.midDataPath
 
-class data_generator(Dataset):
+class traffic_data(Dataset):
 
     '''每次读取进来一个场景下的文件，通过输入的参数指定是读取路段的数据样本还是读取路口数据样本
     '''
 
-    def __init__(self, args, data_prefix='default', fold=fold, mod='seg', topology=topology):
+    def __init__(self, args, data_prefix='default', fold=fold, mod='seg', topology=seg_topology):
 
         super().__init__()
 
@@ -47,12 +45,13 @@ class data_generator(Dataset):
         self.car_out = pd.DataFrame()
         self.number = pd.DataFrame()
         self.edge_number = 0
+        self.bucketlist = []
 
         self.filter_data()
 
     def filter_data(self):
 
-        if mod == 'seg':
+        if self.mod == 'seg':
             if not isinstance(self.topology, list):
                 print("wrong type of topology for mod segment!")
                 raise RuntimeError("TOPOLOGY TYPE ERROR")
@@ -61,12 +60,21 @@ class data_generator(Dataset):
             self.car_in = self.all_car_in[bucketlist]
             self.car_out = self.all_car_out[bucketlist]
             self.number = self.all_number[bucketlist]
-        elif mod == 'inter':
+        elif self.mod == 'inter':
             if not isinstance(self.topology, dict):
                 print("wrong type of topology for mod intersection!")
                 raise RuntimeError("TOPOLOGY TYPE ERROR")
-            edgelist = self.topology.values()
-            bucketlist = [item for item in self.all_car_in.columns if int(int(item)/100) in edgelist]
+
+            major_buckets = [item for item in self.all_car_in.columns if int(int(item)/100)==self.topology['major']]
+            minor_buckets = [item for item in self.all_car_in.columns if int(int(item)/100)==self.topology['minor']]
+            end_buckets = [item for item in self.all_car_in.columns if int(int(item)/100)==self.topology['end']]
+            inter_bucket = [item for item in self.all_car_in.columns if int(int(item)/100)==self.topology['inter']]
+            
+            major_buckets.sort()
+            minor_buckets.sort()
+            end_buckets.sort()
+
+            bucketlist = major_buckets[-2:] + minor_buckets[-2:] + inter_bucket + end_buckets[:2]
             self.car_in = self.all_car_in[bucketlist]
             self.car_out = self.all_car_out[bucketlist]
             self.number = self.all_number[bucketlist]
@@ -74,7 +82,7 @@ class data_generator(Dataset):
             print("wrong mod to generate data !")
             raise RuntimeError('MOD ERROR')
 
-    def reload(self, data_prefix='default', fold=fold, mod='seg', topology=topology):
+    def reload(self, data_prefix='default', fold=fold, mod='seg', topology=seg_topology):
 
         self.mod = mod
         self.topology = topology
@@ -91,42 +99,39 @@ class data_generator(Dataset):
 
     def __getitem__(self, index):
         
-        if mod == "seg":
+        if self.mod == "seg":
             
             edge = self.topology[index % self.edge_number]
             time = int(index / self.edge_number) * self.sim_step
             
             bucketlist = [item for item in self.car_in.columns if int(int(item)/100)==edge]
             timelist = [i*self.delta_T+time for i in range(self.temporal_length+1)]
+
+            In = np.array(self.car_in.loc[timelist, bucketlist].T)[:, :, np.newaxis]
+            out = np.array(self.car_out.loc[timelist, bucketlist].T)[:, :, np.newaxis]
+            number = np.array(self.number.loc[timelist, bucketlist].T)[:, :, np.newaxis]
             
-        elif mod == "inter":
+            inputs = torch.Tensor(np.concatenate((out[:, :-1, :], In[:, :-1, :], number[:, :-1, :]), axis=2)).float()
+            outputs = torch.Tensor(np.concatenate((out[:, self.seqPredict+1:, :], In[:, self.seqPredict+1:, :], number[:, self.seqPredict+1:, :]), axis=2)).float()
+
+            return inputs, outputs
+            
+        elif self.mod == "inter":
         
             time = index * self.sim_step
             timelist = [i*self.delta_T+time for i in range(self.temporal_length+1)]
 
-            major_buckets = [item for item in self.car_in.columns if int(int(item)/100)==self.topology['major']]
-            minor_buckets = [item for item in self.car_in.columns if int(int(item)/100)==self.topology['minor']]
-            end_buckets = [item for item in self.car_in.columns if int(int(item)/100)==self.topology['end']]
-            inter_bucket = [item for item in self.car_in.columns if int(int(item)/100)==self.topology['inter']]
+            In = np.array(self.car_in.loc[timelist].T)[:, :, np.newaxis]
+            out = np.array(self.car_out.loc[timelist].T)[:, :, np.newaxis]
+            number = np.array(self.number.loc[timelist].T)[:, :, np.newaxis]
             
-            major_buckets.sort()
-            minor_buckets.sort()
-            end_buckets.sort()
+            inputs = torch.Tensor(np.concatenate((out[:, :-1, :], In[:, :-1, :], number[:, :-1, :]), axis=2)).float()
+            outputs = torch.Tensor(np.concatenate((out[:, self.seqPredict+1:, :], In[:, self.seqPredict+1:, :], number[:, self.seqPredict+1:, :]), axis=2)).float()
 
-            bucketlist = major_buckets[-2:] + minor_buckets[-2:] + inter_bucket + end_buckets[:2]
-
+            return inputs,outputs
         else:
             print("wrong mod to generate data !")
             raise RuntimeError('MOD ERROR')
-
-        In = np.array(self.car_in.loc[timelist, bucketlist].T)[:, :, np.newaxis]
-        out = np.array(self.car_out.loc[timelist, bucketlist].T)[:, :, np.newaxis]
-        number = np.array(self.number.loc[timelist, bucketlist].T)[:, :, np.newaxis]
-            
-        inputs = torch.Tensor(np.concatenate((out[:, :-1, :], In[:, :-1, :], number[:, :-1, :]), axis=2)).float()
-        outputs = torch.Tensor(np.concatenate((out[:, self.seqPredict+1:, :], In[:, self.seqPredict+1:, :], number[:, self.seqPredict+1:, :]), axis=2)).float()
-
-        return [inputs, outputs]
 
     def __len__(self):
 
@@ -152,5 +157,7 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
 
-    dataset = data_generator(mod=mod, args=args)
-    print(len(dataset))
+    dataset = traffic_data(mod='seg', topology=seg_topology, args=args)
+    inputs,outputs = dataset[4]
+    print(inputs.shape)
+    print(outputs.shape)
