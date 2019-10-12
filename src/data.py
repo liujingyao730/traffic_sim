@@ -98,6 +98,8 @@ class traffic_data(Dataset):
         self.filter_data()
 
     def __getitem__(self, index):
+        # seg mod下返回的数据是(spatial, temporal, feature)
+        # inter mod下返回的数据是(temporal, n_unit, feature)
         
         if self.mod == "seg":
             
@@ -121,12 +123,12 @@ class traffic_data(Dataset):
             time = index * self.sim_step
             timelist = [i*self.delta_T+time for i in range(self.temporal_length+1)]
 
-            In = np.array(self.car_in.loc[timelist].T)[:, :, np.newaxis]
-            out = np.array(self.car_out.loc[timelist].T)[:, :, np.newaxis]
-            number = np.array(self.number.loc[timelist].T)[:, :, np.newaxis]
+            In = np.array(self.car_in.loc[timelist])[:, :, np.newaxis]
+            out = np.array(self.car_out.loc[timelist])[:, :, np.newaxis]
+            number = np.array(self.number.loc[timelist])[:, :, np.newaxis]
             
-            inputs = torch.Tensor(np.concatenate((out[:, :-1, :], In[:, :-1, :], number[:, :-1, :]), axis=2)).float()
-            outputs = torch.Tensor(np.concatenate((out[:, self.seqPredict+1:, :], In[:, self.seqPredict+1:, :], number[:, self.seqPredict+1:, :]), axis=2)).float()
+            inputs = torch.Tensor(np.concatenate((out[:-1, :, :], In[:-1, :, :], number[:-1, :, :]), axis=2)).float()
+            outputs = torch.Tensor(np.concatenate((out[self.seqPredict+1:, :, :], In[self.seqPredict+1:, :, :], number[self.seqPredict+1:, :, :]), axis=2)).float()
 
             return inputs,outputs
         else:
@@ -157,7 +159,7 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
 
-    dataset = traffic_data(mod='seg', topology=seg_topology, args=args)
+    dataset = traffic_data(mod='inter', topology=inter_topology, args=args)
     inputs,outputs = dataset[4]
     print(inputs.shape)
     print(outputs.shape)

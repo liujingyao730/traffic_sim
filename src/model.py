@@ -449,3 +449,49 @@ class loss_function(nn.Module):
             loss = torch.mean(loss)
 
         return loss
+
+class seg_model(nn.Module):
+    '''
+    全连接式的路口形式
+    '''
+    def __init__(self, args):
+        super().__init__()
+
+        self.n_unit = args["n_unit"]
+        self.input_feature = args["input_size"]
+        self.hidden_size = args["hidden_size"]
+
+        self.RNNlayer = nn.LSTM(self.input_feature*self.n_unit, self.hidden_size, batch_first=True)
+        self.outputlayer = nn.Linear(self.hidden_size, self.input_feature*self.n_unit)
+
+    def forward(self, inputs, hidden=None):
+        
+        [batch_size, temporal_lenghth, n_unit, input_feature] = inputs.shape
+
+        inputs = inputs.view(batch_size, temporal_lenghth, n_unit*input_feature)
+
+        if hidden is None:
+            h_0 = inputs.data.new(1, batch_size, self.hidden_size).fill_(0).float()
+            c_0 = inputs.data.new(1, batch_size, self.hidden_size).fill_(0).float()
+        else:
+            h_0 = hidden[0]
+            c_0 = hidden[0]
+
+        output, _ =self.RNNlayer(inputs, (h_0, c_0))
+        
+        output = self.outputlayer(output)
+
+        output = output.view(batch_size, temporal_lenghth, n_unit, input_feature)
+
+        return output
+
+if __name__ == "__main__":
+    
+    args = {}
+    
+    args["n_unit"] = 7
+    args["input_size"] = 3
+    args["hidden_size"] = 64
+    inputs = torch.randn(5, 8, 7, 3)
+    model = seg_model(args)
+    print(model(inputs).shape)
