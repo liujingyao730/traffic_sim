@@ -279,20 +279,17 @@ class inter_model(nn.Module):
 
         self.cell = nn.LSTMCell(self.input_feature*self.n_unit, self.hidden_size*self.n_unit)        
 
-    def forward(self, inputs, hidden=None):
+    def forward(self, inputs, hidden):
         
         [batch_size, n_unit, input_feature] = inputs.shape
 
         assert n_unit == self.n_unit and input_feature == self.input_feature
 
-        inputs = inputs.view(batch_size, n_unit*input_feature)
+        [h_0, c_0] = hidden
 
-        if hidden is None:
-            h_0 = inputs.data.new(batch_size, self.hidden_size*self.n_unit).fill_(0).float()
-            c_0 = inputs.data.new(batch_size, self.hidden_size*self.n_unit).fill_(0).float()
-        else:
-            h_0 = hidden[0]
-            c_0 = hidden[0]
+        inputs = inputs.view(batch_size, n_unit*input_feature)
+        h_0 = h_0.view(batch_size, n_unit*self.hidden_size)
+        c_0 = c_0.view(batch_size, n_unit*self.hidden_size)
 
         h, c = self.cell(inputs, (h_0, c_0))
 
@@ -312,34 +309,36 @@ class seg_model(nn.Module):
 
         self.input_size = args["input_size"]
         self.hidden_size = args["hidden_size"]
-        self.t_predict = args["t_predict"]
 
-        self.cell = MD_lstm_cell(self.input_size, self.hidden_size)
-
-    def forward(self, inputs, hidden=None):
+        self.cell = torch.nn.LSTMCell(self.input_size, self.hidden_size)
         
-        [batch_size, spatial_size, input_size] = inputs.shape
+        self.sigma = torch.nn.Sigmoid()
+
+        self.spatial_forget = torch.nn.Linear(2*self.hidden_size, self.hidden_size)
+        self.spatial_input = torch.nn.Linear(2*self.hidden_size, self.hidden_size)
+
+    def forward(self, inputs, h_s_t, c_s_t, h_after_t, h_before_t):
+        
+        [batch_size, input_size] = inputs.shape
+        [batch_size, hidden_size] = h_s_t.shape
 
         assert input_size == self.input_size
 
-        if hidden is None:
-            h_0 = inputs.data.new(batch_size, spatial_size, self.hidden_size).fill_(0).float()
-            c_0 = inputs.data.new(batch_size, spatial_size-2, self.hidden_size).fill_(0).float()
-        else:
-            h_0 = hidden[0]
-            c_0 = hidden[1]
+        spatial_hidden = torch.cat((h_after_t, h_before_t), dim=1)
+        spatial_i = self.spatial_input(spatial_hidden)
+        spatial_f = self.spatial_forget(spatial_hidden)
+        spatial_i = self.sigma(spatial_i)
+        spatial_f = self.sigma(spatial_f)
 
-        h_s_t = h_0[:, 1:-1, :].contiguous()
-        h_after_t = h_0[:, 2:, :].contiguous()
-        h_before_t = h_0[:, :-2, :].contiguous()
-        
-        h_s_tp, c_s_tp = self.cell(inputs[:, 1:-1, :].contiguous(), h_s_t, c_0, h_after_t, h_before_t)
+        c_s_t = c_s_t * spatial_f
+        h_s_t = h_s_t * spatial_i
+
+        h_s_tp, c_s_tp = self.cell(inputs, (h_s_t, c_s_t))
 
         return h_s_tp, c_s_tp
 
 
-
-class network(nn.Module):
+class network_model(nn.Module):
 
     def __init__(self, args):
         
@@ -352,13 +351,36 @@ class network(nn.Module):
 
         self.segment_model = seg_model(args)
         self.intersection_model = inter_model(args)
-        self.outputlayer = FCNet([self.hidden_size, self.output_hidden_size, self.output_size])
+        self.outputlayer = FCNet(layerSize=[self.hidden_size, self.output_hidden_size, self.output_size])
 
-    def forward(self, seg_data, topology):
+    def forward(self, seg_data, inter_data, h_seg=None, h_int=None):
+
+        [number_buckets, input_size] = seg_data.shape
+        [number_inter, n_units, input_size] = inter_data.shape
         
-        raise NotImplementedError
+        if h_seg is None:
+            h_s_t = Variable(seg_data.data.new(number_buckets, self.hidden_size).fill_(0).float())
+            c_s_t = Variable(seg_data.data.new(number_buckets, self.hidden_size).fill_(0).float())
+            h_after_t = Variable(seg_data.data.new(number_buckets, self.hidden_size).fill_(0).float())
+            h_before_t = Variable(seg_data.data.new(number_buckets, self.hidden_size).fill_(0).float())
+        else:
+            [h_s_t, c_s_t, h_after_t, h_before_t] = h_seg
 
-        return output
+        if h_int is None:
+            h_inter = Variable(inter_data.data.new(number_inter, n_units, self.hidden_size).fill_(0).float())
+            c_inter = Variable(inter_data.data.new(number_inter, n_units, self.hidden_size).fill_(0).float())
+        else:
+            [h_inter, c_inter] = h_int
+
+        h_s_tafter, c_s_tbefore = self.segment_model(seg_data, h_s_t, c_s_t, h_after_t, h_before_t)
+        h_inter, c_inter = self.intersection_model(inter_data, [h_inter, c_inter])
+
+        seg_output = self.outputlayer(h_s_tafter)
+        inter_output = self.outputlayer(h_inter)
+        h_seg = [h_s_tafter,c_s_tbefore]
+        h_int = [h_inter, c_inter]
+
+        return [seg_output, inter_output], [h_seg, h_int]
 
 if __name__ == "__main__":
     
@@ -367,7 +389,14 @@ if __name__ == "__main__":
     args["n_unit"] = 7
     args["input_size"] = 3
     args["hidden_size"] = 64
+    args["output_hidden_size"] = 16
     args["t_predict"] = 4
-    inputs = torch.randn(5, 7, 3)
-    model = seg_model(args)
-    print(model(inputs)[1].shape)
+    model = network(args)
+
+    seg_inputs = torch.randn(32, 3)
+    inter_inputs = torch.randn(3, 7, 3)
+    [[seg_output, inter_output], [h_seg, h_inter]] = model(seg_inputs, inter_inputs)
+    print(seg_output.shape)
+    print(inter_output.shape)
+    print(h_seg)
+    print(h_inter)
