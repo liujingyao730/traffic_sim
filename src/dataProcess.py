@@ -134,8 +134,7 @@ def bucketId(pos, length):
 
 
 def bucketRecord(netXml, fcdXml, length, carInFile=conf.carInDefualt, 
-                carOutFile=conf.carOutDefualt, numberFile=conf.numberDefualt,
-                speedFile=conf.speedDefualt):
+                carOutFile=conf.carOutDefualt, numberFile=conf.numberDefualt):
     '''这里还是采用和基于路段的中间数据的格式
     但不同的是这里是基于每个小bucket的流入流出，所以需要按照bucket进行存储
     每个bucket的命名规则是三位数字，百位代表车道数，十位与各位代表编号，从小到大

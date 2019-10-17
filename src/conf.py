@@ -4,41 +4,19 @@ import os
 curPath = os.path.abspath(os.path.dirname(__file__))
 rootPath = os.path.dirname(curPath)
 
-dataPath = rootPath + "/dataFile"
-fcdOutputPath = dataPath + "/fcdOutput"
-simConfigurePath = dataPath + "/simConfigure"
-midDataPath = dataPath + "/midData"
-modelPath = dataPath + "/model"
-picsPath = dataPath + "/pics"
-resultPath = dataPath + "/result"
-logPath = dataPath + "/log"
+dataPath = os.path.join(rootPath, 'dataFile')
+fcdOutputPath = os.path.join(dataPath, 'fcdOutput')
+simConfigurePath = os.path.join(dataPath, 'simConfigure')
+midDataPath = os.path.join(dataPath, 'midData')
+modelPath = os.path.join(dataPath, 'model')
+picsPath = os.path.join(dataPath, 'pics')
+logPath = os.path.join(dataPath, 'log')
+configPath = os.path.join(dataPath, 'config')
 
-firstStageSim = simConfigurePath + "/firstStageSim"
-firstStageFcd = fcdOutputPath + "/firstStage"
-
-# debug文件
-fcdDebug = fcdOutputPath + "/debug.xml"
-netDebug = firstStageSim + "/basic.net.xml"
-carInDebug = midDataPath + "/debugCarIn.csv"
-carOutDebug = midDataPath + "/debugCarOut.csv"
-numberDebug = midDataPath + "/debugNumber.csv"
-laneNumberDebug = midDataPath + "/debugLaneNumber.csv"
-modelDebug = modelPath + "/debugModel.pth"
-
-# 一些固定输出的文件，会覆盖，注意及时保存
-fcdDefualt = firstStageFcd + "/0.5_0.5_7200.xml"
-carInDefualt = midDataPath + "/defualtCarIn.csv"
-carOutDefualt = midDataPath + "/defualtCarOut.csv"
-numberDefualt = midDataPath + "/defualtNumber.csv"
-speedDefualt = midDataPath + "/defualtSpeed.csv"
-laneNumberDefualt = midDataPath + "/defualtLaneNumeber.csv"
-modelDefualt = modelPath + "/defualtModel.pth"
-
-# 
-
-# 关心的路段
-# edges = ["1", "2", "3", "4", "5", "6"] # 8-20改 之后的数据是单双车道
-# laneNumber = [1, 2, 3, 4, 5, 6]
+laneNumberDefualt = os.path.join(midDataPath, 'defualtLaneNumber.csv')
+carInDefualt = os.path.join(midDataPath, 'defualtCarIn.csv')
+carOutDefualt = os.path.join(midDataPath, 'defualtCarOut.csv')
+numberDefualt = os.path.join(midDataPath, 'defualtNumber.csv')
 
 edges = ['1', '2']
 laneNumber = [1, 2]
@@ -61,6 +39,7 @@ args["trainSimStep"] = 0.1
 
 # mask
 args["mask"] = [0.6, 0.85, 0.9, 0.58, 0.54, 0.91, 1.15, 1.25, 1.36, 6.45, 13.35, 48.75, 890]
+#args['mask'] = [0.55, 0.8, 0.88, 0.78, 0.92, 1.66, 2.23, 2.39, 3.04, 2.86, 2.36, 1.43, 1]
 
 # 文件名的生成
 def modelName(prefix):

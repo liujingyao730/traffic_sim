@@ -500,3 +500,39 @@
 > ![new with simerror error](dataFile/pics/up_with_simerror_newerror.png)
 > * 今天遇到一个比较头疼的问题，整个路网的数据结构比较麻烦，是个复合的结构，用两个字典来表示，一个是拓扑结构，预先写定，一层的键值是路口标号，二层的键值是路段的性质（major, minor, inter, end）;另一个是每个路段的数据，键值是每一个路段的标号，对应值是一个包含着这个路段每一时刻每一个小段的输入值的张量
 > * 另外确定了整体模型的结构，两个分的基础模型一个是路段的模型，一个是路口的模型，这两个模型分别给出相同维度的隐层变量，同时由同一个全连接层得到实际的输出（这部分可能要根据实际实验结果调整）。这部分今天都已经写完
+
+> ## 10-14
+> * 周末训练了加入flow_loss的模型和base_line的模型，结果是这样：
+> base line
+> ![base line](dataFile/pics/up_new_base_line_heat.png)
+> with flow loss
+> ![with flow loss](dataFile/pics/up_flow_loss_1_heat.png)
+> * 结果发现flow loss意外的好……，这下最终的模型参数选择上又得多训练一轮来看看结果怎么样了
+> * 确定下来，网络模型内部不涉及到任何的网络拓扑结构的处理，输入到网络内部的就是已经完全理顺好网络结构的规整的张量，有四个参数：seg_data, h_seg ，这两个是路段模型中的输入，seg_data(number_buckets, input_size)是这个时刻内所有路段bucket的输入，h_seg是一个列表，四个元素都是(number_buckets, hidden_size)分别表示当前节点的隐层状态，当前节点的细胞状态，前方节点的隐层状态，后方节点的隐层状态；inter_data, h_int，这两个是路口模型的输入，inter_data(n_units, input_size)是这个时刻内每一个路口相关节点的输入，h_int包含两个元素，都是(n_units, hidden_size)分别表示隐层状态和细胞状态
+
+> ## 10-15
+> * 今天主要集中精力把周末给王老师汇报的ppt做好，先不推进模型代码部分了
+> * 昨天训练的两个模型结果是这样：
+> with pool
+> ![with pool error](dataFile/pics/up_with_pool_error.png)
+> ![with pool heat](dataFile/pics/up_new_with_pool_heat.png)
+> with all
+> ![with all error](dataFile/pics/up_with_all_error.png)
+> ![with all heat](dataFile/pics/up_new_with_all_heat.png)
+> * 整体上看来不是有越多的技巧就可以效果越好，目前看来是只有flow的效果是最好
+
+> ## 10-16
+> * 昨天训练完成了带有flow的混合方法模型，结果如下：
+> with flow with sim error:
+> ![with flow with sim error](dataFile/pics/up_with_simerror_with_flow_heat.png)
+> with flow with mask:
+> ![with flow with all](dataFile/pics/up_with_flow_with_all_heat.png)
+
+> ## 10-17
+> * 昨天训练了单独带有数据增强和所有都带上的模型，结果是这样的：
+> with new mask:
+> ![with new mask](dataFile/pics/up_with_new_mask_heat.png)
+> with new mask flow simerror
+> ![with all](dataFile/pics/up_with_flow_mask_simerror_heat.png)
+> * 目前看来比较好的结果是单独带数据增强的和带flow与sim error的，后者效果更好一些，之后的实验中可以两者交替做尝试
+> * 今天是和dataloader搏斗的一天，调整了很久，终于确定了一个可能可以的方案，先尝试一下

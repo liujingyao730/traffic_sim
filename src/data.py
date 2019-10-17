@@ -8,13 +8,16 @@ import random
 from torch.autograd import Variable
 from torch.utils.data import Dataset
 
+import time as ttt
 import argparse
 
 import conf 
 
 seg_topology = [1, 2]
 inter_topology = {"major":2, "minor":4, "end":7, "inter":6}
-co_toplogy ={'inter1':{"major":2, "minor":4, "end":7, "inter":6}, 'inter2':{"major":3, "minor":1, "end":8, "inter":5}}
+co_topology ={'inter1':{"major":2, "minor":4, "end":7, "inter":6}, 'inter2':{"major":3, "minor":1, "end":8, "inter":5}}
+seg = [1, 2, 3, 4, 7, 8]
+inter_node = [5, 6]
 fold = conf.midDataPath
 
 class traffic_data(Dataset):
@@ -26,10 +29,10 @@ class traffic_data(Dataset):
 
         super().__init__()
 
-        self.sim_step = args.sim_step
-        self.delta_T = args.delta_T
-        self.temporal_length = args.temporal_length
-        self.seqPredict = args.t_predict
+        self.sim_step = args["sim_step"]
+        self.delta_T = args["delta_T"]
+        self.temporal_length = args["temporal_length"]
+        self.seqPredict = args["t_predict"]
 
         self.mod = mod
         self.topology = topology
@@ -41,6 +44,7 @@ class traffic_data(Dataset):
         self.all_car_in = pd.read_csv(self.car_in_file, index_col=0).dropna(axis=0)
         self.all_car_out = pd.read_csv(self.car_out_file, index_col=0).dropna(axis=0)
         self.all_number = pd.read_csv(self.number_file, index_col=0)
+        self.time_number = len(self.all_car_in.index) - self.temporal_length * self.delta_T * self.sim_step
 
         self.car_in = pd.DataFrame()
         self.car_out = pd.DataFrame()
@@ -80,7 +84,7 @@ class traffic_data(Dataset):
             self.car_out = self.all_car_out[bucketlist]
             self.number = self.all_number[bucketlist]
         elif self.mod == 'cooperate':
-            return
+            self.inter_number = len(self.topology)
         else:
             print("wrong mod to generate data !")
             raise RuntimeError('MOD ERROR')
@@ -109,51 +113,56 @@ class traffic_data(Dataset):
             edge = self.topology[index % self.edge_number]
             time = int(index / self.edge_number) * self.sim_step
             
-            bucketlist = [item for item in self.car_in.columns if int(int(item)/100)==edge]
-            timelist = [i*self.delta_T+time for i in range(self.temporal_length+1)]
+            timelist = [round(i*self.delta_T+time, 1) for i in range(self.temporal_length+1)]
 
-            In = np.array(self.car_in.loc[timelist, bucketlist].T)[:, :, np.newaxis]
-            out = np.array(self.car_out.loc[timelist, bucketlist].T)[:, :, np.newaxis]
-            number = np.array(self.number.loc[timelist, bucketlist].T)[:, :, np.newaxis]
+            In = np.array(self.car_in.loc[timelist].T)[:, :, np.newaxis]
+            out = np.array(self.car_out.loc[timelist].T)[:, :, np.newaxis]
+            number = np.array(self.number.loc[timelist].T)[:, :, np.newaxis]
             
-            inputs = torch.Tensor(np.concatenate((out[:, :-1, :], In[:, :-1, :], number[:, :-1, :]), axis=2)).float()
-            outputs = torch.Tensor(np.concatenate((out[:, self.seqPredict+1:, :], In[:, self.seqPredict+1:, :], number[:, self.seqPredict+1:, :]), axis=2)).float()
+            data = torch.Tensor(np.concatenate((out, In, number), axis=2)).float()
 
-            return inputs, outputs
+            return data
             
         elif self.mod == "inter":
         
             time = index * self.sim_step
-            timelist = [i*self.delta_T+time for i in range(self.temporal_length+1)]
+            timelist = [round(i*self.delta_T+time, 1) for i in range(self.temporal_length+1)]
 
             In = np.array(self.car_in.loc[timelist])[:, :, np.newaxis]
             out = np.array(self.car_out.loc[timelist])[:, :, np.newaxis]
             number = np.array(self.number.loc[timelist])[:, :, np.newaxis]
             
-            inputs = torch.Tensor(np.concatenate((out[:-1, :, :], In[:-1, :, :], number[:-1, :, :]), axis=2)).float()
-            outputs = torch.Tensor(np.concatenate((out[self.seqPredict+1:, :, :], In[self.seqPredict+1:, :, :], number[self.seqPredict+1:, :, :]), axis=2)).float()
+            data = torch.Tensor(np.concatenate((out, In, number), axis=2)).float()
 
-            return inputs,outputs
+            return data
 
         elif self.mod == "cooperate":
             
-            seg_data = {}
-            time = index * self.sim_step
-            timelist = [i*self.delta_T+time for i in range(self.temporal_length+1)]
-            
-            for intersect_topology in self.topology.values():
-                for edge in intersect_topology.values():
-                    bucketlist = [item for item in self.all_car_in.columns if int(int(item)/100)==edge]
-                    In = np.array(self.all_car_in.loc[timelist, bucketlist])[:, :, np.newaxis]
-                    out = np.array(self.all_car_out.loc[timelist, bucketlist])[:, :, np.newaxis]
-                    number = np.array(self.all_number.loc[timelist, bucketlist])[:, :, np.newaxis]
+            seg_data = []
+            inter_point = list(self.topology.keys())[index % self.inter_number]
+            time = int(index / self.inter_number) * self.sim_step
+            time_list = [i*self.delta_T+time for i in range(self.temporal_length+1)]
+            edge_list = list(self.topology[inter_point].values())
+            buckets = {edge:[] for edge in edge_list}
+            bucket_list = []
+            bucket_number = []
+            for bucket in self.all_car_in.columns:
+                edge = int(int(bucket)/100)
+                if edge in edge_list:
+                    buckets[edge].append(bucket)
 
-                    inputs = torch.Tensor(np.concatenate((out[:-1, :, :], In[:-1, :, :], number[:-1, :, :]), axis=2)).float()
-                    outputs = torch.Tensor(np.concatenate((out[self.seqPredict+1:, :, :], In[self.seqPredict+1:, :, :], number[self.seqPredict+1:, :, :]), axis=2)).float()
+            for edge in edge_list:
+                buckets[edge].sort()
+                bucket_number.append(len(buckets[edge]))
+                bucket_list.extend(buckets[edge])
 
-                    seg_data[edge] = [inputs, outputs]
+            In = np.array(self.all_car_in.loc[time_list, bucket_list])[:, :, np.newaxis]
+            out = np.array(self.all_car_out.loc[time_list, bucket_list])[:, :, np.newaxis]
+            number = np.array(self.all_number.loc[time_list, bucket_list])[:, :, np.newaxis]
 
-            return seg_data
+            data = torch.Tensor(np.concatenate((out, In, number), axis=2)).float()
+
+            return data, bucket_number
 
         else:
             print("wrong mod to generate data !")
@@ -162,9 +171,11 @@ class traffic_data(Dataset):
     def __len__(self):
 
         if self.mod == 'seg':
-            length = self.edge_number * (len(self.car_in.index) - self.temporal_length * self.delta_T * self.sim_step)
-        elif self.mod == 'inter' or self.mod == 'cooperate':
-            length = len(self.car_in.index) - self.temporal_length * self.delta_T * self.sim_step
+            length = self.edge_number * self.time_number
+        elif self.mod == 'inter' :
+            length = self.time_number
+        elif self.mod == 'cooperate':
+            length = self.inter_number * self.time_number
         else:
             print("wrong mod to generate data !")
             raise RuntimeError('MOD ERROR')
@@ -174,15 +185,12 @@ class traffic_data(Dataset):
 
 if __name__ == "__main__":
     
-    parser = argparse.ArgumentParser()
-    
-    parser.add_argument('--t_predict', type=int, default=4)
-    parser.add_argument('--temporal_length', type=int, default=8)
-    parser.add_argument('--sim_step', type=float, default=0.1)
-    parser.add_argument('--delta_T', type=int, default=10)
-    
-    args = parser.parse_args()
+    args = {}
+    args["t_predict"] = 4
+    args["temporal_length"] = 8
+    args["sim_step"] = 0.1
+    args["delta_T"] = 10
 
-    dataset = traffic_data(mod='cooperate', topology=co_toplogy, args=args)
-    seg_data = dataset[4]
-    print(seg_data)
+    dataset = traffic_data(mod='cooperate', topology=co_topology, args=args)
+    a = dataset[10]
+    print(len(dataset))

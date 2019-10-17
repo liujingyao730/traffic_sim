@@ -69,6 +69,7 @@ def train(args):
     if args["use_cuda"]:
         net = net.cuda()
         criterion = criterion.cuda()
+        sim_error_criterion = sim_error_criterion.cuda()
         pool = pool.cuda()
         
         # 初始化优化器
@@ -210,7 +211,6 @@ def train(args):
             optimizer.step()
 
             loss_meter.add(loss.item())
-
                 
             if i % args["show_every"] == 0:
                 print("batch{}, train_loss = {:.3f}".format(i, loss_meter.value()[0]))

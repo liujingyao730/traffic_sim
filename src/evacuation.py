@@ -44,8 +44,8 @@ def eva(args):
     load_directory = os.path.join(conf.logPath, args["model_prefix"])
     eva_prefix = args["eva_prefix"]
     eva_generator = batchGenerator(eva_prefix, args)
-    eva_generator.CurrentTime = 0
-    eva_generator.CurrentEdgePoint = 1
+    eva_generator.CurrentTime = args["current_time"]
+    eva_generator.CurrentEdgePoint = args["edge_point"]
 
     eva_generator.generateNewMatrix()
 

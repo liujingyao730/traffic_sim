@@ -353,34 +353,13 @@ class network_model(nn.Module):
         self.intersection_model = inter_model(args)
         self.outputlayer = FCNet(layerSize=[self.hidden_size, self.output_hidden_size, self.output_size])
 
-    def forward(self, seg_data, inter_data, h_seg=None, h_int=None):
+    def forward(self, seg_data, inter_data, bucket_number):
 
-        [number_buckets, input_size] = seg_data.shape
-        [number_inter, n_units, input_size] = inter_data.shape
+        [batch_size, spatial, temporal, input_size] = seg_data.shape
         
-        if h_seg is None:
-            h_s_t = Variable(seg_data.data.new(number_buckets, self.hidden_size).fill_(0).float())
-            c_s_t = Variable(seg_data.data.new(number_buckets, self.hidden_size).fill_(0).float())
-            h_after_t = Variable(seg_data.data.new(number_buckets, self.hidden_size).fill_(0).float())
-            h_before_t = Variable(seg_data.data.new(number_buckets, self.hidden_size).fill_(0).float())
-        else:
-            [h_s_t, c_s_t, h_after_t, h_before_t] = h_seg
+        raise NotImplementedError
 
-        if h_int is None:
-            h_inter = Variable(inter_data.data.new(number_inter, n_units, self.hidden_size).fill_(0).float())
-            c_inter = Variable(inter_data.data.new(number_inter, n_units, self.hidden_size).fill_(0).float())
-        else:
-            [h_inter, c_inter] = h_int
-
-        h_s_tafter, c_s_tbefore = self.segment_model(seg_data, h_s_t, c_s_t, h_after_t, h_before_t)
-        h_inter, c_inter = self.intersection_model(inter_data, [h_inter, c_inter])
-
-        seg_output = self.outputlayer(h_s_tafter)
-        inter_output = self.outputlayer(h_inter)
-        h_seg = [h_s_tafter,c_s_tbefore]
-        h_int = [h_inter, c_inter]
-
-        return [seg_output, inter_output], [h_seg, h_int]
+        return 
 
 if __name__ == "__main__":
     
