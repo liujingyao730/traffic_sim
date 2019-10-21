@@ -15,7 +15,7 @@ import conf
 
 seg_topology = [1, 2]
 inter_topology = {"major":2, "minor":4, "end":7, "inter":6}
-co_topology ={'inter1':{"major":2, "minor":4, "end":7, "inter":6}, 'inter2':{"major":3, "minor":1, "end":8, "inter":5}}
+co_topology =[{"major":2, "minor":4, "end":7, "inter":6}, {"major":3, "minor":1, "end":8, "inter":5}]
 seg = [1, 2, 3, 4, 7, 8]
 inter_node = [5, 6]
 fold = conf.midDataPath
@@ -84,23 +84,40 @@ class traffic_data(Dataset):
             self.car_out = self.all_car_out[bucketlist]
             self.number = self.all_number[bucketlist]
         elif self.mod == 'cooperate':
-            self.inter_number = len(self.topology)
+
+            major_buckets = [item for item in self.all_car_in.columns if int(int(item)/100)==self.topology['major']]
+            minor_buckets = [item for item in self.all_car_in.columns if int(int(item)/100)==self.topology['minor']]
+            end_buckets = [item for item in self.all_car_in.columns if int(int(item)/100)==self.topology['end']]
+            inter_bucket = [item for item in self.all_car_in.columns if int(int(item)/100)==self.topology['inter']]
+            
+            major_buckets.sort()
+            minor_buckets.sort()
+            end_buckets.sort()
+
+            bucketlist = major_buckets + minor_buckets + end_buckets + inter_bucket
+            self.car_in = self.all_car_in[bucketlist]
+            self.car_out = self.all_car_out[bucketlist]
+            self.number = self.all_number[bucketlist]
+            self.bucket_number = [len(major_buckets), len(major_buckets)+len(minor_buckets), 
+                                len(major_buckets)+len(minor_buckets)+len(end_buckets), 
+                                len(major_buckets)+len(minor_buckets)+len(end_buckets)+len(inter_bucket)]
         else:
             print("wrong mod to generate data !")
             raise RuntimeError('MOD ERROR')
 
-    def reload(self, data_prefix='default', fold=fold, mod='seg', topology=seg_topology):
+    def reload(self, data_prefix=None, fold=fold, mod='seg', topology=seg_topology):
 
         self.mod = mod
         self.topology = topology
 
-        self.car_in_file = os.path.join(fold, data_prefix+'CarIn.csv')
-        self.car_out_file = os.path.join(fold, data_prefix+'CarOut.csv')
-        self.number_file = os.path.join(fold, data_prefix+'Number.csv')
+        if data_prefix is not None:
+            self.car_in_file = os.path.join(fold, data_prefix+'CarIn.csv')
+            self.car_out_file = os.path.join(fold, data_prefix+'CarOut.csv')
+            self.number_file = os.path.join(fold, data_prefix+'Number.csv')
 
-        self.all_car_in = pd.read_csv(self.car_in_file, index_col=0).dropna(axis=0)
-        self.all_car_out = pd.read_csv(self.car_out_file, index_col=0).dropna(axis=0)
-        self.all_number = pd.read_csv(self.number_file, index_col=0)
+            self.all_car_in = pd.read_csv(self.car_in_file, index_col=0).dropna(axis=0)
+            self.all_car_out = pd.read_csv(self.car_out_file, index_col=0).dropna(axis=0)
+            self.all_number = pd.read_csv(self.number_file, index_col=0)
 
         self.filter_data()
 
@@ -139,30 +156,16 @@ class traffic_data(Dataset):
         elif self.mod == "cooperate":
             
             seg_data = []
-            inter_point = list(self.topology.keys())[index % self.inter_number]
-            time = int(index / self.inter_number) * self.sim_step
+            time = index * self.sim_step
             time_list = [i*self.delta_T+time for i in range(self.temporal_length+1)]
-            edge_list = list(self.topology[inter_point].values())
-            buckets = {edge:[] for edge in edge_list}
-            bucket_list = []
-            bucket_number = []
-            for bucket in self.all_car_in.columns:
-                edge = int(int(bucket)/100)
-                if edge in edge_list:
-                    buckets[edge].append(bucket)
 
-            for edge in edge_list:
-                buckets[edge].sort()
-                bucket_number.append(len(buckets[edge]))
-                bucket_list.extend(buckets[edge])
-
-            In = np.array(self.all_car_in.loc[time_list, bucket_list])[:, :, np.newaxis]
-            out = np.array(self.all_car_out.loc[time_list, bucket_list])[:, :, np.newaxis]
-            number = np.array(self.all_number.loc[time_list, bucket_list])[:, :, np.newaxis]
+            In = np.array(self.car_in.loc[time_list])[:, :, np.newaxis]
+            out = np.array(self.car_out.loc[time_list])[:, :, np.newaxis]
+            number = np.array(self.number.loc[time_list])[:, :, np.newaxis]
 
             data = torch.Tensor(np.concatenate((out, In, number), axis=2)).float()
 
-            return data, bucket_number
+            return data
 
         else:
             print("wrong mod to generate data !")
@@ -175,7 +178,7 @@ class traffic_data(Dataset):
         elif self.mod == 'inter' :
             length = self.time_number
         elif self.mod == 'cooperate':
-            length = self.inter_number * self.time_number
+            length = self.time_number
         else:
             print("wrong mod to generate data !")
             raise RuntimeError('MOD ERROR')
