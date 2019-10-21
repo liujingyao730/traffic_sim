@@ -44,7 +44,7 @@ class traffic_data(Dataset):
         self.all_car_in = pd.read_csv(self.car_in_file, index_col=0).dropna(axis=0)
         self.all_car_out = pd.read_csv(self.car_out_file, index_col=0).dropna(axis=0)
         self.all_number = pd.read_csv(self.number_file, index_col=0)
-        self.time_number = len(self.all_car_in.index) - self.temporal_length * self.delta_T * self.sim_step
+        self.time_number = len(self.all_car_in.index) - self.temporal_length * self.delta_T / self.sim_step
 
         self.car_in = pd.DataFrame()
         self.car_out = pd.DataFrame()
@@ -98,9 +98,10 @@ class traffic_data(Dataset):
             self.car_in = self.all_car_in[bucketlist]
             self.car_out = self.all_car_out[bucketlist]
             self.number = self.all_number[bucketlist]
-            self.bucket_number = [len(major_buckets), len(major_buckets)+len(minor_buckets), 
-                                len(major_buckets)+len(minor_buckets)+len(end_buckets), 
-                                len(major_buckets)+len(minor_buckets)+len(end_buckets)+len(inter_bucket)]
+            self.bucket_number = [len(major_buckets)-2, len(major_buckets)-1,
+                                len(major_buckets)+len(minor_buckets)-2, len(major_buckets)+len(minor_buckets)-1,
+                                len(major_buckets)+len(minor_buckets), len(major_buckets)+len(minor_buckets)+1,
+                                len(major_buckets)+len(minor_buckets)+len(end_buckets)]
         else:
             print("wrong mod to generate data !")
             raise RuntimeError('MOD ERROR')
@@ -156,8 +157,8 @@ class traffic_data(Dataset):
         elif self.mod == "cooperate":
             
             seg_data = []
-            time = index * self.sim_step
-            time_list = [i*self.delta_T+time for i in range(self.temporal_length+1)]
+            time = round(index * self.sim_step)
+            time_list = [round(i*self.delta_T+time, 1)for i in range(self.temporal_length+1)]
 
             In = np.array(self.car_in.loc[time_list])[:, :, np.newaxis]
             out = np.array(self.car_out.loc[time_list])[:, :, np.newaxis]
@@ -194,6 +195,6 @@ if __name__ == "__main__":
     args["sim_step"] = 0.1
     args["delta_T"] = 10
 
-    dataset = traffic_data(mod='cooperate', topology=co_topology, args=args)
-    a = dataset[10]
+    dataset = traffic_data(mod='cooperate', topology=co_topology[0], args=args)
+    a = dataset[0]
     print(len(dataset))
