@@ -357,7 +357,6 @@ class network_model(nn.Module):
     def forward(self, co_data, bucket_number):
 
         [batch_size, temporal, spatial, input_size] = co_data.shape
-        all_buckets_number = batch_size*(spatial-1)
 
         inter_place = [1, 3, 4, 6]
         inter_bucket = [bucket_number[1], bucket_number[3], bucket_number[4], bucket_number[6]]
@@ -370,7 +369,7 @@ class network_model(nn.Module):
         h_after_in_all = [i for i in range(spatial) if i not in non_after_bucket]
         h_before_in_all = [i for i in range(spatial) if i not in non_before_bucket]
         h_after_in_seg = list(range(len(seg_bucket) - 1))
-        h_before_in_seg = [i for i in range(len(seg_bucket)) if i not in [bucket_number[0], bucket_number[2]]]
+        h_before_in_seg = [i for i in range(1, len(seg_bucket)) if not i == bucket_number[1]]
 
         seg_data = co_data[:, :, seg_bucket, :]
         inter_data = co_data[:, :, bucket_number, :]
@@ -410,7 +409,7 @@ class network_model(nn.Module):
             h_tmp[:, inter_bucket, :] += h_inter[:, inter_place, :]
             h_tmp[:, seg_bucket, :] += h_seg
             c_tmp[:, inter_bucket, :] += c_inter[:, inter_place, :]
-            h_tmp[:, seg_bucket, :] += c_seg
+            c_tmp[:, seg_bucket, :] += c_seg
 
             h_inter = h_inter * 0
             c_inter = c_inter * 0
@@ -430,9 +429,107 @@ class network_model(nn.Module):
             if time >= self.t_predict:
                 h_output[:, time-self.t_predict, :, :] += h_tmp
 
+            h_tmp = h_tmp * 0
+            c_tmp = c_tmp * 0
+
         output = self.outputlayer(h_output)
 
         return output
+
+    def infer(self, co_data, bucket_number, hidden=None, topology_struct=None):
+
+        [batch_size, spatial, input_size] = co_data.shape
+
+        if topology_struct is None:
+            inter_place = [1, 3, 4, 6]
+            inter_bucket = [bucket_number[1], bucket_number[3], bucket_number[4], bucket_number[6]]
+            seg_bucket = [i for i in range(spatial) if i not in inter_bucket]
+            seg_bucket_number = len(seg_bucket) * batch_size
+            non_after_bucket = [0, bucket_number[1]+1, bucket_number[4], bucket_number[5], bucket_number[6]]
+            non_before_bucket = [bucket_number[0], bucket_number[1], 
+                                bucket_number[2], bucket_number[3], 
+                                bucket_number[6]-1, bucket_number[6]]
+            h_after_in_all = [i for i in range(spatial) if i not in non_after_bucket]
+            h_before_in_all = [i for i in range(spatial) if i not in non_before_bucket]
+            h_after_in_seg = list(range(len(seg_bucket) - 1))
+            h_before_in_seg = [i for i in range(1, len(seg_bucket)) if not i == bucket_number[1]]
+
+            topology_struct = [inter_bucket, inter_place, seg_bucket, seg_bucket_number, 
+                                h_after_in_all, h_after_in_seg, h_before_in_all, h_before_in_seg]
+        else:
+
+            inter_bucket = topology_struct[0]
+            inter_place = topology_struct[1]
+            seg_bucket = topology_struct[2]
+            seg_bucket_number = topology_struct[3]
+            h_after_in_all = topology_struct[4]
+            h_after_in_seg = topology_struct[5]
+            h_before_in_all = topology_struct[6]
+            h_before_in_seg = topology_struct[7]
+
+        inter_data = co_data[:, bucket_number, :]
+        seg_data = co_data[:, seg_bucket, :]
+
+        h_inter = Variable(co_data.data.new(batch_size, len(bucket_number), self.hidden_size).fill_(0).float())
+        c_inter = Variable(co_data.data.new(batch_size, len(bucket_number), self.hidden_size).fill_(0).float())
+        h_seg = Variable(co_data.data.new(batch_size, len(seg_bucket), self.hidden_size).fill_(0).float())
+        c_seg = Variable(co_data.data.new(batch_size, len(seg_bucket), self.hidden_size).fill_(0).float())
+        h_s_t = Variable(co_data.data.new(batch_size, len(seg_bucket), self.hidden_size).fill_(0).float())
+        c_s_t = Variable(co_data.data.new(batch_size, len(seg_bucket), self.hidden_size).fill_(0).float())
+        h_after_t = Variable(co_data.data.new(batch_size, len(seg_bucket), self.hidden_size).fill_(0).float())
+        h_before_t = Variable(co_data.data.new(batch_size, len(seg_bucket), self.hidden_size).fill_(0).float())
+
+        if hidden is None:
+            h_all = Variable(co_data.data.new(batch_size, spatial, self.hidden_size).fill_(0).float())
+            c_all = Variable(co_data.data.new(batch_size, spatial, self.hidden_size).fill_(0).float())
+        else:
+            h_all = hidden[0]
+            c_all = hidden[1]
+
+        h_inter = h_inter * 0
+        c_inter = c_inter * 0
+        h_inter += h_all[:, bucket_number, :]
+        c_inter += c_all[:, bucket_number, :]
+
+        h_s_t = h_s_t * 0
+        h_s_t += h_all[:, seg_bucket, :]
+        c_s_t = c_s_t * 0
+        c_s_t += c_all[:, seg_bucket, :]
+
+        h_after_t = h_after_t * 0
+        h_before_t = h_before_t * 0
+        h_after_t[:, h_after_in_seg, :] += h_all[:, h_after_in_all, :]
+        h_before_t[:, h_before_in_seg, :] += h_all[:, h_before_in_all, :]   
+
+        h_s_t = h_s_t.view(seg_bucket_number, self.hidden_size)
+        c_s_t = c_s_t.view(seg_bucket_number, self.hidden_size)
+        h_seg = h_seg.view(seg_bucket_number, self.hidden_size)
+        c_seg = c_seg.view(seg_bucket_number, self.hidden_size)
+        h_after_t = h_after_t.view(seg_bucket_number, self.hidden_size)
+        h_before_t = h_before_t.view(seg_bucket_number, self.hidden_size)
+
+        h_inter, c_inter = self.intersection_model(inter_data, (h_inter, c_inter))
+        h_seg, c_seg = self.segment_model(seg_data.contiguous().view(seg_bucket_number, input_size), h_s_t, c_s_t, h_after_t, h_before_t)
+
+        h_s_t = h_s_t.view(batch_size, len(seg_bucket), self.hidden_size)
+        c_s_t = c_s_t.view(batch_size, len(seg_bucket), self.hidden_size)
+        h_seg = h_seg.view(batch_size, len(seg_bucket), self.hidden_size)
+        c_seg = c_seg.view(batch_size, len(seg_bucket), self.hidden_size)
+        h_after_t = h_after_t.view(batch_size, len(seg_bucket), self.hidden_size)
+        h_before_t = h_before_t.view(batch_size, len(seg_bucket), self.hidden_size)
+
+        h_all = h_all * 0
+        c_all = c_all * 0
+        h_all[:, inter_bucket, :] += h_inter[:, inter_place, :]
+        h_all[:, seg_bucket, :] += h_seg
+        c_all[:, inter_bucket, :] += c_inter[:, inter_place, :]
+        c_all[:, seg_bucket, :] += c_seg
+
+        outputs = self.outputlayer(h_all)
+        hidden = [h_all, c_all]
+
+        return outputs, hidden, topology_struct
+
 
 if __name__ == "__main__":
     
