@@ -479,7 +479,7 @@ class network_model(nn.Module):
         h_after_t = Variable(co_data.data.new(batch_size, len(seg_bucket), self.hidden_size).fill_(0).float())
         h_before_t = Variable(co_data.data.new(batch_size, len(seg_bucket), self.hidden_size).fill_(0).float())
 
-        if hidden is None:
+        if hidden[0] is None:
             h_all = Variable(co_data.data.new(batch_size, spatial, self.hidden_size).fill_(0).float())
             c_all = Variable(co_data.data.new(batch_size, spatial, self.hidden_size).fill_(0).float())
         else:

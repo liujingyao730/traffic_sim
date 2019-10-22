@@ -1,0 +1,56 @@
+#model:
+input_size: 3
+embedding_size: 8
+hidden_size: 64
+output_hidden_size: 16
+t_predict: 4
+temporal_length: 8
+lane_gate_size: 4
+
+# train
+batch_size: 100
+num_epochs: 3
+show_every: 50
+learing_rate: 0.003
+decay_rate: 0.95
+lambda_param: 0.0005
+use_cuda: true
+flow_loss_weight: 1
+grad_clip: 10
+sample_rate: 1
+sample_decay: 1
+use_mask: true
+use_simerror: true
+gamma: 0.5
+
+# data
+sim_step: 0.1
+delta_T: 10
+cycle: 100
+green_pass: 52
+n_unit: 7
+
+model_prefix: multi_dimension
+
+prefix:
+  - default
+
+test_prefix:
+  - default
+
+mask:
+  - 0.6
+  - 0.85
+  - 0.9
+  - 0.58
+  - 0.54
+  - 0.91
+  - 1.15
+  - 1.25
+  - 1.36
+  - 6.45
+  - 13.35
+  - 48.75
+  - 890
+
+#拓扑结构写死在data.py内部
