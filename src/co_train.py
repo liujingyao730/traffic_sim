@@ -77,14 +77,15 @@ def train(args):
     topology = d.co_topology
     seg = d.seg
     inter = d.inter_node
-    
-    print("****************training epoch beginning**********************")
+
     for epoch in range(args["num_epochs"]):
+        print("****************training epoch beginning**********************")
+        model.train()
         acc_meter.reset()
         start = time.time()
         i = 0
         for prefix in args["prefix"]:
-
+            
             for topology_index in range(len(d.co_topology)):
 
                 data_set = traffic_data(args, data_prefix=prefix, 
@@ -211,10 +212,108 @@ def train(args):
         flow_loss_meter.reset()
         last_loss_meter.reset()
         last_flow_loss_meter.reset()
+        i = 0
 
-        
+        print("********validation epoch beginning***********")
+        model.eval()
+        for prefix in args["test_prefix"]:
+
+            for topology_index in range(len(d.co_topology)):
+
+                data_set = traffic_data(args, data_prefix=prefix, 
+                        mod='cooperate', topology=d.co_topology[topology_index])
+            
+                dataloader = torch.utils.data.DataLoader(data_set, 
+                                                    batch_size=args["batch_size"], 
+                                                    num_workers=1)
+
+                [temporal, spatial, input_size] = data_set[0].shape
+                bucket_number = data_set.bucket_number
+                init_bucket = [0, bucket_number[1]+1]
+                non_flow_from = [bucket_number[1], bucket_number[3], 
+                                bucket_number[5], bucket_number[6]]
+                non_flow_in = [0, bucket_number[1]+1, 
+                                bucket_number[3], bucket_number[6]]
+                flow_from = [i for i in range(spatial) if i not in non_flow_from]
+                flow_in = [i for i in range(spatial) if i not in non_flow_in]
+
+                for ii, co_data in tqdm(enumerate(dataloader)):
+
+                    batch_size = co_data.shape[0]
+
+                    if args["use_cuda"]:
+                        co_data = co_data.cuda()
+
+                    inputs = co_data[:, :-1, :, :]
+                    target = co_data[:, args["t_predict"]+1:, :]
+                    In = inputs.data.new(batch_size, args["temporal_length"]-args["t_predict"], spatial).fill_(0).float()
+                    numbers_caculate = inputs.data.new(batch_size, args["temporal_length"]-args["t_predict"], spatial).fill_(0).float()
+                    numbers_current = target[:, :, :, 2]
+                    In[:, :, init_bucket] += target[:, :, init_bucket, 1]
+
+                    h_all = None
+                    c_all = None
+                    topology_struct = None
+                    input_data = inputs[:, 0, :, :]
+                    outputs = inputs.data.new(batch_size, args["temporal_length"]-args["t_predict"], spatial).fill_(0).float()
+
+                    for t in range(args["temporal_length"]):
+
+                        output, [h_all, c_all], topology_struct = model.infer(input_data, 
+                                                        bucket_number, [h_all, c_all], topology_struct)
+                        
+                        if t < args["t_predict"]:
+                            input_data = inputs[:, t+1, :, :]
+                        else:
+                            number_before = inputs[:, t, :, 2].view(batch_size, spatial, 1)
+                            number_current = target[:, t-args["t_predict"], :, 2].view(batch_size, spatial, 1)
+                            In[:, t-args["t_predict"], flow_in] += output[:, flow_from, 0]
+                            In[:, t-args["t_predict"], bucket_number[6]] += output[:, bucket_number[1], 0] + output[:, bucket_number[3], 0]
+                            In[:, t-args["t_predict"], bucket_number[4]] += output[:, bucket_number[6], 0]
+                            number_caculate = number_before + In[:, t-args["t_predict"], :].unsqueeze(2) - output
+                            numbers_caculate[:, t-args["t_predict"], :] += number_caculate.squeeze(2)
+                            input_data = torch.cat((output, In[:, t-args["t_predict"], :].unsqueeze(2), number_caculate), 2)
+                            outputs[:, t-args["t_predict"], :] += output.squeeze(2)
+
+                    acc_loss = criterion(target[:, :, :, 0], outputs)
+                    flow_loss = criterion(numbers_current, numbers_caculate)
+                    last_acc_loss = criterion(target[:, -1, :, 0], outputs[:, -1, :])
+                    last_flow_loss = criterion(numbers_current[:, -1, :], numbers_caculate[:, -1, :])
+
+                    acc_meter.add(acc_loss.item())
+                    flow_loss_meter.add(flow_loss.item())
+                    last_loss_meter.add(last_acc_loss.item())
+                    last_flow_loss_meter.add(last_flow_loss.item())
+
+                    if i % args["show_every"] == 0:
+                        print("batch{}, acc_loss={:.3f}, flow_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}".format(i, acc_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0], last_flow_loss_meter.value()[0]))
+                        log_curve_file.write("batch{}, acc_loss={:.3f}, flow_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}\n".format(i, acc_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0], last_flow_loss_meter.value()[0]))
+                            #if i > 5:
+                            #    break
+                    i += 1
+
+        if acc_meter.value()[0] < best_acc:
+            best_acc_epoch = epoch
+            best_acc = acc_meter.value()[0]
+
+        if flow_loss_meter.value()[0] < best_flow_loss:
+            best_flow_epoch = epoch
+            best_flow_loss = flow_loss_meter.value()[0]
+
+        print("epoch{}, acc_loss={:.3f}, flow_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}".format(epoch, acc_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0], last_flow_loss_meter.value()[0]))
+        log_curve_file.write("epoch{}, acc_loss={:.3f}, flow_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}\n".format(epoch, acc_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0], last_flow_loss_meter.value()[0]))
+        print('saving model')
+        torch.save({
+            'epoch': epoch,
+            'state_dict': model.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict()
+        }, checkpoint_path(epoch))                
 
 
+    log_curve_file.write("best mes epoch {}, best mes loss {:.3f}, best flow epoch{}, best flow loss{:.3f}".format(best_acc_epoch, best_acc, best_flow_epoch, best_flow_loss))
+    log_curve_file.close()
+
+    return True
 
 def get_mask(target, mask):
 
