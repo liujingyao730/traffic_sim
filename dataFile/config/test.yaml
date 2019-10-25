@@ -2,7 +2,7 @@
 test_batchs: 30
 batch_size: 100
 use_epoch: 49
-model_prefix: with_new_simerror
+model_prefix: with_mask_with_flow
 t_predict: 4
 temporal_length: 8
 use_cuda: true
