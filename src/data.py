@@ -44,7 +44,7 @@ class traffic_data(Dataset):
         self.all_car_in = pd.read_csv(self.car_in_file, index_col=0).dropna(axis=0)
         self.all_car_out = pd.read_csv(self.car_out_file, index_col=0).dropna(axis=0)
         self.all_number = pd.read_csv(self.number_file, index_col=0)
-        self.time_number = len(self.all_car_in.index) - self.temporal_length * self.delta_T / self.sim_step
+        self.time_number = len(self.all_car_in.index) - (self.temporal_length + 1)* self.delta_T / self.sim_step
 
         self.car_in = pd.DataFrame()
         self.car_out = pd.DataFrame()
