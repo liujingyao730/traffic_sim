@@ -10,6 +10,8 @@ import torchvision.models as models
 import pyecharts as pe
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.animation as anim
+import matplotlib
 
 import argparse
 import os
@@ -98,95 +100,24 @@ def eva(args):
     plt.title('simulate result')
     plt.show()
 
-'''
-class sim_cell(nn.Module):
-
-    #cell1
-
-    def __init__(self, input_size, hidden_size):
-
-        #目前的结构是在传统LSTM cell之外，对隐层状态施加一个门控制，这里我们叫做空间门，后续可能会要改
-        #input_size: int 输入的维度
-        #hidden_size: int 隐层状态的维度
-
-        super().__init__()
-
-        self.input_size = input_size
-        self.hidden_size = hidden_size
-
-        self.cell = torch.nn.LSTMCell(input_size, hidden_size)
-        
-        self.sigma = torch.nn.Sigmoid()
-
-        #self.spatial_embedding = torch.nn.Linear(2*hidden_size, hidden_size)
-        self.after_embedding = torch.nn.Linear(hidden_size, hidden_size)
-        self.before_embedding = torch.nn.Linear(hidden_size, hidden_size)
-         
-
-    def forward(self, inputs, h_s_t, c_s_t, h_after_t, h_before_t):
-
-        #inputs: tensor [batch_size, spatial_size, input_size] 当前节点此时刻的输入
-        #h_s_t: tensor [batch_size, spatial_size, hidden_size] 当前节点前一个时刻的隐层状态
-        #c_s_t: tensor [batch_size, spatial_size, hidden_size] 当前节点前一个时刻的细胞状态
-        #h_after_t: tensor [batch_size, spatial_size, hidden_size] 下一个节点前一个时刻的隐层状态
-        #h_before_t: tensor [batch_size, spatial_size, hidden_size] 前一个节点前一个时刻的隐层状态
-
-        [spatial_size, hidden_size] = h_s_t.shape
-
-        h_hat_after = self.after_embedding(h_after_t)
-        h_hat_before = self.before_embedding(h_before_t)
-
-        h_hat, c_s_tp = self.cell(inputs, (h_s_t, c_s_t))
-
-        #输出结果
-        h_s_tp = h_hat + h_hat_after + h_hat_before
-
-        return h_s_tp, c_s_tp
-'''
-'''
-class sim_cell(nn.Module):
-
-    # cell2 只是去掉了原版本里的batch，每次只能处理一个路段
-
-    def __init__(self, input_size, hidden_size):
-
-        super().__init__()
-
-        self.input_size = input_size
-        self.hidden_size = hidden_size
-
-        self.cell = torch.nn.LSTMCell(input_size, hidden_size)
-        
-        self.sigma = torch.nn.Sigmoid()
-
-        self.spatial_gate = torch.nn.Linear(2*hidden_size, hidden_size)
-        self.spatial_embedding = torch.nn.Linear(2*hidden_size, hidden_size)
-
-    def forward(self, inputs, h_s_t, c_s_t, h_after_t, h_before_t):
-
-        #inputs: tensor [batch_size, spatial_size, input_size] 当前节点此时刻的输入
-        #h_s_t: tensor [batch_size, spatial_size, hidden_size] 当前节点前一个时刻的隐层状态
-        #c_s_t: tensor [batch_size, spatial_size, hidden_size] 当前节点前一个时刻的细胞状态
-        #h_after_t: tensor [batch_size, spatial_size, hidden_size] 下一个节点前一个时刻的隐层状态
-        #h_before_t: tensor [batch_size, spatial_size, hidden_size] 前一个节点前一个时刻的隐层状态
-       
-        [spatial_size, hidden_size] = h_s_t.shape
-
-        spatial_info = torch.cat((h_after_t, h_before_t), dim=1)
-        
-        #处理batch 因为batch内部的不同路段的不同节点在这里都是独立的，所以可以分开来
-        gate_controller = spatial_info.clone()
-        spatial_info = self.spatial_embedding(spatial_info)
-        gate_controller = self.spatial_gate(gate_controller)
-        spatial_info = spatial_info * gate_controller
-
-        h_hat, c_s_tp = self.cell(inputs, (h_s_t, c_s_t))
-        
-        #空间门
-        h_s_tp = h_hat + spatial_info 
-
-        return h_s_tp, c_s_tp
-'''
+    fig = plt.figure()
+    ax1 = fig.add_subplot(121)
+    ax2 = fig.add_subplot(122)
+    image1 = number_caculate.detach().numpy()[:, np.newaxis, :]
+    image2 = target.detach().numpy()[:, np.newaxis, :]
+    ims = []
+    for i in range(image1.shape[2]):
+        im = ax1.imshow(image1[:, :, i], cmap=plt.cm.hot_r, interpolation='sinc', vmin=0, vmax=12)
+        im2 = ax2.imshow(image2[:, :, i], cmap=plt.cm.hot_r, interpolation='sinc', vmin=0, vmax=12)
+        ax1.set_xticks([])
+        ax1.set_yticks([])
+        ax2.set_xticks([])
+        ax2.set_yticks([])
+        plt.subplots_adjust(left=0.48, top=0.96, right=0.52, bottom=0.04, wspace=0.01, hspace=0.01)
+        ims.append([im, im2])
+    ani = anim.ArtistAnimation(fig, ims, interval=100, blit=False)
+    ani.save(os.path.join(conf.picsPath, 'anim.gif'), writer="imagemagick")
+    plt.show()
 
 class sim_cell(nn.Module):
 
@@ -233,56 +164,6 @@ class sim_cell(nn.Module):
         h_s_tp, c_s_tp = self.cell(inputs, (h_s_t, c_s_t))
 
         return h_s_tp, c_s_tp
-
-'''
-class sim_cell(nn.Module):
-
-    #cell4
-
-    def __init__(self, input_size, hidden_size):
-
-        #目前的结构是在传统LSTM cell之外，对隐层状态施加一个门控制，这里我们叫做空间门，后续可能会要改
-        #input_size: int 输入的维度
-        #hidden_size: int 隐层状态的维度
-
-        super().__init__()
-
-        self.input_size = input_size
-        self.hidden_size = hidden_size
-
-        self.cell = torch.nn.LSTMCell(input_size, hidden_size)
-        
-        self.sigma = torch.nn.Sigmoid()
-
-        self.after_gate = torch.nn.Linear(input_size+hidden_size, hidden_size)
-        self.before_gate = torch.nn.Linear(input_size+hidden_size, hidden_size)
-         
-
-    def forward(self, inputs, h_s_t, c_s_t, h_after_t, h_before_t):
-
-        #inputs: tensor [batch_size, spatial_size, input_size] 当前节点此时刻的输入
-        #h_s_t: tensor [batch_size, spatial_size, hidden_size] 当前节点前一个时刻的隐层状态
-        #c_s_t: tensor [batch_size, spatial_size, hidden_size] 当前节点前一个时刻的细胞状态
-        #h_after_t: tensor [batch_size, spatial_size, hidden_size] 下一个节点前一个时刻的隐层状态
-        #h_before_t: tensor [batch_size, spatial_size, hidden_size] 前一个节点前一个时刻的隐层状态
-
-        [spatial_size, hidden_size] = h_s_t.shape
-        [_, input_size] = inputs.shape
-
-        cell_input = torch.cat((h_s_t, inputs), dim=1)
-
-        i_after = self.after_gate(cell_input)
-        i_before = self.before_gate(cell_input)
-        i_after = self.sigma(i_after)
-        i_before = self.sigma(i_before)
-
-        h_hat, c_s_tp = self.cell(inputs, (h_s_t, c_s_t))
-
-        #输出结果
-        h_s_tp = h_hat + h_after_t * i_after + h_before_t * i_before
-
-        return h_s_tp, c_s_tp
-'''
 
 class segment:
 

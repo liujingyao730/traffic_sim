@@ -88,7 +88,7 @@ def train(args):
             
             for topology_index in range(len(d.co_topology)):
 
-                data_set = traffic_data(args, data_prefix=prefix, 
+                data_set = traffic_data(args, data_prefix=prefix,
                         mod='cooperate', topology=d.co_topology[topology_index])
             
                 dataloader = torch.utils.data.DataLoader(data_set, 
@@ -220,7 +220,7 @@ def train(args):
 
             for topology_index in range(len(d.co_topology)):
 
-                data_set = traffic_data(args, data_prefix=prefix, 
+                data_set = traffic_data(args, data_prefix=prefix,
                         mod='cooperate', topology=d.co_topology[topology_index])
             
                 dataloader = torch.utils.data.DataLoader(data_set, 
