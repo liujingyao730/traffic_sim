@@ -62,9 +62,9 @@ class traffic_data(Dataset):
                 raise RuntimeError("TOPOLOGY TYPE ERROR")
             self.edge_number = len(self.topology)
             bucketlist = [item for item in self.all_car_in.columns if int(int(item)/100) in self.topology]
-            self.car_in = self.all_car_in[bucketlist]
-            self.car_out = self.all_car_out[bucketlist]
-            self.number = self.all_number[bucketlist]
+            self.car_in = self.all_car_in[bucketlist].values
+            self.car_out = self.all_car_out[bucketlist].values
+            self.number = self.all_number[bucketlist].values
         elif self.mod == 'inter':
             if not isinstance(self.topology, dict):
                 print("wrong type of topology for mod intersection!")
@@ -80,9 +80,10 @@ class traffic_data(Dataset):
             end_buckets.sort()
 
             bucketlist = major_buckets[-2:] + minor_buckets[-2:] + inter_bucket + end_buckets[:2]
-            self.car_in = self.all_car_in[bucketlist]
-            self.car_out = self.all_car_out[bucketlist]
-            self.number = self.all_number[bucketlist]
+            self.bucketlist = bucketlist
+            self.car_in = self.all_car_in[bucketlist].values
+            self.car_out = self.all_car_out[bucketlist].values
+            self.number = self.all_number[bucketlist].values
         elif self.mod == 'cooperate':
 
             major_buckets = [item for item in self.all_car_in.columns if int(int(item)/100)==self.topology['major']]
@@ -102,6 +103,10 @@ class traffic_data(Dataset):
                                 len(major_buckets)+len(minor_buckets)-2, len(major_buckets)+len(minor_buckets)-1,
                                 len(major_buckets)+len(minor_buckets), len(major_buckets)+len(minor_buckets)+1,
                                 len(major_buckets)+len(minor_buckets)+len(end_buckets)]
+
+            self.car_in = self.all_car_in.values
+            self.car_out = self.all_car_out.values
+            self.number = self.all_number.values
         else:
             print("wrong mod to generate data !")
             raise RuntimeError('MOD ERROR')
@@ -129,13 +134,13 @@ class traffic_data(Dataset):
         if self.mod == "seg":
             
             edge = self.topology[index % self.edge_number]
-            time = int(index / self.edge_number) * self.sim_step
+            time = int(index / self.edge_number)
             
-            timelist = [round(i*self.delta_T+time, 1) for i in range(self.temporal_length+1)]
+            timelist = [int(i*self.delta_T/self.sim_step + time) for i in range(self.temporal_length+1)]
 
-            In = np.array(self.car_in.loc[timelist].T)[:, :, np.newaxis]
-            out = np.array(self.car_out.loc[timelist].T)[:, :, np.newaxis]
-            number = np.array(self.number.loc[timelist].T)[:, :, np.newaxis]
+            In = np.array(self.car_in[timelist].T)[:, :, np.newaxis]
+            out = np.array(self.car_out[timelist].T)[:, :, np.newaxis]
+            number = np.array(self.number[timelist].T)[:, :, np.newaxis]
             
             data = torch.Tensor(np.concatenate((out, In, number), axis=2)).float()
 
@@ -143,29 +148,40 @@ class traffic_data(Dataset):
             
         elif self.mod == "inter":
         
-            time = index * self.sim_step
-            timelist = [round(i*self.delta_T+time, 1) for i in range(self.temporal_length+1)]
+            time = index 
+            timelist = [int(i*self.delta_T/self.sim_step + time) for i in range(self.temporal_length+1)]
 
-            In = np.array(self.car_in.loc[timelist])[:, :, np.newaxis]
-            out = np.array(self.car_out.loc[timelist])[:, :, np.newaxis]
-            number = np.array(self.number.loc[timelist])[:, :, np.newaxis]
+            In = np.array(self.car_in[timelist])[:, :, np.newaxis]
+            out = np.array(self.car_out[timelist])[:, :, np.newaxis]
+            number = np.array(self.number[timelist])[:, :, np.newaxis]
             
             data = torch.Tensor(np.concatenate((out, In, number), axis=2)).float()
 
             return data
 
         elif self.mod == "cooperate":
-            
+
+            #t1 = ttt.time()
             seg_data = []
-            time = round(index * self.sim_step)
-            time_list = [round(i*self.delta_T+time, 1)for i in range(self.temporal_length+1)]
+            time = index
+            time_list = [int(i*self.delta_T/self.sim_step) + time for i in range(self.temporal_length+1)]
 
-            In = np.array(self.car_in.loc[time_list])[:, :, np.newaxis]
-            out = np.array(self.car_out.loc[time_list])[:, :, np.newaxis]
-            number = np.array(self.number.loc[time_list])[:, :, np.newaxis]
+            #t2 = ttt.time()
+            In = self.car_in[time_list]
+            out = self.car_out[time_list]
+            number = self.number[time_list]
+   
+            #t3 = ttt.time()
+            In = In[:, :, np.newaxis]
+            out = out[:, :, np.newaxis]
+            number = number[:, :, np.newaxis]
 
-            data = torch.Tensor(np.concatenate((out, In, number), axis=2)).float()
+            #t4 = ttt.time()
+            data = np.concatenate((out, In, number), axis=2)
+            #t5 = ttt.time()
+            data = torch.Tensor(data).float()
 
+            #t6 = ttt.time()
             return data
 
         else:
@@ -195,6 +211,16 @@ if __name__ == "__main__":
     args["sim_step"] = 0.1
     args["delta_T"] = 10
 
-    dataset = traffic_data(mod='cooperate', topology=co_topology[0], args=args)
+    dataset = traffic_data(mod='seg', topology=seg_topology, args=args)
+    t = ttt.time()
     a = dataset[0]
+    a = dataset[0]
+    a = dataset[0]
+    a = dataset[0]
+    a = dataset[0]
+    a = dataset[0]
+    a = dataset[0]
+    a = dataset[0]
+    a = dataset[0]
+    t2 = ttt.time()
     print(len(dataset))

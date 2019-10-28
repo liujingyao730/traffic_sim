@@ -93,7 +93,7 @@ def train(args):
             
                 dataloader = torch.utils.data.DataLoader(data_set, 
                                                     batch_size=args["batch_size"], 
-                                                    num_workers=1)
+                                                    num_workers=args["num_workers"])
 
                 [temporal, spatial, input_size] = data_set[0].shape
                 bucket_number = data_set.bucket_number
@@ -107,20 +107,24 @@ def train(args):
 
                 for ii, co_data in tqdm(enumerate(dataloader)):
 
+                    #t1 = time.time()
                     model.zero_grad()
                     optimizer.zero_grad()
                 
+                    #t2 = time.time()
                     co_data = Variable(co_data)
                     batch_size = co_data.shape[0]
 
                     if args["use_cuda"]:
                         co_data = co_data.cuda()
 
+                    #t3 = time.time()
                     inputs = co_data[:, :-1, :, :]
                     target = co_data[:, args["t_predict"]+1:, :]
                     In = Variable(inputs.data.new(batch_size, temporal-args["t_predict"]-1, spatial).fill_(0).float())
                     In[:, :, init_bucket] += target[:, :, init_bucket, 1]
 
+                    #t4 = time.time()
                     if random.random() < args["sample_rate"]:
                     
                         outputs = model(inputs, bucket_number)
@@ -190,17 +194,20 @@ def train(args):
                         
                         loss = loss / (args["temporal_length"] - args["t_predict"])
 
+                    #t5 = time.time()
                     loss.backward()
                     torch.nn.utils.clip_grad_norm_(model.parameters(), args["grad_clip"])
                     optimizer.step()
 
+                    #t6 = time.time()
                     acc_meter.add(loss.item())
 
                     i += 1
                     if i % args["show_every"] == 0:
                         print("batch{}, train_loss = {:.3f}".format(i, acc_meter.value()[0]))
                         log_curve_file.write("batch{}, train_loss = {:.3f}".format(i, acc_meter.value()[0]))
-                
+                    
+                    #print(t6-t1)
                 print("batch{}, train_loss = {:.3f} for topology {}, preifx {}".format(ii, acc_meter.value()[0], topology_index, prefix))
                 log_curve_file.write("batch{}, train_loss = {:.3f} for topology {}, preifx {}".format(ii, acc_meter.value()[0], topology_index, prefix))
         
@@ -238,25 +245,28 @@ def train(args):
                 flow_in = [i for i in range(spatial) if i not in non_flow_in]
 
                 for ii, co_data in tqdm(enumerate(dataloader)):
-
+                    #t1 = time.time()
                     batch_size = co_data.shape[0]
 
                     if args["use_cuda"]:
                         co_data = co_data.cuda()
-
+                    
+                    #t2 = time.time()
                     inputs = co_data[:, :-1, :, :]
                     target = co_data[:, args["t_predict"]+1:, :]
                     In = inputs.data.new(batch_size, args["temporal_length"]-args["t_predict"], spatial).fill_(0).float()
                     numbers_caculate = inputs.data.new(batch_size, args["temporal_length"]-args["t_predict"], spatial).fill_(0).float()
                     numbers_current = target[:, :, :, 2]
                     In[:, :, init_bucket] += target[:, :, init_bucket, 1]
-
+                    
+                    #t3 = time.time()
                     h_all = None
                     c_all = None
                     topology_struct = None
                     input_data = inputs[:, 0, :, :]
                     outputs = inputs.data.new(batch_size, args["temporal_length"]-args["t_predict"], spatial).fill_(0).float()
 
+                    #t4 = time.time()
                     for t in range(args["temporal_length"]):
 
                         output, [h_all, c_all], topology_struct = model.infer(input_data, 
@@ -275,11 +285,13 @@ def train(args):
                             input_data = torch.cat((output, In[:, t-args["t_predict"], :].unsqueeze(2), number_caculate), 2)
                             outputs[:, t-args["t_predict"], :] += output.squeeze(2)
 
+                    #t5 = time.time()    
                     acc_loss = criterion(target[:, :, :, 0], outputs)
                     flow_loss = criterion(numbers_current, numbers_caculate)
                     last_acc_loss = criterion(target[:, -1, :, 0], outputs[:, -1, :])
                     last_flow_loss = criterion(numbers_current[:, -1, :], numbers_caculate[:, -1, :])
 
+                    #t6 = time.time()
                     acc_meter.add(acc_loss.item())
                     flow_loss_meter.add(flow_loss.item())
                     last_loss_meter.add(last_acc_loss.item())
