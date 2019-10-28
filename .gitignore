@@ -126,3 +126,8 @@ src/draft.py
 dataFile/log/*/log_curve.txt
 src/feature.py
 *.sumocfg
+*.zip
+dairy.md
+*.png
+*.gif
+*.jpg
