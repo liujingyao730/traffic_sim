@@ -96,17 +96,14 @@ class traffic_data(Dataset):
             end_buckets.sort()
 
             bucketlist = major_buckets + minor_buckets + end_buckets + inter_bucket
-            self.car_in = self.all_car_in[bucketlist]
-            self.car_out = self.all_car_out[bucketlist]
-            self.number = self.all_number[bucketlist]
+            self.car_in = self.all_car_in[bucketlist].values
+            self.car_out = self.all_car_out[bucketlist].values
+            self.number = self.all_number[bucketlist].values
             self.bucket_number = [len(major_buckets)-2, len(major_buckets)-1,
                                 len(major_buckets)+len(minor_buckets)-2, len(major_buckets)+len(minor_buckets)-1,
                                 len(major_buckets)+len(minor_buckets), len(major_buckets)+len(minor_buckets)+1,
                                 len(major_buckets)+len(minor_buckets)+len(end_buckets)]
 
-            self.car_in = self.all_car_in.values
-            self.car_out = self.all_car_out.values
-            self.number = self.all_number.values
         else:
             print("wrong mod to generate data !")
             raise RuntimeError('MOD ERROR')
