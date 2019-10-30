@@ -232,7 +232,7 @@ def train(args):
             
                 dataloader = torch.utils.data.DataLoader(data_set, 
                                                     batch_size=args["batch_size"], 
-                                                    num_workers=1)
+                                                    num_workers=args["num_workers"])
 
                 [temporal, spatial, input_size] = data_set[0].shape
                 bucket_number = data_set.bucket_number
