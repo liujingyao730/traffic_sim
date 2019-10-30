@@ -66,6 +66,11 @@ def eva(args):
     
     real_flow = torch.sum(target, dim=0).numpy()
     target_flow = torch.sum(number_caculate, dim=0).detach().numpy()
+    output = output.detach().numpy().flatten()
+    tar = np.array(eva_generator.CurrentOutputs)[:, :, 1].flatten()
+    print(np.cov(tar, rowvar=False))
+    print(np.cov(tar-output))
+    print(metrics.explained_variance_score(tar, output))
     print(metrics.explained_variance_score(real_flow, target_flow))
     print(metrics.r2_score(real_flow, target_flow))
     print(metrics.mean_absolute_error(real_flow, target_flow))

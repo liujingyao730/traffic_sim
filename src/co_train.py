@@ -21,7 +21,7 @@ from tqdm import tqdm
 from utils import batchGenerator
 from model import TP_lstm
 from model import loss_function
-from model import network_model
+from net_model import network_model
 from data import traffic_data
 import data as d
 import conf

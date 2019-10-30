@@ -6,6 +6,111 @@ from torch.autograd import Variable
 import conf
 from model import FCNet
 
+major_order = [1, 0, 3, 4, 6]
+minor_order = [3, 2, 1, 4, 6]
+end_order = [4, 5, 1, 3, 6]
+inter_order = [6, 6, 1, 3, 4]
+
+class inter_cell(nn.Module):
+
+    def __init__(self, input_size, hidden_size):
+        
+        super().__init__()
+
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+
+        self.cell = torch.nn.LSTMCell(self.input_size, self.hidden_size)
+
+        self.sigma = torch.nn.Sigmoid()
+
+        self.sptail_forget = torch.nn.Linear(2*self.hidden_size, self.hidden_size)
+        self.sptail_input = torch.nn.Linear(2*self.hidden_size, self.hidden_size)
+
+        self.inter_layer = torch.nn.Linear(3*self.hidden_size, self.hidden_size)
+
+    def forward(self, inputs, hidden, cell_state):
+
+        batch_size = hidden.shape[0]
+        
+        self_hidden = hidden[:, 0, :]
+        seg_hidden = hidden[:, 1, :]
+        inter_hidden = hidden[:, 2:, :].view(batch_size, self.hidden_size*3)
+
+        inter_hidden = self.inter_layer(inter_hidden)
+        
+        spatial_hidden = torch.cat((seg_hidden, inter_hidden), 1)
+
+        spatial_f = self.sptail_forget(spatial_hidden)
+        spatial_f = self.sigma(spatial_f)
+        spatial_i = self.sptail_input(spatial_hidden)
+        spatial_i = self.sigma(spatial_i)
+
+        cell_state = cell_state * spatial_f
+        self_hidden = self_hidden * spatial_i
+
+        h, c = self.cell(inputs, (self_hidden, cell_state))
+
+        return h, c
+
+class inter_LSTM(nn.Module):
+
+    def __init__(self, args):
+
+        super().__init__()
+
+        self.input_size = args["input_size"]
+        self.hidden_size = args["hidden_size"]
+        self.n_units = args["n_units"]
+
+        self.major_cell = inter_cell(self.input_size, self.hidden_size)
+        self.minor_cell = inter_cell(self.input_size, self.hidden_size)
+        self.end_cell = inter_cell(self.input_size, self.hidden_size)
+        self.inter_node = inter_cell(self.input_size, self.hidden_size)
+
+    def forward(self, inputs, hidden):
+
+        [batch_size, n_units, input_feature] = inputs.shape
+
+        assert n_units == self.n_units
+
+        [h, c] = hidden
+
+        major_input = inputs[:, 1, :]
+        major_h = h[:, major_order, :]
+        major_c = c[:, 1, :]
+        major_h, major_c = self.major_cell(major_input, major_h, major_c)
+
+        minor_input = inputs[:, 3, :]
+        minor_h = h[:, minor_order, :]
+        minor_c = c[:, 3, :]
+        minor_h, minor_c = self.minor_cell(minor_input, minor_h, minor_c)
+
+        end_input = inputs[:, 4, :]
+        end_h = h[:, end_order, :]
+        end_c = c[:, 4, :]
+        end_h, end_c = self.end_cell(end_input, end_h, end_c)
+
+        inter_input = inputs[:, 6, :]
+        inter_h = h[:, inter_order, :]
+        inter_c = c[:, 6, :]
+        inter_h, inter_c = self.inter_node(inter_input, inter_h, inter_c)
+
+        h = h * 0
+        c = c * 0
+
+        h[:, 1, :] += major_h
+        h[:, 3, :] += minor_h
+        h[:, 4, :] += end_h
+        h[:, 6, :] += inter_h
+
+        c[:, 1, :] += major_c
+        c[:, 3, :] += minor_c
+        c[:, 4, :] += end_c
+        c[:, 6, :] += inter_c
+
+        return h, c
+
 class inter_model(nn.Module):
     
     #直接拼接式的路口模型
@@ -282,10 +387,4 @@ if __name__ == "__main__":
     args["t_predict"] = 4
     model = network_model(args)
 
-    seg_inputs = torch.randn(32, 3)
-    inter_inputs = torch.randn(3, 7, 3)
-    [[seg_output, inter_output], [h_seg, h_inter]] = model(seg_inputs, inter_inputs)
-    print(seg_output.shape)
-    print(inter_output.shape)
-    print(h_seg)
-    print(h_inter)
+    
