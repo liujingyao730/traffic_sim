@@ -46,6 +46,10 @@ def train(args):
 
     log_directory = os.path.join(conf.logPath, args["model_prefix"])
     log_curve_file = open(os.path.join(log_directory, "log_curve.txt"), "w+")
+    
+    for key in args.keys():
+        print(key, "   ", args[key])
+        log_curve_file.write(key+"  "+str(args[key])+'\n')
 
     def checkpoint_path(x):
         return os.path.join(log_directory, str(x)+'.tar')
@@ -205,7 +209,7 @@ def train(args):
                     i += 1
                     if i % args["show_every"] == 0:
                         print("batch{}, train_loss = {:.3f}".format(i, acc_meter.value()[0]))
-                        log_curve_file.write("batch{}, train_loss = {:.3f}".format(i, acc_meter.value()[0]))
+                        log_curve_file.write("batch{}, train_loss = {:.3f}\n".format(i, acc_meter.value()[0]))
                     
                     #print(t6-t1)
                 print("batch{}, train_loss = {:.3f} for topology {}, preifx {}".format(ii, acc_meter.value()[0], topology_index, prefix))
