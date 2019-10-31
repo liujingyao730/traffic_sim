@@ -30,11 +30,14 @@ def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--config", type=str, default="co_eva")
+    parser.add_argument("--test_index", type=int, default=1)
 
     args = parser.parse_args()
     test(args)
 
 def test(args):
+
+    test_index = args.test_index
 
     with open(os.path.join(conf.configPath, args.config+'.yaml'), encoding='UTF-8') as config:
         args = yaml.load(config)
@@ -51,8 +54,8 @@ def test(args):
     eva_prefix = args["eva_prefix"]
     topology_index = args["topology_index"]
 
-    data_set = traffic_data(args, data_prefix=args["eva_prefix"][0], 
-                            mod='cooperate', topology=d.co_topology[topology_index])
+    data_set = traffic_data(args, data_prefix=args["eva_prefix"][test_index], 
+                            mod='cooperate', topology=d.co_topology[topology_index[test_index]])
 
     co_data = data_set[0].unsqueeze(0)
 
@@ -136,7 +139,7 @@ def test(args):
     end_flow_pred = end_predict_number.sum(axis=1)
 
     x = range(len(end_flow_pred))
-
+    
     plt.figure(13, figsize=(18, 4))
     plt.subplot(131)
     plt.plot(x, major_flow_real, 's-', color='r', label='real')
@@ -211,6 +214,48 @@ def test(args):
     plt.title("end error")
     plt.subplots_adjust(left=0.05, right=0.95, top=0.9, bottom=0.1)
     plt.show()
+    
+    fig = plt.figure(figsize=(2, 6))
+    ax1 = fig.add_subplot(231)
+    ax2 = fig.add_subplot(233)
+    ax3 = fig.add_subplot(235)
+    ims = []
+    for i in x:
+        im1 = ax1.imshow(major_real_number[i, :, np.newaxis], cmap=plt.cm.hot_r, vmin=0, vmax=10)
+        im2 = ax2.imshow(minor_real_number[i, :, np.newaxis], cmap=plt.cm.hot_r, vmin=0, vmax=10)
+        im3 = ax3.imshow(end_real_number[i, :, np.newaxis], cmap=plt.cm.hot_r, vmin=0, vmax=10)
+        ax1.set_xticks([])
+        ax1.set_yticks([])
+        ax2.set_xticks([])
+        ax2.set_yticks([])
+        ax3.set_xticks([])
+        ax3.set_yticks([])
+        plt.subplots_adjust(left=0, top=1, right=1, bottom=0, wspace=0, hspace=0)
+        ims.append([im1, im2, im3])
+    ani = anim.ArtistAnimation(fig, ims, interval=100, blit=False)
+    ani.save(os.path.join(conf.picsPath, args["model_prefix"]+'_'+str(test_index)+'_real.gif'), writer="imagemagick")
+    #plt.show()
+
+    fig = plt.figure(figsize=(2, 6))
+    ax1 = fig.add_subplot(231)
+    ax2 = fig.add_subplot(233)
+    ax3 = fig.add_subplot(235)
+    ims = []
+    for i in x:
+        im1 = ax1.imshow(major_predict_number[i, :, np.newaxis], cmap=plt.cm.hot_r, vmin=0, vmax=10)
+        im2 = ax2.imshow(minor_predict_number[i, :, np.newaxis], cmap=plt.cm.hot_r, vmin=0, vmax=10)
+        im3 = ax3.imshow(end_predict_number[i, :, np.newaxis], cmap=plt.cm.hot_r, vmin=0, vmax=10)
+        ax1.set_xticks([])
+        ax1.set_yticks([])
+        ax2.set_xticks([])
+        ax2.set_yticks([])
+        ax3.set_xticks([])
+        ax3.set_yticks([])
+        plt.subplots_adjust(left=0, top=1, right=1, bottom=0, wspace=0, hspace=0)
+        ims.append([im1, im2, im3])
+    ani = anim.ArtistAnimation(fig, ims, interval=100, blit=False)
+    ani.save(os.path.join(conf.picsPath, args["model_prefix"]+'_'+str(test_index)+'_pred.gif'), writer="imagemagick")
+    #plt.show()
         
 if __name__ == "__main__":
     main()
