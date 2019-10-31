@@ -118,7 +118,7 @@ class inter_model(nn.Module):
     def __init__(self, args):
         super().__init__()
 
-        self.n_unit = args["n_unit"]
+        self.n_unit = args["n_units"]
         self.input_feature = args["input_size"]
         self.hidden_size = args["hidden_size"]
 
@@ -197,7 +197,8 @@ class network_model(nn.Module):
 
         self.segment_model = seg_model(args)
         self.intersection_model = inter_model(args)
-        self.outputlayer = FCNet(layerSize=[self.hidden_size, self.output_hidden_size, self.output_size])
+        self.interoutputlayer = FCNet(layerSize=[self.hidden_size, self.output_hidden_size, self.output_size])
+        self.segoutputlayer = FCNet(layerSize=[self.hidden_size, self.output_hidden_size, self.output_size])
 
     def forward(self, co_data, bucket_number):
 
@@ -228,6 +229,7 @@ class network_model(nn.Module):
         h_after_t = Variable(co_data.data.new(seg_bucket_number, self.hidden_size).fill_(0).float())
         h_before_t = Variable(co_data.data.new(seg_bucket_number, self.hidden_size).fill_(0).float())
 
+        output = Variable(co_data.data.new(batch_size, temporal-self.t_predict, spatial, 1).fill_(0).float())
         h_tmp = Variable(co_data.data.new(batch_size, spatial, self.hidden_size).fill_(0).float())
         c_tmp = Variable(co_data.data.new(batch_size, spatial, self.hidden_size).fill_(0).float())
         h_output = Variable(co_data.data.new(batch_size, temporal-self.t_predict, spatial, self.hidden_size).fill_(0).float())
@@ -277,7 +279,8 @@ class network_model(nn.Module):
             h_tmp = h_tmp * 0
             c_tmp = c_tmp * 0
 
-        output = self.outputlayer(h_output)
+        output[:, :, inter_bucket, :] += self.interoutputlayer(h_output[:, :, inter_bucket, :])
+        output[:, :, seg_bucket, :] += self.segoutputlayer(h_output[:, :, seg_bucket, :])
 
         return output
 
@@ -323,6 +326,7 @@ class network_model(nn.Module):
         c_s_t = Variable(co_data.data.new(batch_size, len(seg_bucket), self.hidden_size).fill_(0).float())
         h_after_t = Variable(co_data.data.new(batch_size, len(seg_bucket), self.hidden_size).fill_(0).float())
         h_before_t = Variable(co_data.data.new(batch_size, len(seg_bucket), self.hidden_size).fill_(0).float())
+        outputs = Variable(co_data.data.new(batch_size, spatial, 1).fill_(0).float())
 
         if hidden[0] is None:
             h_all = Variable(co_data.data.new(batch_size, spatial, self.hidden_size).fill_(0).float())
@@ -370,7 +374,8 @@ class network_model(nn.Module):
         c_all[:, inter_bucket, :] += c_inter[:, inter_place, :]
         c_all[:, seg_bucket, :] += c_seg
 
-        outputs = self.outputlayer(h_all)
+        outputs[:, inter_bucket, :] += self.interoutputlayer(h_inter[:, inter_place, :])
+        outputs[:, seg_bucket, :] += self.segoutputlayer(h_seg)
         hidden = [h_all, c_all]
 
         return outputs, hidden, topology_struct

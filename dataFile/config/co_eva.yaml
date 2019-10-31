@@ -23,7 +23,7 @@ topology_index:
   - 1
   - 0
   - 1
-n_unit: 7
+n_units: 7
 
 #data
 sim_step: 0.1
