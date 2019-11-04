@@ -197,8 +197,9 @@ class network_model(nn.Module):
 
         self.segment_model = seg_model(args)
         self.intersection_model = inter_model(args)
-        self.interoutputlayer = FCNet(layerSize=[self.hidden_size, self.output_hidden_size, self.output_size])
-        self.segoutputlayer = FCNet(layerSize=[self.hidden_size, self.output_hidden_size, self.output_size])
+        #self.interoutputlayer = FCNet(layerSize=[self.hidden_size, self.output_hidden_size, self.output_size])
+        #self.segoutputlayer = FCNet(layerSize=[self.hidden_size, self.output_hidden_size, self.output_size])
+        self.outputlayer = FCNet(layerSize=[self.hidden_size, self.output_hidden_size, self.output_size])
 
     def forward(self, co_data, bucket_number):
 
@@ -279,8 +280,9 @@ class network_model(nn.Module):
             h_tmp = h_tmp * 0
             c_tmp = c_tmp * 0
 
-        output[:, :, inter_bucket, :] += self.interoutputlayer(h_output[:, :, inter_bucket, :])
-        output[:, :, seg_bucket, :] += self.segoutputlayer(h_output[:, :, seg_bucket, :])
+        #output[:, :, inter_bucket, :] += self.interoutputlayer(h_output[:, :, inter_bucket, :])
+        #output[:, :, seg_bucket, :] += self.segoutputlayer(h_output[:, :, seg_bucket, :])
+        output = self.outputlayer(h_output)
 
         return output
 
@@ -374,8 +376,9 @@ class network_model(nn.Module):
         c_all[:, inter_bucket, :] += c_inter[:, inter_place, :]
         c_all[:, seg_bucket, :] += c_seg
 
-        outputs[:, inter_bucket, :] += self.interoutputlayer(h_inter[:, inter_place, :])
-        outputs[:, seg_bucket, :] += self.segoutputlayer(h_seg)
+        #outputs[:, inter_bucket, :] += self.interoutputlayer(h_inter[:, inter_place, :])
+        #outputs[:, seg_bucket, :] += self.segoutputlayer(h_seg)
+        outputs = self.outputlayer(h_all)
         hidden = [h_all, c_all]
 
         return outputs, hidden, topology_struct

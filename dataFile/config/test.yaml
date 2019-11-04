@@ -2,7 +2,7 @@
 test_batchs: 30
 batch_size: 100
 use_epoch: 49
-model_prefix: with_mask_with_flow
+model_prefix: net_work
 t_predict: 4
 temporal_length: 8
 use_cuda: true
@@ -18,6 +18,12 @@ output_hidden_size: 16
 eva_prefix: 
   - 2000_nosignal
 spatial_length: 40
+topology_index: 
+  - 0
+  - 1
+  - 0
+  - 1
+num_workers: 1
 
 #data
 sim_step: 0.1

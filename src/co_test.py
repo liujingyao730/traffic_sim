@@ -30,7 +30,7 @@ def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--config", type=str, default="co_eva")
-    parser.add_argument("--test_index", type=int, default=1)
+    parser.add_argument("--test_index", type=int, default=2)
 
     args = parser.parse_args()
     test(args)
@@ -108,7 +108,7 @@ def test(args):
     
     ttt = time.time()
 
-    print(ttt - tt)
+    print("simlation time ", ttt - tt, " real time ", (args["temporal_length"]-args["t_predict"])*args["delta_T"])
     
     if args["use_cuda"]:
         target = target.cpu()
@@ -119,10 +119,10 @@ def test(args):
     numbers_caculate = numbers_caculate.detach().numpy()
     outputs = outputs.detach().numpy()
 
-    print(metrics.mean_absolute_error(target[0, :, :, 0].flatten(), outputs[0, :, :, 0].flatten()))
-    print(metrics.mean_absolute_error(target[0, :, :, 2].flatten(), numbers_caculate[0, :, :, 0].flatten()))
-    print(metrics.explained_variance_score(target[0, :, :, 0].flatten(), outputs[0, :, :, 0].flatten()))
-    print(metrics.explained_variance_score(target[0, :, :, 2].flatten(), numbers_caculate[0, :, :, 0].flatten()))
+    print("output mean absolute error ", metrics.mean_absolute_error(target[0, :, :, 0].flatten(), outputs[0, :, :, 0].flatten()))
+    print("number mean absolute error ", metrics.mean_absolute_error(target[0, :, :, 2].flatten(), numbers_caculate[0, :, :, 0].flatten()))
+    print("output explained variance score ", metrics.explained_variance_score(target[0, :, :, 0].flatten(), outputs[0, :, :, 0].flatten()))
+    print("number explained variance score ", metrics.explained_variance_score(target[0, :, :, 2].flatten(), numbers_caculate[0, :, :, 0].flatten()))
 
     major_real_number = target[0, :, :bucket_number[1]+1, 2]
     major_predict_number = numbers_caculate[0, :, :bucket_number[1]+1, 0]
@@ -137,6 +137,10 @@ def test(args):
     minor_flow_pred = minor_predict_number.sum(axis=1)
     end_flow_real = end_real_number.sum(axis=1)
     end_flow_pred = end_predict_number.sum(axis=1)
+
+    print("major r2_score ", metrics.r2_score(major_flow_real, major_flow_pred))
+    print("minor r2_score ", metrics.r2_score(minor_flow_real, minor_flow_pred))
+    print("end r2_score ", metrics.r2_score(end_flow_real, end_flow_pred))
 
     x = range(len(end_flow_pred))
     
@@ -169,11 +173,11 @@ def test(args):
 
     fig = plt.figure(figsize=(10, 6))
     heat = fig.add_subplot(311)
-    im = heat.imshow(major_real_number.T, cmap=plt.cm.hot_r)
+    im = heat.imshow(major_real_number.T, cmap=plt.cm.hot_r, vmax=10)
     plt.colorbar(im)
     plt.title("marjor ground truth")
     heat = fig.add_subplot(312)
-    im = heat.imshow(major_predict_number.T, cmap=plt.cm.hot_r, vmin=0)
+    im = heat.imshow(major_predict_number.T, cmap=plt.cm.hot_r, vmin=0, vmax=10)
     plt.colorbar(im)
     plt.title("major predict")
     heat = fig.add_subplot(313)
@@ -185,11 +189,11 @@ def test(args):
 
     fig = plt.figure(figsize=(10, 6))
     heat = fig.add_subplot(311)
-    im = heat.imshow(minor_real_number.T, cmap=plt.cm.hot_r)
+    im = heat.imshow(minor_real_number.T, cmap=plt.cm.hot_r, vmax=10)
     plt.colorbar(im)
     plt.title("minor ground truth")
     heat = fig.add_subplot(312)
-    im = heat.imshow(minor_predict_number.T, cmap=plt.cm.hot_r, vmin=0)
+    im = heat.imshow(minor_predict_number.T, cmap=plt.cm.hot_r, vmin=0, vmax=10)
     plt.colorbar(im)
     plt.title("minor predict")
     heat = fig.add_subplot(313)
@@ -201,11 +205,11 @@ def test(args):
 
     fig = plt.figure(figsize=(10, 6))
     heat = fig.add_subplot(311)
-    im = heat.imshow(end_real_number.T, cmap=plt.cm.hot_r)
+    im = heat.imshow(end_real_number.T, cmap=plt.cm.hot_r, vmax=10)
     plt.colorbar(im)
     plt.title("end ground truth")
     heat = fig.add_subplot(312)
-    im = heat.imshow(end_predict_number.T, cmap=plt.cm.hot_r, vmin=0)
+    im = heat.imshow(end_predict_number.T, cmap=plt.cm.hot_r, vmin=0, vmax=10)
     plt.colorbar(im)
     plt.title("end predict")
     heat = fig.add_subplot(313)

@@ -15,12 +15,12 @@ learing_rate: 0.003
 decay_rate: 0.95
 lambda_param: 0.0005
 use_cuda: true
-flow_loss_weight: 1
+flow_loss_weight: 0
 grad_clip: 10
 sample_rate: 1
 sample_decay: 1
 use_mask: true
-use_simerror: true
+use_simerror: false
 gamma: 0.5
 num_workers: 1
 
@@ -29,7 +29,7 @@ sim_step: 0.1
 delta_T: 10
 cycle: 100
 green_pass: 52
-n_unit: 7
+n_units: 7
 
 model_prefix: base_line
 
