@@ -31,8 +31,7 @@ def bucketid(pos, length):
 def data_record(file, lane_edge=lane_edge, length=length, prefix='default', 
                 special_edge=special_edge, fold=conf.midDataPath):
 
-    fcdxml = etree.parse(file)
-    root = fcdxml.getroot()
+    root = etree.iterparse(file, events=["start", "end"])
 
     formstep = {}
     nowstep = {}
@@ -41,19 +40,19 @@ def data_record(file, lane_edge=lane_edge, length=length, prefix='default',
     car_out = pd.DataFrame(columns=["label"])
     number = pd.DataFrame(columns=["label"])
 
-    for timeStep in root:
-        time = float(timeStep.attrib["time"])
-        car_in.loc[time] = 0
-        car_out.loc[time] = 0
-        number.loc[time] = 0
-
-        for vehicle in timeStep:
-            vehicle_id = vehicle.attrib["id"]
-            lane = vehicle.attrib['lane']
+    for event, elem in root:
+        if elem.tag == "timestep" and event == "start":
+            time = float(elem.attrib["time"])
+            car_in.loc[time] = 0
+            car_out.loc[time] = 0
+            number.loc[time] = 0
+        elif elem.tag == "vehicle" and event == "end":
+            vehicle_id = elem.attrib["id"]
+            lane = elem.attrib['lane']
             edge = lane_edge[lane]
 
             if edge not in special_edge:
-                pos = float(vehicle.attrib["pos"])
+                pos = float(elem.attrib["pos"])
                 bucket = bucketid(pos, length[edge]) + edge*100
             else:
                 bucket = edge*100 + 1
@@ -65,21 +64,24 @@ def data_record(file, lane_edge=lane_edge, length=length, prefix='default',
                 car_out[bucket] = 0
 
             number.loc[time, bucket] += 1
-
-        for vehicle in nowstep.keys():
-            if vehicle not in formstep.keys():
-                car_in.loc[time, nowstep[vehicle]] += 1
-            else:
-                if formstep[vehicle] != nowstep[vehicle]:
+        
+        elif elem.tag == "timestep" and event == "end":
+            for vehicle in nowstep.keys():
+                if vehicle not in formstep.keys():
                     car_in.loc[time, nowstep[vehicle]] += 1
-                    car_out.loc[time, formstep[vehicle]] += 1
-                formstep.pop(vehicle)
+                else:
+                    if formstep[vehicle] != nowstep[vehicle]:
+                        car_in.loc[time, nowstep[vehicle]] += 1
+                        car_out.loc[time, formstep[vehicle]] += 1
+                    formstep.pop(vehicle)
 
-        for vehicle in formstep.keys():
-            car_out.loc[time, formstep[vehicle]] += 1
+            for vehicle in formstep.keys():
+                car_out.loc[time, formstep[vehicle]] += 1
 
-        formstep = nowstep.copy()
-        nowstep.clear()
+            formstep = nowstep.copy()
+            nowstep.clear()
+        
+        elem.clear()
 
     car_in_file = os.path.join(fold, prefix+'CarIn.csv')
     car_out_file = os.path.join(fold, prefix+'CarOut.csv')
@@ -136,5 +138,5 @@ def reset_data(prefix, fold=conf.midDataPath, deltaT=conf.args["deltaT"],
 
 
 if __name__ == "__main__":
-    #data_record(merge_fcd_path)
-    reset_data('default')
+    data_record(merge_fcd_path)
+    #reset_data('default')

@@ -29,7 +29,7 @@ import conf
 def main():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--config", type=str, default="co_eva")
+    parser.add_argument("--config", type=str, default="model_test")
     parser.add_argument("--test_index", type=int, default=0)
 
     args = parser.parse_args()
@@ -59,11 +59,16 @@ def test(args):
 
     dd = torch.utils.data.DataLoader(data_set, batch_size=100, num_workers=1)
 
-    em = enumerate(dd)
+    for i, data in enumerate(dd):
 
-    a = em[0]
+        [batch_size, temporal, spatial, inputs_size] = data.shape
 
-    print("stop")
+        inputs = data[:, :-1, :, :]
+        target = data[:, args["t_predict"]:, :, :]
+
+        
+        
+        break
 
 if __name__ == "__main__":
     main()

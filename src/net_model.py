@@ -196,7 +196,7 @@ class network_model(nn.Module):
         self.output_size = 1
 
         self.segment_model = seg_model(args)
-        self.intersection_model = inter_model(args)
+        self.intersection_model = inter_LSTM(args)
         #self.interoutputlayer = FCNet(layerSize=[self.hidden_size, self.output_hidden_size, self.output_size])
         #self.segoutputlayer = FCNet(layerSize=[self.hidden_size, self.output_hidden_size, self.output_size])
         self.outputlayer = FCNet(layerSize=[self.hidden_size, self.output_hidden_size, self.output_size])

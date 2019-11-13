@@ -7,7 +7,6 @@ import numpy as np
 import sklearn.metrics as metrics
 from tqdm import tqdm
 import torchvision.models as models
-import pyecharts as pe
 import pandas as pd
 import random
 

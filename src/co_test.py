@@ -30,7 +30,7 @@ def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--config", type=str, default="co_eva")
-    parser.add_argument("--test_index", type=int, default=2)
+    parser.add_argument("--test_index", type=int, default=0)
 
     args = parser.parse_args()
     test(args)
@@ -108,7 +108,8 @@ def test(args):
     
     ttt = time.time()
 
-    print("simlation time ", ttt - tt, " real time ", (args["temporal_length"]-args["t_predict"])*args["delta_T"])
+    print("simlation time ", ttt - tt)
+    print("real time ", (args["temporal_length"]-args["t_predict"])*args["delta_T"])
     
     if args["use_cuda"]:
         target = target.cpu()
@@ -205,11 +206,11 @@ def test(args):
 
     fig = plt.figure(figsize=(10, 6))
     heat = fig.add_subplot(311)
-    im = heat.imshow(end_real_number.T, cmap=plt.cm.hot_r, vmax=10)
+    im = heat.imshow(end_real_number.T, cmap=plt.cm.hot_r, vmax=8)
     plt.colorbar(im)
     plt.title("end ground truth")
     heat = fig.add_subplot(312)
-    im = heat.imshow(end_predict_number.T, cmap=plt.cm.hot_r, vmin=0, vmax=10)
+    im = heat.imshow(end_predict_number.T, cmap=plt.cm.hot_r, vmin=0, vmax=8)
     plt.colorbar(im)
     plt.title("end predict")
     heat = fig.add_subplot(313)

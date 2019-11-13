@@ -208,7 +208,7 @@ if __name__ == "__main__":
     args["sim_step"] = 0.1
     args["delta_T"] = 10
 
-    dataset = traffic_data(mod='seg', topology=seg_topology, args=args)
+    dataset = traffic_data(mod='cooperate', topology=co_topology[0], args=args)
     t = ttt.time()
     a = dataset[0]
     a = dataset[0]
