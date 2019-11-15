@@ -191,6 +191,9 @@ def train(args):
                 for ii, co_data in tqdm(enumerate(dataloader)):
 
                     batch_size = co_data.shape[0]
+                    
+                    if args["use_cuda"]:
+                        co_data = co_data.cuda()
 
                     inputs = co_data[:, :-1, :, :]
                     target = co_data[:, args["t_predict"]+1:, :, :]
@@ -205,11 +208,11 @@ def train(args):
                     acc_meter.add(acc_loss.item())
                     flow_loss_meter.add(flow_loss.item())
                     last_frame_acc_meter.add(last_frame_acc_loss.item())
-                    last_frame_flow_meter.add(last_frame_flow_meter.item())
+                    last_frame_flow_meter.add(last_frame_flow_loss.item())
 
                     if i % args["show_every"] == 0:
-                        print("batch{}, acc_loss={:.3f}, flow_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}".format(i, acc_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0], last_flow_loss_meter.value()[0]))
-                        log_curve_file.write("batch{}, acc_loss={:.3f}, flow_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}\n".format(i, acc_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0], last_flow_loss_meter.value()[0]))
+                        print("batch{}, acc_loss={:.3f}, flow_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}".format(i, acc_meter.value()[0], flow_loss_meter.value()[0], last_frame_acc_meter.value()[0], last_frame_flow_meter.value()[0]))
+                        log_curve_file.write("batch{}, acc_loss={:.3f}, flow_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}\n".format(i, acc_meter.value()[0], flow_loss_meter.value()[0], last_frame_acc_meter.value()[0], last_frame_flow_meter.value()[0]))
 
                     i += 1
 
@@ -221,8 +224,8 @@ def train(args):
             best_flow_epoch = epoch
             best_flow_loss = flow_loss_meter.value()[0]
 
-        print("epoch{}, acc_loss={:.3f}, flow_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}".format(epoch, acc_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0], last_flow_loss_meter.value()[0]))
-        log_curve_file.write("epoch{}, acc_loss={:.3f}, flow_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}\n".format(epoch, acc_meter.value()[0], flow_loss_meter.value()[0], last_loss_meter.value()[0], last_flow_loss_meter.value()[0]))
+        print("epoch{}, acc_loss={:.3f}, flow_loss={:.3f}, last_frame_acc_loss={:.3f}, last_frame_flow_loss={:.3f}".format(epoch, acc_meter.value()[0], flow_loss_meter.value()[0], last_frame_acc_meter.value()[0], last_frame_flow_meter.value()[0]))
+        log_curve_file.write("epoch{}, acc_loss={:.3f}, flow_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}\n".format(epoch, acc_meter.value()[0], flow_loss_meter.value()[0], last_frame_acc_meter.value()[0], last_frame_flow_meter.value()[0]))
         print('saving model')
         torch.save({
             'epoch': epoch,
