@@ -75,7 +75,7 @@ class uni_network_model(nn.Module):
         self.end_before_input = [bucket_number[1], bucket_number[3], bucket_number[6]]
         self.inter_before_input = [bucket_number[1], bucket_number[3]]
 
-    def generate_spatial_hidden(self, h, h_after, h_before):
+    def generate_spatial_hidden(self, h, h_after, h_before, bucket_number):
 
         [batch_size, spatial, hidden_size] = h.shape
             
@@ -98,7 +98,7 @@ class uni_network_model(nn.Module):
 
         return h_after, h_before
 
-    def caculate_next_input(self, former_input, next_input, output):
+    def caculate_next_input(self, former_input, next_input, output, bucket_number):
 
         [batch_size, spatial, _] = former_input.shape
 
@@ -119,6 +119,7 @@ class uni_network_model(nn.Module):
     def forward(self, inputs, bucket_number):
         
         [batch_size, temporal, spatial, input_size] = inputs.shape
+        temporal -= 1
 
         self.get_topology(bucket_number, spatial)
 
@@ -127,6 +128,7 @@ class uni_network_model(nn.Module):
         h_after = Variable(inputs.data.new(batch_size, spatial, self.hidden_size).fill_(0).float())
         h_before = Variable(inputs.data.new(batch_size, spatial, self.hidden_size).fill_(0).float())
         h_output = Variable(inputs.data.new(batch_size, temporal-self.t_predict, spatial, self.hidden_size).fill_(0).float())
+        outputs = Variable(inputs.data.new(batch_size, temporal-self.t_predict, spatial, 3).fill_(0).float())
 
         for time in range(temporal):
 
@@ -143,14 +145,18 @@ class uni_network_model(nn.Module):
             h_after = h_after.view(batch_size, spatial, self.hidden_size)
             h_before = h_before.view(batch_size, spatial, self.hidden_size)
             
-            h_after, h_before = self.generate_spatial_hidden(h, h_after, h_before)
+            h_after, h_before = self.generate_spatial_hidden(h, h_after, h_before, bucket_number)
 
             if time > self.t_predict:
                 h_output[:, time - self.t_predict, :, :] += h
-        
-        output = self.output_layer(h_output)
+                output = self.output_layer(h)
+                outputs[:, time - self.t_predict, :, :] += self.caculate_next_input(
+                                                            inputs[:, time, :, :], 
+                                                            inputs[:, time+1, :, :],
+                                                            output,
+                                                            bucket_number)     
 
-        return output
+        return outputs, h_output
 
     def infer(self, inputs, bucket_number):
 
@@ -181,7 +187,7 @@ class uni_network_model(nn.Module):
             h_after = h_after.view(batch_size, spatial, self.hidden_size)
             h_before = h_before.view(batch_size, spatial, self.hidden_size)
             
-            h_after, h_before = self.generate_spatial_hidden(h, h_after, h_before)
+            h_after, h_before = self.generate_spatial_hidden(h, h_after, h_before, bucket_number)
 
         input_data = inputs[:, self.t_predict, :, :].contiguous()
 
@@ -202,10 +208,11 @@ class uni_network_model(nn.Module):
             input_data = input_data.view(batch_size, spatial, self.input_size)
             
             output = self.output_layer(h)
-            h_after, h_before = self.generate_spatial_hidden(h, h_after, h_before)
+            h_after, h_before = self.generate_spatial_hidden(h, h_after, h_before, bucket_number)
 
             input_data = self.caculate_next_input(input_data, 
-                                                inputs[:, time+self.t_predict+1, :, :], output)
+                                                inputs[:, time+self.t_predict+1, :, :], 
+                                                output, bucket_number)
             
             h_output[:, time, :, :] += h
             outputs[:, time, :, :] += input_data
@@ -223,6 +230,6 @@ if __name__ == "__main__":
     bucket_number = [10, 11, 14, 15, 16, 17, 20]
     model = uni_network_model(args)
 
-    output, _ = model.infer(inputs, bucket_number)
+    output, _ = model(inputs, bucket_number)
     loss = torch.mean(output)
     loss.backward()

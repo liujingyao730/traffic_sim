@@ -2,10 +2,11 @@ import numpy as np
 import xml.etree.cElementTree as etree
 import pandas as pd
 import os 
+import time as ttt
 
 import conf
 
-merge_fcd_path = os.path.join(conf.fcdOutputPath, 'merge', 'fcd.xml')
+merge_fcd_path = os.path.join(conf.fcdOutputPath, 'merge', 'big_test.xml')
 #路网的结构是固定的
 length = {1:600, 2:600, 3:200, 4:200, 7:200, 8:200}
 lane_number = {1:1, 2:2, 3:2, 4:1, 5:2, 6:3, 8:1, 7:2}
@@ -19,7 +20,7 @@ def bucketid(pos, length):
     bucketNumber = int(length / 50)
 
     if pos >= bucketNumber * 50 or pos < 0:
-        print("there must be something wrong !!!!!!!")
+        print("there must be something wrong !!!!!!! pos ", pos)
         return False
 
     for i in range(bucketNumber):
@@ -31,7 +32,7 @@ def bucketid(pos, length):
 def data_record(file, lane_edge=lane_edge, length=length, prefix='default', 
                 special_edge=special_edge, fold=conf.midDataPath):
 
-    root = etree.iterparse(file, events=["start", "end"])
+    root = etree.iterparse(file)
 
     formstep = {}
     nowstep = {}
@@ -41,12 +42,30 @@ def data_record(file, lane_edge=lane_edge, length=length, prefix='default',
     number = pd.DataFrame(columns=["label"])
 
     for event, elem in root:
-        if elem.tag == "timestep" and event == "start":
+        if elem.tag == "timestep":
+
+            #处理之前的数据
+            for vehicle in nowstep.keys():
+                if vehicle not in formstep.keys():
+                    car_in.loc[time, nowstep[vehicle]] += 1
+                else:
+                    if formstep[vehicle] != nowstep[vehicle]:
+                        car_in.loc[time, nowstep[vehicle]] += 1
+                        car_out.loc[time, formstep[vehicle]] += 1
+                    formstep.pop(vehicle)
+
+            for vehicle in formstep.keys():
+                car_out.loc[time, formstep[vehicle]] += 1
+
+            formstep = nowstep.copy()
+            nowstep.clear()
+
+            #创建现在的数据
             time = float(elem.attrib["time"])
             car_in.loc[time] = 0
             car_out.loc[time] = 0
             number.loc[time] = 0
-        elif elem.tag == "vehicle" and event == "end":
+        elif elem.tag == "vehicle":
             vehicle_id = elem.attrib["id"]
             lane = elem.attrib['lane']
             edge = lane_edge[lane]
@@ -64,22 +83,6 @@ def data_record(file, lane_edge=lane_edge, length=length, prefix='default',
                 car_out[bucket] = 0
 
             number.loc[time, bucket] += 1
-        
-        elif elem.tag == "timestep" and event == "end":
-            for vehicle in nowstep.keys():
-                if vehicle not in formstep.keys():
-                    car_in.loc[time, nowstep[vehicle]] += 1
-                else:
-                    if formstep[vehicle] != nowstep[vehicle]:
-                        car_in.loc[time, nowstep[vehicle]] += 1
-                        car_out.loc[time, formstep[vehicle]] += 1
-                    formstep.pop(vehicle)
-
-            for vehicle in formstep.keys():
-                car_out.loc[time, formstep[vehicle]] += 1
-
-            formstep = nowstep.copy()
-            nowstep.clear()
         
         elem.clear()
 
@@ -138,5 +141,14 @@ def reset_data(prefix, fold=conf.midDataPath, deltaT=conf.args["deltaT"],
 
 
 if __name__ == "__main__":
+    length[1] = 1400
+    length[2] = 1400
+    length[3] = 1000
+    length[4] = 1000
+    length[7] = 1000
+    length[8] = 1000
+    t = ttt.time()
     data_record(merge_fcd_path)
+    t2 = ttt.time()
+    print(t2 - t)
     #reset_data('default')
