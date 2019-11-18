@@ -77,6 +77,9 @@ class uni_network_model(nn.Module):
 
     def generate_spatial_hidden(self, h, h_after, h_before, bucket_number):
 
+        h_after = h_after * 0
+        h_before = h_before * 0
+
         [batch_size, spatial, hidden_size] = h.shape
             
         #添加路段上的after和before
@@ -84,17 +87,17 @@ class uni_network_model(nn.Module):
         h_before[:, self.after_block, :] += h[:, self.before_block, :]
 
         #添加主路段的最后一个节点的后续hidden
-        h_after[:, bucket_number[1], :] = self.end_resize(h[:, self.major_after_input, :].view(batch_size, -1))
+        h_after[:, bucket_number[1], :] += self.end_resize(h[:, self.major_after_input, :].view(batch_size, -1))
 
         #添加次路段的最后一个节点的后续hidden
-        h_after[:, bucket_number[3], :] = self.end_resize(h[:, self.minor_after_input, :].view(batch_size, -1))
+        h_after[:, bucket_number[3], :] += self.end_resize(h[:, self.minor_after_input, :].view(batch_size, -1))
 
         #添加后续路段的第一个节点的之前的hidden
-        h_before[:, bucket_number[4], :] = self.end_resize(h[:, self.end_before_input, :].view(batch_size, -1))
+        h_before[:, bucket_number[4], :] += self.end_resize(h[:, self.end_before_input, :].view(batch_size, -1))
 
         #添加inter node 的前后hidden
-        h_after[:, bucket_number[6], :] = h[:, bucket_number[4], :]
-        h_before[:, bucket_number[6], :] = self.inter_resize(h[:, self.inter_before_input, :].view(batch_size, -1))
+        h_after[:, bucket_number[6], :] += h[:, bucket_number[4], :]
+        h_before[:, bucket_number[6], :] += self.inter_resize(h[:, self.inter_before_input, :].view(batch_size, -1))
 
         return h_after, h_before
 
