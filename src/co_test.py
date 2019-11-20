@@ -23,6 +23,7 @@ import yaml
 from model import TP_lstm
 from model import loss_function
 from unit_net_model import uni_network_model 
+from net_model import network_model
 from data import traffic_data
 import data as d
 import conf
@@ -49,7 +50,7 @@ def test(args):
     load_directory = os.path.join(conf.logPath, args["model_prefix"])
     file = os.path.join(load_directory, str(use_epoch)+'.tar')
     checkpoint = torch.load(file)
-    model = uni_network_model(args)
+    model = network_model(args)
     model.load_state_dict(checkpoint['state_dict'])
     
     eva_prefix = args["eva_prefix"]
@@ -65,7 +66,6 @@ def test(args):
         model = model.cuda()
 
     [_, temporal, spatial, input_size] = co_data.shape
-    inputs = co_data[:, :args["t_predict"]+1, :, :]
     target = co_data[:, args["t_predict"]+1:, :, :]
 
     bucket_number = data_set.bucket_number
@@ -80,7 +80,7 @@ def test(args):
     if args["use_cuda"]:
         target = target.cpu()
         outputs = outputs.cpu()
-
+    '''
     ordered_output = []
     for i in range(10):
         ordered_output.append(np.array([]))
@@ -91,7 +91,7 @@ def test(args):
         ordered_output[i] = output[torch.eq(target_output, i)].detach().numpy()
     sns.violinplot(data=np.array(ordered_output))
     plt.show()
-
+    '''
     target = target.detach().numpy()
     outputs = outputs.detach().numpy()
 

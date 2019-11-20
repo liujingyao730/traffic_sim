@@ -197,7 +197,7 @@ class network_model(nn.Module):
         self.inter_place = [1, 3, 4, 6]
 
         self.segment_model = seg_model(args)
-        self.intersection_model = inter_LSTM(args)
+        self.intersection_model = inter_model(args)
         #self.interoutputlayer = FCNet(layerSize=[self.hidden_size, self.output_hidden_size, self.output_size])
         #self.segoutputlayer = FCNet(layerSize=[self.hidden_size, self.output_hidden_size, self.output_size])
         self.outputlayer = FCNet(layerSize=[self.hidden_size, self.output_hidden_size, self.output_size])
@@ -205,13 +205,17 @@ class network_model(nn.Module):
     def get_topoloy(self, bucket_number, spatial):
 
         self.bucket_number = bucket_number
+        self.spatial = spatial
         self.seg_input = list(range(spatial - 1))
 
-        self.not_after_block = [0, bucket_number[1]+1, bucket_number[4], bucket_number[6]]
-        self.not_before_block = [bucket_number[1], bucket_number[3],
+        self.not_after_block = [0, bucket_number[1]+1, bucket_number[4], 
+                                    bucket_number[5], bucket_number[6]]
+        self.not_before_block = [bucket_number[0], bucket_number[1],
+                                bucket_number[2], bucket_number[3],
                                 bucket_number[6]-1, bucket_number[6]]
-        not_after_seg_block = self.not_after_block + [bucket_number[5]]
-        not_before_seg_block = self.not_before_block + [bucket_number[0], bucket_number[2]]
+        self.not_after_seg_block = [0, bucket_number[1]+1, bucket_number[4], bucket_number[6]]
+        self.not_before_seg_block = [bucket_number[1], bucket_number[3],
+                                bucket_number[6]-1, bucket_number[6]]
         self.init_block = [0, bucket_number[1]+1]
 
         self.inter_block = [bucket_number[i] for i in self.inter_place]
@@ -220,20 +224,20 @@ class network_model(nn.Module):
         self.seg_block_number = len(self.seg_block)
         self.inter_block_number = len(self.bucket_number)
 
-        self.after_block = [i for i in range(spatial) if i not in self.not_after_block]
-        self.before_block = [i for i in range(spatial) if i not in self.not_before_block]
+        self.after_block = [i for i in range(spatial) if i not in self.not_after_seg_block]
+        self.before_block = [i for i in range(spatial) if i not in self.not_before_seg_block]
 
-        self.before_to = [i for i in range(1, self.seg_block_number) if not i == bucket_number[1]]
-        self.after_to = list(range(self.seg_block_number - 1))
-        self.after_from = [i for i in range(spatial) if i not in not_after_seg_block]
-        self.before_from = [i for i in range(spatial) if i not in not_before_seg_block]
+        self.before_in_seg = [i for i in range(1, self.seg_block_number) if not i == bucket_number[1]]
+        self.after_in_seg = list(range(self.seg_block_number - 1))
+        self.after_in_all = [i for i in range(spatial) if i not in self.not_after_block]
+        self.before_in_all = [i for i in range(spatial) if i not in self.not_before_block]
 
-    def collect_spatial_hidden(self, h_inter, c_inter, h_seg, c_seg, spatial):
+    def collect_spatial_hidden(self, h_inter, c_inter, h_seg, c_seg):
 
         batch_size = h_inter.shape[0]
 
-        h_tmp = Variable(h_inter.data.new(batch_size, spatial, self.hidden_size).fill_(0).float())
-        c_tmp = Variable(h_inter.data.new(batch_size, spatial, self.hidden_size).fill_(0).float())
+        h_tmp = Variable(h_inter.data.new(batch_size, self.spatial, self.hidden_size).fill_(0).float())
+        c_tmp = Variable(h_inter.data.new(batch_size, self.spatial, self.hidden_size).fill_(0).float())
 
         h_tmp[:, self.seg_block, :] += h_seg
         c_tmp[:, self.seg_block, :] += c_seg
@@ -253,13 +257,13 @@ class network_model(nn.Module):
         h_inter = Variable(h_tmp.data.new(batch_size, self.inter_block_number, self.hidden_size).fill_(0).float())
         c_inter = Variable(h_tmp.data.new(batch_size, self.inter_block_number, self.hidden_size).fill_(0).float())
 
-        h_seg = h_tmp[:, self.seg_block, :]
-        c_seg = c_tmp[:, self.seg_block, :]
-        h_inter = h_tmp[:, self.bucket_number, :]
-        c_inter = c_tmp[:, self.bucket_number, :]
+        h_seg += h_tmp[:, self.seg_block, :]
+        c_seg += c_tmp[:, self.seg_block, :]
+        h_inter += h_tmp[:, self.bucket_number, :]
+        c_inter += c_tmp[:, self.bucket_number, :]
 
-        h_after[:, self.after_to, :] += h_tmp[:, self.after_from, :]
-        h_before[:, self.before_to, :] += h_tmp[:, self.before_from, :]
+        h_after[:, self.after_in_seg, :] += h_tmp[:, self.after_in_all, :]
+        h_before[:, self.before_in_seg, :] += h_tmp[:, self.before_in_all, :]
 
         return h_seg, c_seg, h_after, h_before, h_inter, c_inter
 
@@ -273,6 +277,7 @@ class network_model(nn.Module):
         In[:, self.after_block, 0] += output[:, self.before_block, 0]
         In[:, self.init_block, 0] += next_input[:, self.init_block, 1]
         In[:, self.bucket_number[6], 0] += output[:, self.bucket_number[1], 0] + output[:, self.bucket_number[3], 0]
+        In[:, self.bucket_number[4], 0] += output[:, self.bucket_number[6], 0]
         number_caculate = number_former + In - output
 
         input_caculate = torch.cat((output, In, number_caculate), dim=2)
@@ -315,8 +320,10 @@ class network_model(nn.Module):
             h_after = h_after.view(batch_size, self.seg_block_number, self.hidden_size)
             h_before = h_before.view(batch_size, self.seg_block_number, self.hidden_size)
 
-            h_tmp, c_tmp = self.collect_spatial_hidden(h_inter, c_inter, h_seg, c_seg, spatial)
-            h_seg, c_seg, h_after, h_before, h_inter, c_inter = self.distribute_spatial_hidden(h_tmp, c_tmp)
+            h_tmp, c_tmp = self.collect_spatial_hidden(h_inter, c_inter, h_seg, c_seg)
+            h_seg, c_seg, h_after, h_before, h_inter, c_inter = self.distribute_spatial_hidden(
+                                                                                h_tmp, c_tmp,
+                                                                                )
 
             if time > self.t_predict:
                 h_outputs[:, time-self.t_predict, :, :] += h_tmp
@@ -365,8 +372,10 @@ class network_model(nn.Module):
             h_after = h_after.view(batch_size, self.seg_block_number, self.hidden_size)
             h_before = h_before.view(batch_size, self.seg_block_number, self.hidden_size)
 
-            h_tmp, c_tmp = self.collect_spatial_hidden(h_inter, c_inter, h_seg, c_seg, spatial)
-            h_seg, c_seg, h_after, h_before, h_inter, c_inter = self.distribute_spatial_hidden(h_tmp, c_tmp)
+            h_tmp, c_tmp = self.collect_spatial_hidden(h_inter, c_inter, h_seg, c_seg)
+            h_seg, c_seg, h_after, h_before, h_inter, c_inter = self.distribute_spatial_hidden(
+                                                                                        h_tmp, c_tmp,
+                                                                                        )
 
         input_data = co_data[:, self.t_predict, :, :]
 
@@ -389,7 +398,7 @@ class network_model(nn.Module):
             h_after = h_after.view(batch_size, self.seg_block_number, self.hidden_size)
             h_before = h_before.view(batch_size, self.seg_block_number, self.hidden_size)
 
-            h_tmp, c_tmp = self.collect_spatial_hidden(h_inter, c_inter, h_seg, c_seg, spatial)
+            h_tmp, c_tmp = self.collect_spatial_hidden(h_inter, c_inter, h_seg, c_seg)
             output = self.outputlayer(h_tmp)
             h_seg, c_seg, h_after, h_before, h_inter, c_inter = self.distribute_spatial_hidden(h_tmp, c_tmp)
 
