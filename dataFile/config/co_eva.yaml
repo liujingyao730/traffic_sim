@@ -1,7 +1,7 @@
 # test
 batch_size: 100
-use_epoch: 1
-model_prefix: net_with_flow_with_simerror
+use_epoch: 49
+model_prefix: network_baseline
 t_predict: 4
 temporal_length: 304
 use_cuda: true
@@ -12,7 +12,7 @@ input_size: 3
 lane_gate_size: 4
 output_hidden_size: 16
 eva_prefix: 
-  - !!str 200
+  - !!str 500
   - test2
   - test3
   - test4

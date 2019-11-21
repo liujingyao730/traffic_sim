@@ -48,8 +48,6 @@ prefix:
   - !!str 1500_1
 
 test_prefix:
-  - !!str 200_1
-  - !!str 300_1
   - !!str 400_1
   - !!str 500_1
   - !!str 600_1
