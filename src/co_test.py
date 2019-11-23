@@ -46,6 +46,8 @@ def test(args):
 
     model_prefix = args["model_prefix"]
     use_epoch = args["use_epoch"]
+    start_time = args["time"]
+    start_time = int(start_time / args["sim_step"])
 
     load_directory = os.path.join(conf.logPath, args["model_prefix"])
     file = os.path.join(load_directory, str(use_epoch)+'.tar')
@@ -59,7 +61,7 @@ def test(args):
     data_set = traffic_data(args, data_prefix=args["eva_prefix"][test_index], 
                             mod='cooperate', topology=d.co_topology[topology_index[test_index]])
 
-    co_data = data_set[0].unsqueeze(0)
+    co_data = data_set[start_time].unsqueeze(0)
 
     if args["use_cuda"]:
         co_data = co_data.cuda()
@@ -80,7 +82,7 @@ def test(args):
     if args["use_cuda"]:
         target = target.cpu()
         outputs = outputs.cpu()
-    '''
+    
     ordered_output = []
     for i in range(10):
         ordered_output.append(np.array([]))
@@ -91,7 +93,7 @@ def test(args):
         ordered_output[i] = output[torch.eq(target_output, i)].detach().numpy()
     sns.violinplot(data=np.array(ordered_output))
     plt.show()
-    '''
+    
     target = target.detach().numpy()
     outputs = outputs.detach().numpy()
 
@@ -100,12 +102,12 @@ def test(args):
     print("output explained variance score ", metrics.explained_variance_score(target[0, :, :, 0].flatten(), outputs[0, :, :, 0].flatten()))
     print("number explained variance score ", metrics.explained_variance_score(target[0, :, :, 2].flatten(), outputs[0, :, :, 2].flatten()))
 
-    major_real_number = target[0, :, :bucket_number[1]+1, 2]
-    major_predict_number = outputs[0, :, :bucket_number[1]+1, 2]
-    minor_real_number = target[0, :, bucket_number[1]+1:bucket_number[4], 2]
-    minor_predict_number = outputs[0, :, bucket_number[1]+1:bucket_number[4], 2]
+    major_real_number = target[0, :, :bucket_number[1]+1, 0]
+    major_predict_number = outputs[0, :, :bucket_number[1]+1, 0]
+    minor_real_number = target[0, :, bucket_number[1]+1:bucket_number[4], 0]
+    minor_predict_number = outputs[0, :, bucket_number[1]+1:bucket_number[4], 0]
     end_real_number = target[0, :, bucket_number[4]:-1, 2]
-    end_predict_number = outputs[0, :, bucket_number[4]:-1, 0]
+    end_predict_number = outputs[0, :, bucket_number[4]:-1, 2]
     
     major_flow_real = major_real_number.sum(axis=1)
     major_flow_pred = major_predict_number.sum(axis=1)

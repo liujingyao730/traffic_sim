@@ -197,7 +197,7 @@ class network_model(nn.Module):
         self.inter_place = [1, 3, 4, 6]
 
         self.segment_model = seg_model(args)
-        self.intersection_model = inter_model(args)
+        self.intersection_model = inter_LSTM(args)
         #self.interoutputlayer = FCNet(layerSize=[self.hidden_size, self.output_hidden_size, self.output_size])
         #self.segoutputlayer = FCNet(layerSize=[self.hidden_size, self.output_hidden_size, self.output_size])
         self.outputlayer = FCNet(layerSize=[self.hidden_size, self.output_hidden_size, self.output_size])
@@ -325,7 +325,7 @@ class network_model(nn.Module):
                                                                                 h_tmp, c_tmp,
                                                                                 )
 
-            if time > self.t_predict:
+            if time >= self.t_predict:
                 h_outputs[:, time-self.t_predict, :, :] += h_tmp
                 output = self.outputlayer(h_tmp)
                 outputs[:, time-self.t_predict, :, :] += self.caculate_next_input(

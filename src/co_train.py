@@ -22,6 +22,7 @@ from model import TP_lstm
 from model import loss_function
 from net_model import network_model
 from unit_net_model import uni_network_model as unlstm
+from separate_seg_model import sp_network_model as splstm
 from data import traffic_data
 import data as d
 import conf
@@ -52,7 +53,8 @@ def train(args):
         return os.path.join(log_directory, str(x)+'.tar')
 
     #model = unlstm(args)
-    model = network_model(args)
+    #model = network_model(args)
+    model = splstm(args)
 
     criterion = loss_function()
     sim_error_criterion = torch.nn.ReLU()
@@ -153,11 +155,11 @@ def train(args):
                     acc_meter.add(loss.item())
 
                     #break
-                    i += 1
                     if i % args["show_every"] == 0:
                         print("batch{}, train_loss = {:.3f}".format(i, acc_meter.value()[0]))
                         log_curve_file.write("batch{}, train_loss = {:.3f}\n".format(i, acc_meter.value()[0]))
-                    
+                    i += 1
+
                     #print(t6-t1)
                 #break
                 print("batch{}, train_loss = {:.3f} for topology {}, preifx {}".format(ii, acc_meter.value()[0], topology_index, prefix))

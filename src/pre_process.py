@@ -10,6 +10,7 @@ merge_fcd_path = os.path.join(conf.fcdOutputPath, 'merge', 'big_test.xml')
 #路网的结构是固定的
 length = {1:600, 2:600, 3:200, 4:200, 7:200, 8:200}
 lane_number = {1:1, 2:2, 3:2, 4:1, 5:2, 6:3, 8:1, 7:2}
+connections = {1:1, 2:2, 3:1, 4:1, 5:0, 6:0, 8:2, 7:2}
 special_edge = [5, 6]
 lane_edge = {'1_0':1, '2_0':2, '2_1':2, '3_0':3, '3_1':3, '4_0':4, '7_0':7, '7_1':7,
             '8_0':8, ':gneJ1_0_0':5, ':gneJ1_4_0':5, ':gneJ2_6_0':6, ':gneJ2_10_0':6,
@@ -140,6 +141,37 @@ def reset_data(prefix, fold=conf.midDataPath, deltaT=conf.args["deltaT"],
     print(prefix + "car in and out file have been reset")
 
 
+def add_lane(prefix, fold=conf.midDataPath):
+
+    car_in_file = os.path.join(fold, prefix+'CarIn.csv')
+    car_in = pd.read_csv(car_in_file, index_col=0)
+    lanes = pd.DataFrame(index=car_in.index, columns=car_in.columns)
+
+    for block in car_in.columns:
+        edge = int(int(block) / 100)
+        lanes[block] = lane_number[edge]
+
+    lanes_file = os.path.join(fold, prefix+'LaneNumber.csv')
+    lanes.to_csv(lanes_file)
+
+    print(prefix + " lane number file have been saved")
+
+def add_connection(prefix, fold=conf.midDataPath):
+
+    car_in_file = os.path.join(fold, prefix+'CarIn.csv')
+    car_in = pd.read_csv(car_in_file, index_col=0)
+    connection = pd.DataFrame(index=car_in.index, columns=car_in.columns)
+
+    for block in car_in.columns:
+        edge = int(int(block) / 100)
+        connection[block] = connections[edge]
+
+    connection_file = os.path.join(fold, prefix+'Connection.csv')
+    connection.to_csv(connection_file)
+
+    print(prefix +" connection number file have been saved")
+
+
 if __name__ == "__main__":
     length[1] = 1400
     length[2] = 1400
@@ -148,7 +180,9 @@ if __name__ == "__main__":
     length[7] = 1000
     length[8] = 1000
     t = ttt.time()
-    data_record(merge_fcd_path)
+    #data_record(merge_fcd_path)
+    #add_lane("default")
+    add_connection("default")
     t2 = ttt.time()
     print(t2 - t)
     #reset_data('default')
