@@ -4,8 +4,8 @@ embedding_size: 8
 hidden_size: 64
 output_hidden_size: 16
 t_predict: 4
-temporal_length: 8
-lane_gate_size: 4
+temporal_length: 16
+lane_gate_size: 8
 
 # train
 batch_size: 500

@@ -6,6 +6,7 @@ from torch.autograd import Variable
 import conf
 from model import FCNet
 from net_model import inter_model
+from net_model import inter_LSTM
 from net_model import seg_model
 
 class sp_network_model(nn.Module):
@@ -24,7 +25,7 @@ class sp_network_model(nn.Module):
         self.major_seg_model = seg_model(args)
         self.minor_seg_model = seg_model(args)
         self.end_seg_model = seg_model(args)
-        self.intersectio_model = inter_model(args)
+        self.intersectio_model = inter_LSTM(args)
 
         self.outputlayer = FCNet(layerSize=[self.hidden_size, self.output_hidden_size, self.output_size])
 

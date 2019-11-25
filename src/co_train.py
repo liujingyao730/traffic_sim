@@ -86,7 +86,7 @@ def train(args):
         i = 0 
 
         for prefix in args["prefix"]:
-            #break
+            break
             for topology_index in range(len(d.co_topology)):
 
                 data_set = traffic_data(args, data_prefix=prefix,

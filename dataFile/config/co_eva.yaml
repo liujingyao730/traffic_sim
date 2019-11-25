@@ -1,18 +1,19 @@
 # test
 batch_size: 100
 use_epoch: 49
-model_prefix: network_baseline
-t_predict: 4
+model_prefix: separate_seg_128
+t_predict: 8
 temporal_length: 304
+time: 110
 use_cuda: true
 
 # eva
-hidden_size: 64
+hidden_size: 128
 input_size: 3
 lane_gate_size: 4
 output_hidden_size: 16
 eva_prefix: 
-  - !!str 500
+  - test1
   - test2
   - test3
   - test4

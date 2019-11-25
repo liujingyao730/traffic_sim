@@ -24,6 +24,7 @@ from model import TP_lstm
 from model import loss_function
 from unit_net_model import uni_network_model 
 from net_model import network_model
+from separate_seg_model import sp_network_model
 from data import traffic_data
 import data as d
 import conf
@@ -52,7 +53,8 @@ def test(args):
     load_directory = os.path.join(conf.logPath, args["model_prefix"])
     file = os.path.join(load_directory, str(use_epoch)+'.tar')
     checkpoint = torch.load(file)
-    model = network_model(args)
+    #model = network_model(args)
+    model = sp_network_model(args)
     model.load_state_dict(checkpoint['state_dict'])
     
     eva_prefix = args["eva_prefix"]
@@ -102,10 +104,10 @@ def test(args):
     print("output explained variance score ", metrics.explained_variance_score(target[0, :, :, 0].flatten(), outputs[0, :, :, 0].flatten()))
     print("number explained variance score ", metrics.explained_variance_score(target[0, :, :, 2].flatten(), outputs[0, :, :, 2].flatten()))
 
-    major_real_number = target[0, :, :bucket_number[1]+1, 0]
-    major_predict_number = outputs[0, :, :bucket_number[1]+1, 0]
-    minor_real_number = target[0, :, bucket_number[1]+1:bucket_number[4], 0]
-    minor_predict_number = outputs[0, :, bucket_number[1]+1:bucket_number[4], 0]
+    major_real_number = target[0, :, :bucket_number[1]+1, 2]
+    major_predict_number = outputs[0, :, :bucket_number[1]+1, 2]
+    minor_real_number = target[0, :, bucket_number[1]+1:bucket_number[4], 2]
+    minor_predict_number = outputs[0, :, bucket_number[1]+1:bucket_number[4], 2]
     end_real_number = target[0, :, bucket_number[4]:-1, 2]
     end_predict_number = outputs[0, :, bucket_number[4]:-1, 2]
     

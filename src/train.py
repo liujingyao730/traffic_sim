@@ -172,7 +172,7 @@ def train(args):
                         
                     output, [hidden_state, cell_state] = net.train_infer(input_data, hidden_state, cell_state)
 
-                    number_before = data[:, :, args["t_predict"]+t, 2].view(batch_size, spatial_size, 1)
+                    number_before = input_data[:, :, 2].view(batch_size, spatial_size, 1)
                     number_current = target[:, :, t, 2].view(batch_size, spatial_size, 1)
                     inflow = torch.cat((data[:, 0, args["t_predict"]+t, 1].view(batch_size, 1, 1), output[:, :-1]), 1)
                     number_caculate = number_before + inflow - output
