@@ -87,7 +87,7 @@ def train(args):
 
         for prefix in args["prefix"]:
             #break
-            for topology_index in range(len(d.co_topology)):
+            for topology_index in range(1):
 
                 data_set = traffic_data(args, data_prefix=prefix,
                                 mod='cooperate', topology=d.co_topology[topology_index])
@@ -180,7 +180,7 @@ def train(args):
         model.eval()
         for prefix in args["test_prefix"]:
 
-            for topology_index in range(len(d.co_topology)):
+            for topology_index in range(1):
 
                 data_set = traffic_data(args, data_prefix=prefix,
                                         mod="cooperate", topology=d.co_topology[topology_index])

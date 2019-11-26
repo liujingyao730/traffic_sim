@@ -275,7 +275,7 @@ class sp_network_model(nn.Module):
             h_minor_after = h_minor_after.view(batch_size, self.minor_block_number, self.hidden_size)
             h_minor_before = h_minor_before.view(batch_size, self.minor_block_number, self.hidden_size)
             h_end_after = h_end_after.view(batch_size, self.end_block_number, self.hidden_size)
-            c_end_before = h_end_before.view(batch_size, self.end_block_number, self.hidden_size)
+            h_end_before = h_end_before.view(batch_size, self.end_block_number, self.hidden_size)
 
             h_tmp = h_tmp * 0
             c_tmp = c_tmp * 0
@@ -287,6 +287,20 @@ class sp_network_model(nn.Module):
             c_tmp[:, self.minor_seg_block, :] += c_minor
             c_tmp[:, self.end_seg_block, :] += c_end
             c_tmp[:, self.inter_block, :] += c_inter[:, self.inter_place, :]
+
+            h_major_after = h_major_after * 0
+            h_major_before = h_major_before * 0
+            h_minor_after = h_minor_after * 0
+            h_minor_before = h_minor_before * 0
+            h_end_after = h_end_after * 0
+            h_end_before = h_end_before * 0
+
+            h_major_after += h_tmp[:, self.major_after_all]
+            h_major_before[:, self.major_before_seg, :] += h_tmp[:, self.major_before_all, :]
+            h_minor_after += h_tmp[:, self.minor_after_all]
+            h_minor_before[:, self.minor_before_seg, :] += h_tmp[:, self.minor_before_all, :]
+            h_end_after[:, self.end_after_seg, :] += h_tmp[:, self.end_after_all, :]
+            h_end_before += h_tmp[:, self.end_before_all]
 
         return outputs, h_outputs
             
