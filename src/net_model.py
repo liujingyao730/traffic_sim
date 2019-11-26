@@ -29,10 +29,10 @@ class inter_LSTM(nn.Module):
         self.end_cell = seg_model(args)
         self.inter_cell = seg_model(args)
 
-        self.major_resize = nn.Linear(3*self.hidden_size, self.hidden_size)
-        self.minor_resize = nn.Linear(3*self.hidden_size, self.hidden_size)
-        self.end_resize = nn.Linear(3*self.hidden_size, self.hidden_size)
-        self.inter_resize = nn.Linear(2*self.hidden_size, self.hidden_size)
+        self.major_resize = nn.Linear(2*self.hidden_size, self.hidden_size)
+        self.minor_resize = nn.Linear(2*self.hidden_size, self.hidden_size)
+        self.end_resize = nn.Linear(2*self.hidden_size, self.hidden_size)
+        #self.inter_resize = nn.Linear(2*self.hidden_size, self.hidden_size)
 
     def forward(self, input_data, hidden):
 
@@ -43,10 +43,10 @@ class inter_LSTM(nn.Module):
         h_out = h.data.new(batch_size, n_unit, self.hidden_size).fill_(0).float()
         c_out = h.data.new(batch_size, n_unit, self.hidden_size).fill_(0).float()
 
-        major_cat = torch.cat((h[:, self.minor, :], h[:, self.end, :], h[:, self.inter, :]), dim=1)
-        minor_cat = torch.cat((h[:, self.major, :], h[:, self.end, :], h[:, self.inter, :]), dim=1)
-        end_cat = torch.cat((h[:, self.major, :], h[:, self.minor, :], h[:, self.inter, :]), dim=1)
-        inter_cat = torch.cat((h[:, self.minor, :], h[:, self.major, :]), dim=1)
+        major_cat = torch.cat((h[:, self.minor, :], h[:, self.end, :]), dim=1)
+        minor_cat = torch.cat((h[:, self.major, :], h[:, self.end, :]), dim=1)
+        end_cat = torch.cat((h[:, self.major, :], h[:, self.minor, :]), dim=1)
+        #inter_cat = torch.cat((h[:, self.minor, :], h[:, self.major, :]), dim=1)
 
         h_major = h[:, self.major, :]
         c_major = h[:, self.major, :]
@@ -61,14 +61,14 @@ class inter_LSTM(nn.Module):
         h_minor_after = self.minor_resize(minor_cat)
         h_minor_before = h[:, self.minor_before, :]
         h_minor_out, c_minor_out = self.minor_cell(input_minor, h_minor, c_minor, h_minor_after, h_minor_before)
-
+        '''
         h_inter = h[:, self.inter, :]
         c_inter = h[:, self.inter, :]
         input_inter = input_data[:, self.inter, :]
         h_inter_before = self.inter_resize(inter_cat)
         h_inter_after = h[:, self.inter_after, :]
         h_inter_out, c_inter_out = self.inter_cell(input_inter, h_inter, c_inter, h_inter_after, h_inter_before)
-
+        '''
         h_end = h[:, self.end, :]
         c_end = h[:, self.end, :]
         input_end = input_data[:, self.end, :]
@@ -80,8 +80,8 @@ class inter_LSTM(nn.Module):
         c_out[:, self.major, :] += c_major_out
         h_out[:, self.minor, :] += h_minor_out
         c_out[:, self.minor, :] += c_minor_out
-        h_out[:, self.inter, :] += h_inter_out
-        c_out[:, self.inter, :] += c_inter_out
+        #h_out[:, self.inter, :] += h_inter_out
+        #c_out[:, self.inter, :] += c_inter_out
         h_out[:, self.end, :] += h_end_out
         c_out[:, self.end, :] += c_end_out
 

@@ -159,7 +159,6 @@ class traffic_data(Dataset):
         elif self.mod == "cooperate":
 
             #t1 = ttt.time()
-            seg_data = []
             time = index
             time_list = [int(i*self.delta_T/self.sim_step) + time for i in range(self.temporal_length+1)]
 

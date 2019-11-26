@@ -87,7 +87,7 @@ class sp_network_model(nn.Module):
         In[:, self.after_block, 0] += output[:, self.before_block, 0]
         In[:, self.init_block, 0] += next_input[:, self.init_block, 1]
         In[:, self.bucket_number[6], 0] += output[:, self.bucket_number[1], 0] + output[:, self.bucket_number[3], 0]
-        In[:, self.bucket_number[4], 0] += output[:, self.bucket_number[6], 0]
+        In[:, self.bucket_number[4], 0] += output[:, self.bucket_number[1], 0] + output[:, self.bucket_number[3], 0]
         number_caculate = number_former + In - output
 
         input_caculate = torch.cat((output, In, number_caculate), dim=2)

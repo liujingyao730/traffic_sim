@@ -86,7 +86,7 @@ def train(args):
         i = 0 
 
         for prefix in args["prefix"]:
-            break
+            #break
             for topology_index in range(len(d.co_topology)):
 
                 data_set = traffic_data(args, data_prefix=prefix,
@@ -131,21 +131,21 @@ def train(args):
                         outputs, _ = model.infer(co_data, bucket_number)
 
                         if args["use_simerror"]:
-                            sim_error = outputs[:, :-1, :, 2] - target[:, :-1, :, 2]
-                            sim_error = sim_error * (target[:, 1:, :, 0] - outputs[:, 1:, :, 0])
+                            sim_error = outputs[:, :-1, :-1, 2] - target[:, :-1, :-1, 2]
+                            sim_error = sim_error * (target[:, 1:, :-1, 0] - outputs[:, 1:, :-1, 0])
                             sim_error = sim_error_criterion(sim_error)
                         else:
                             sim_error = Variable(co_data.data.new(1).fill_(0).float())
                         
                         if args["use_mask"] :
-                            mask = get_mask(target[:, :, :, 0], args["mask"])
-                            acc_loss = criterion(target[:, :, :, 0], outputs[:, :, :, 0], mask)
+                            mask = get_mask(target[:, :, :-1, 0], args["mask"])
+                            acc_loss = criterion(target[:, :, :-1, 0], outputs[:, :, :-1, 0], mask)
                             sim_error = sim_error * mask[:, 1:, :]
                         else:
-                            acc_loss = criterion(target[:, :, :, 0], outputs[:, :, :, 0])
+                            acc_loss = criterion(target[:, :, :-1, 0], outputs[:, :, :-1, 0])
 
                         sim_error = torch.mean(sim_error)
-                        flow_loss = criterion(target[:, :, :, 2], outputs[:, :, :, 2])
+                        flow_loss = criterion(target[:, :, :-1, 2], outputs[:, :, :-1, 2])
                         loss = (2 - args["flow_loss_weight"]) * acc_loss + args["flow_loss_weight"] * flow_loss + args["gamma"] * sim_error
 
                     loss.backward()
@@ -203,10 +203,10 @@ def train(args):
                     
                     outputs, _ = model.infer(co_data, bucket_number)
 
-                    acc_loss = criterion(target[:, :, :, 0], outputs[:, :, :, 0])
-                    flow_loss = criterion(target[:, :, :, 2], outputs[:, :, :, 2])
-                    last_frame_acc_loss = criterion(target[:, -1, :, 0], outputs[:, -1, :, 0])
-                    last_frame_flow_loss = criterion(target[:, -1, :, 2], outputs[:, -1, :, 2])
+                    acc_loss = criterion(target[:, :, :-1, 0], outputs[:, :, :-1, 0])
+                    flow_loss = criterion(target[:, :, :-1, 2], outputs[:, :, :-1, 2])
+                    last_frame_acc_loss = criterion(target[:, -1, :-1, 0], outputs[:, -1, :-1, 0])
+                    last_frame_flow_loss = criterion(target[:, -1, :-1, 2], outputs[:, -1, :-1, 2])
 
                     acc_meter.add(acc_loss.item())
                     flow_loss_meter.add(flow_loss.item())
