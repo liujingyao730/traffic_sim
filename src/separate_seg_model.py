@@ -25,7 +25,7 @@ class sp_network_model(nn.Module):
         self.major_seg_model = seg_model(args)
         self.minor_seg_model = seg_model(args)
         self.end_seg_model = seg_model(args)
-        self.intersectio_model = inter_LSTM(args)
+        self.intersectio_model = inter_model(args)
 
         self.outputlayer = FCNet(layerSize=[self.hidden_size, self.output_hidden_size, self.output_size])
 
