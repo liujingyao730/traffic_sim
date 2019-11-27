@@ -64,7 +64,8 @@ def train(args):
         criterion = criterion.cuda()
         sim_error_criterion = sim_error_criterion.cuda()
 
-    optimizer = torch.optim.Adagrad(model.parameters(), weight_decay=args["lambda_param"])
+    #optimizer = torch.optim.Adagrad(model.parameters(), weight_decay=args["lambda_param"])
+    optimizer = torch.optim.Adam(model.parameters(), lr=args["learning_rate"])
 
     acc_meter = meter.AverageValueMeter()
     flow_loss_meter = meter.AverageValueMeter()
