@@ -154,6 +154,11 @@ class seg_model(nn.Module):
         before_input_gate = self.before_input(h_before_t)
         before_forget_gate = self.before_forget(h_before_t)
 
+        after_forget_gate = self.sigma(after_forget_gate)
+        after_input_gate = self.sigma(after_input_gate)
+        before_forget_gate = self.sigma(before_forget_gate)
+        before_input_gate = self.sigma(before_input_gate)
+
         after_h = h_s_t * after_input_gate
         before_h = h_s_t * before_input_gate
         after_c = c_s_t * after_forget_gate
