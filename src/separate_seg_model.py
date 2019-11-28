@@ -175,7 +175,7 @@ class sp_network_model(nn.Module):
             if time > self.t_predict:
                 h_outputs[:, time-self.t_predict-1, :, :] += h_tmp
                 output = self.outputlayer(h_tmp)
-                outputs[:, time-self.t_predict, :, :] += self.caculate_next_input(
+                outputs[:, time-self.t_predict-1, :, :] += self.caculate_next_input(
                                                         co_data[:, time, :, :],
                                                         co_data[:, time+1, :, :],
                                                         output
