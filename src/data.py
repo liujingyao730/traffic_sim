@@ -130,14 +130,13 @@ class traffic_data(Dataset):
         
         if self.mod == "seg":
             
-            edge = self.topology[index % self.edge_number]
             time = int(index / self.edge_number)
             
             timelist = [int(i*self.delta_T/self.sim_step + time) for i in range(self.temporal_length+1)]
 
-            In = np.array(self.car_in[timelist].T)[:, :, np.newaxis]
-            out = np.array(self.car_out[timelist].T)[:, :, np.newaxis]
-            number = np.array(self.number[timelist].T)[:, :, np.newaxis]
+            In = self.car_in[timelist][:, :, np.newaxis]
+            out = self.car_out[timelist][:, :, np.newaxis]
+            number = self.number[timelist][:, :, np.newaxis]
             
             data = torch.Tensor(np.concatenate((out, In, number), axis=2)).float()
 

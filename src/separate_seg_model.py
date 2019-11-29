@@ -33,31 +33,17 @@ class sp_network_model(nn.Module):
 
         self.bucket_number = bucket_number
         self.spatial = spatial
-        self.seg_input = list(range(spatial - 1))
 
-        self.not_after_block = [0, bucket_number[1]+1, bucket_number[4], 
-                                    bucket_number[5], bucket_number[6]]
-        self.not_before_block = [bucket_number[0], bucket_number[1],
-                                bucket_number[2], bucket_number[3],
-                                bucket_number[6]-1, bucket_number[6]]
         self.not_after_seg_block = [0, bucket_number[1]+1, bucket_number[4], bucket_number[6]]
         self.not_before_seg_block = [bucket_number[1], bucket_number[3],
                                 bucket_number[6]-1, bucket_number[6]]
         self.init_block = [0, bucket_number[1]+1]
 
         self.inter_block = [bucket_number[i] for i in self.inter_place]
-        self.seg_block = [i for i in range(spatial) if i not in self.inter_block]
-        self.len_inter_block = len(self.inter_block)
-        self.seg_block_number = len(self.seg_block)
         self.inter_block_number = len(self.bucket_number)
 
         self.after_block = [i for i in range(spatial) if i not in self.not_after_seg_block]
         self.before_block = [i for i in range(spatial) if i not in self.not_before_seg_block]
-
-        self.before_in_seg = [i for i in range(1, self.seg_block_number) if not i == bucket_number[1]]
-        self.after_in_seg = list(range(self.seg_block_number - 1))
-        self.after_in_all = [i for i in range(spatial) if i not in self.not_after_block]
-        self.before_in_all = [i for i in range(spatial) if i not in self.not_before_block]
 
         self.major_seg_block = list(range(bucket_number[1]))
         self.minor_seg_block = list(range(bucket_number[1]+1, bucket_number[3]))
@@ -303,7 +289,121 @@ class sp_network_model(nn.Module):
             h_end_before += h_tmp[:, self.end_before_all]
 
         return outputs, h_outputs
+
+
+class single_seg(nn.Module):
+
+    def __init__(self, args):
+
+        super().__init__()
+
+        self.input_size = args["input_size"]
+        self.hidden_size = args["hidden_size"]
+        self.output_hidden_size = args["output_hidden_size"]
+        self.t_predict = args["t_predict"]
+        self.output_size = 1
+
+        self.cell = seg_model(args)
+
+        self.outputLayer = FCNet(layerSize=[self.hidden_size, self.output_hidden_size, self.output_size])
+
+    def get_spatial_hidden(self, h):
+
+        [batch_size, spatial, _] = h.shape
+
+        h_after = Variable(h.data.new(batch_size, spatial, self.hidden_size).fill_(0).float())
+        h_before = Variable(h.data.new(batch_size, spatial, self.hidden_size).fill_(0).float())
+
+        h_after[:, :-1, :] += h[:, 1:, :]
+        h_before[:, 1:, :] += h[:, :-1, :]
+
+        return h_after, h_before
+
+    def caculate_next_input(self, former_input, next_input, output):
+
+        In = torch.cat((next_input[:, 0:1, 1:2], output[:, :-1, :]), dim=1)
+        former_number = former_input[:, :, [2]]
+        number_caculate = former_number + In - output
+
+        next_data = torch.cat((output, In, number_caculate), dim=2)
+
+        return next_data
+
+    def forward(self, input_data):
+
+        [batch_size, temporal, spatial, input_size] = input_data.shape
+        self.spatial = spatial
+
+        h = Variable(input_data.data.new(batch_size, spatial, self.hidden_size).fill_(0).float())
+        c = Variable(input_data.data.new(batch_size, spatial, self.hidden_size).fill_(0).float())
+
+        outputs = Variable(input_data.data.new(batch_size, temporal-self.t_predict-1, spatial, input_size).fill_(0).float())
+
+        for time in range(temporal - 1):
+
+            h_after, h_before = self.get_spatial_hidden(h)
+
+            h = h.view(batch_size*spatial, self.hidden_size)
+            c = c.view(batch_size*spatial, self.hidden_size)
+            h_after = h_after.view(batch_size*spatial, self.hidden_size)
+            h_before = h_before.view(batch_size*spatial, self.hidden_size)
+            data = input_data[:, time, :, :].contiguous().view(batch_size*spatial, input_size)
+
+            h, c = self.cell(data, h, c, h_after, h_before)
+
+            h = h.view(batch_size, spatial, self.hidden_size)
+            c = c.view(batch_size, spatial, self.hidden_size)
+
+            if time >= self.t_predict:
+                output = self.outputLayer(h)
+                next_input = self.caculate_next_input(
+                                                    input_data[:, time, :, :],
+                                                    input_data[:, time+1, :, :],
+                                                    output
+                                                    )
+                outputs[:, time-self.t_predict, :, :] += next_input
+
+        return outputs
+
+    def infer(self, input_data):
+
+        [batch_size, temporal, spatial, input_size] = input_data.shape
+        self.spatial = spatial
+
+        h = Variable(input_data.data.new(batch_size, spatial, self.hidden_size).fill_(0).float())
+        c = Variable(input_data.data.new(batch_size, spatial, self.hidden_size).fill_(0).float())
+
+        outputs = Variable(input_data.data.new(batch_size, temporal-self.t_predict-1, spatial, input_size).fill_(0).float())
             
+        for time in range(temporal):
+
+            h_after, h_before = self.get_spatial_hidden(h)
+
+            if time <= self.t_predict:
+                data = input_data[:, time, :, :]
+            else:
+                output = self.outputLayer(h)
+                data = self.caculate_next_input(
+                                                data,
+                                                input_data[:, time, :, :],
+                                                output
+                                            )
+                outputs[:, time-self.t_predict-1, :, :] += data
+
+            data = data.contiguous().view(batch_size*spatial, input_size)
+            h = h.view(batch_size*spatial, self.hidden_size)
+            c = c.view(batch_size*spatial, self.hidden_size)
+            h_after = h_after.view(batch_size*spatial, self.hidden_size)
+            h_before = h_before.view(batch_size*spatial, self.hidden_size)
+
+            h, c = self.cell(data, h, c, h_after, h_before)
+
+            h = h.view(batch_size, spatial, self.hidden_size)
+            c = c.view(batch_size, spatial, self.hidden_size)
+            data = data.view(batch_size, spatial, input_size)
+
+        return outputs
+
 
 if __name__ == "__main__":
     
@@ -315,12 +415,12 @@ if __name__ == "__main__":
     args["output_hidden_size"] = 16
     args["t_predict"] = 4
     args["n_units"] = 7
-    model = sp_network_model(args)
+    model = single_seg(args)
 
     co_data = Variable(torch.randn(11, 9, 21, 3))
     bucket_number = [10, 11, 14, 15, 16, 17, 20]
 
-    output, _ = model(co_data, bucket_number) 
+    output = model.infer(co_data) 
     fake_loss = torch.mean(output)
     fake_loss.backward()
     
