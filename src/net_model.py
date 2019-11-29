@@ -136,11 +136,8 @@ class seg_model(nn.Module):
         
         self.sigma = torch.nn.Sigmoid()
 
-        self.after_forget = torch.nn.Linear(self.hidden_size, self.hidden_size)
-        self.after_input = torch.nn.Linear(self.hidden_size, self.hidden_size)
-
-        self.before_forget = torch.nn.Linear(self.hidden_size, self.hidden_size)
-        self.before_input = torch.nn.Linear(self.hidden_size, self.hidden_size)
+        self.spatial_forget = torch.nn.Linear(2*self.hidden_size, self.hidden_size)
+        self.spatial_input = torch.nn.Linear(2*self.hidden_size, self.hidden_size)
 
     def forward(self, inputs, h_s_t, c_s_t, h_after_t, h_before_t):
         
@@ -149,23 +146,15 @@ class seg_model(nn.Module):
 
         assert input_size == self.input_size
 
-        after_input_gate = self.after_input(h_after_t)
-        after_forget_gate = self.after_forget(h_after_t)
-        before_input_gate = self.before_input(h_before_t)
-        before_forget_gate = self.before_forget(h_before_t)
+        spatial_hidden_input = torch.cat((h_after_t, h_before_t), dim=1)
 
-        after_forget_gate = self.sigma(after_forget_gate)
-        after_input_gate = self.sigma(after_input_gate)
-        before_forget_gate = self.sigma(before_forget_gate)
-        before_input_gate = self.sigma(before_input_gate)
+        spatial_i = self.spatial_input(spatial_hidden_input)
+        spatial_i = self.sigma(spatial_i)
+        spatial_f = self.spatial_forget(spatial_hidden_input)
+        spatial_f = self.sigma(spatial_f)
 
-        after_h = h_s_t * after_input_gate
-        before_h = h_s_t * before_input_gate
-        after_c = c_s_t * after_forget_gate
-        before_c = c_s_t * before_forget_gate
-
-        h = after_h + before_h
-        c = after_c + before_c
+        h = h_s_t * spatial_i
+        c = c_s_t * spatial_i
 
         h_s_tp, c_s_tp = self.cell(inputs, (h, c))
 

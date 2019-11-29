@@ -114,16 +114,16 @@ def train(args):
                     if random.random() < args["sample_rate"]:
 
                         outputs, _ = model(co_data, bucket_number)
-                        output_pred = outputs[:, :, :, 0]
-                        number_pred = outputs[:, :, :, 2]
+                        output_pred = outputs[:, :, :-1, 0]
+                        number_pred = outputs[:, :, :-1, 2]
 
                         flow_loss = criterion(target[:, :, :, 2], number_pred)
 
                         if args["use_mask"]:
-                            mask = get_mask(target[:, :, :, 0], args["mask"])
-                            acc_loss = criterion(target[:, :, :, 0], output_pred, mask)
+                            mask = get_mask(target[:, :, :-1, 0], args["mask"])
+                            acc_loss = criterion(target[:, :, :-1, 0], output_pred, mask)
                         else:
-                            acc_loss = criterion(target[:, :, :, 0], output_pred)
+                            acc_loss = criterion(target[:, :, :-1, 0], output_pred)
 
                         loss = args["flow_loss_weight"] * flow_loss + (2 - args["flow_loss_weight"]) * acc_loss
                     
