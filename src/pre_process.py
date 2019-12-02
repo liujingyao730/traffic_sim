@@ -8,10 +8,10 @@ import conf
 
 merge_fcd_path = os.path.join(conf.fcdOutputPath, 'merge', 'big_test.xml')
 #路网的结构是固定的
-length = {1:600, 2:600, 3:200, 4:200, 7:200, 8:200}
+length = {1:4950, 2:4950, 3:4950, 4:4950, 7:4950, 8:4950}
 lane_number = {1:1, 2:2, 3:2, 4:1, 5:2, 6:3, 8:1, 7:2}
 connections = {1:1, 2:2, 3:1, 4:1, 5:0, 6:0, 8:2, 7:2}
-special_edge = [5, 6]
+special_edge = {5:8, 6:7}
 lane_edge = {'1_0':1, '2_0':2, '2_1':2, '3_0':3, '3_1':3, '4_0':4, '7_0':7, '7_1':7,
             '8_0':8, ':gneJ1_0_0':5, ':gneJ1_4_0':5, ':gneJ2_6_0':6, ':gneJ2_10_0':6,
             ':gneJ2_10_1':6}
@@ -71,10 +71,11 @@ def data_record(file, lane_edge=lane_edge, length=length, prefix='default',
             lane = elem.attrib['lane']
             edge = lane_edge[lane]
 
-            if edge not in special_edge:
+            if edge not in special_edge.keys():
                 pos = float(elem.attrib["pos"])
                 bucket = bucketid(pos, length[edge]) + edge*100
             else:
+                edge = special_edge[edge]
                 bucket = edge*100 + 1
 
             nowstep[vehicle_id] = bucket

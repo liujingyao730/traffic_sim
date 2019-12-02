@@ -1,0 +1,74 @@
+#model:
+input_size: 3
+embedding_size: 8
+hidden_size: 64
+output_hidden_size: 16
+t_predict: 4
+temporal_length: 8
+
+# train
+batch_size: 500
+num_epochs: 50
+show_every: 200
+learning_rate: 0.003
+decay_rate: 0.95
+lambda_param: 0.0005
+use_cuda: true
+flow_loss_weight: 1
+grad_clip: 10
+sample_rate: 0
+sample_decay: 1
+use_mask: true
+use_simerror: true
+gamma: 0.5
+num_workers: 1
+
+# data
+seg: 2
+sim_step: 0.1
+delta_T: 10
+cycle: 100
+green_pass: 52
+n_units: 7
+
+model_prefix: multi_dimension
+
+prefix:
+  - !!str 200
+  - !!str 300
+  - !!str 400
+  - !!str 500
+  - !!str 600
+  - !!str 700
+  - !!str 800
+  - !!str 900
+  - !!str 1000
+  - !!str 1100_1
+  - !!str 1300_1
+  - !!str 1500_1
+
+test_prefix:
+  - !!str 400_1
+  - !!str 500_1
+  - !!str 600_1
+  - !!str 700_1
+  - !!str 800_1
+  - !!str 900_1
+  - !!str 1000_1
+  - !!str 1200_1
+  - !!str 1400_1
+
+mask:
+  - 1
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
