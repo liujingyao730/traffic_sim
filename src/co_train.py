@@ -117,7 +117,7 @@ def train(args):
                         output_pred = outputs[:, :, :-1, 0]
                         number_pred = outputs[:, :, :-1, 2]
 
-                        flow_loss = criterion(target[:, :, :, 2], number_pred)
+                        flow_loss = criterion(target[:, :, :-1, 2], number_pred)
 
                         if args["use_mask"]:
                             mask = get_mask(target[:, :, :-1, 0], args["mask"])

@@ -154,7 +154,7 @@ class seg_model(nn.Module):
         spatial_f = self.sigma(spatial_f)
 
         h = h_s_t * spatial_i
-        c = c_s_t * spatial_i
+        c = c_s_t * spatial_f
 
         h_s_tp, c_s_tp = self.cell(inputs, (h, c))
 
