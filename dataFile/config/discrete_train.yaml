@@ -2,7 +2,7 @@
 input_size: 3
 embedding_size: 8
 hidden_size: 64
-output_hidden_size: 16
+output_size: 13
 t_predict: 8
 temporal_length: 16
 
@@ -15,6 +15,7 @@ decay_rate: 0.95
 lambda_param: 0.0005
 use_cuda: true
 flow_loss_weight: 1
+output_loss_weight: 1
 grad_clip: 10
 sample_rate: 0
 sample_decay: 1
@@ -29,6 +30,7 @@ delta_T: 10
 cycle: 100
 green_pass: 52
 n_units: 7
+seg: 2
 
 model_prefix: multi_dimension
 
@@ -58,18 +60,18 @@ test_prefix:
   - !!str 1400_1
 
 mask:
-  - 1
+  - 0.5
   - 1
   - 2
   - 3
   - 4
-  - 5
-  - 6
-  - 7
-  - 8
-  - 9
-  - 10
-  - 11
-  - 12
+  - 20
+  - 24
+  - 28
+  - 32
+  - 36
+  - 40
+  - 44
+  - 48
 
 #拓扑结构写死在data.py内部

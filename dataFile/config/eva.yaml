@@ -1,9 +1,9 @@
 # test
 batch_size: 100
 use_epoch: 49
-model_prefix: with_simerror_with_flow
+model_prefix: with_mask
 t_predict: 4
-temporal_length: 204
+temporal_length: 304
 use_cuda: true
 
 # eva
