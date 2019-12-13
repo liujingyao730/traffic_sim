@@ -131,8 +131,8 @@ def train(args):
 
                 i += 1
 
-            print("batch{}, train_loss = {:.3f} for topology {}, preifx {}".format(i, acc_meter.value()[0], topology_index, prefix))
-            log_curve_file.write("batch{}, train_loss = {:.3f} for topology {}, preifx {}".format(ii, acc_meter.value()[0], topology_index, prefix))
+            print("batch{}, train_loss = {:.3f} preifx {}".format(i, acc_meter.value()[0], prefix))
+            log_curve_file.write("batch{}, train_loss = {:.3f} preifx {}".format(ii, acc_meter.value()[0], prefix))
         
         t = time.time()
 
@@ -178,7 +178,8 @@ def train(args):
                     print("batch{}, acc_loss={:.3f}, flow_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}".format(i, acc_meter.value()[0], flow_loss_meter.value()[0], last_frame_acc_meter.value()[0], last_frame_flow_meter.value()[0]))
                     log_curve_file.write("batch{}, acc_loss={:.3f}, flow_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}\n".format(i, acc_meter.value()[0], flow_loss_meter.value()[0], last_frame_acc_meter.value()[0], last_frame_flow_meter.value()[0]))       
                 i += 1
-        
+
+        t = time.time()
         if acc_meter.value()[0] < best_acc :
             best_acc_epoch = epoch
             best_acc = acc_meter.value()[0]
@@ -187,7 +188,7 @@ def train(args):
             best_flow_epoch = epoch
             best_flow_loss = flow_loss_meter.value()[0]
 
-        print("epoch{}, acc_loss={:.3f}, flow_loss={:.3f}, last_frame_acc_loss={:.3f}, last_frame_flow_loss={:.3f}".format(epoch, acc_meter.value()[0], flow_loss_meter.value()[0], last_frame_acc_meter.value()[0], last_frame_flow_meter.value()[0]))
+        print("epoch{}, time{:.2f}, acc_loss={:.3f}, flow_loss={:.3f}, last_frame_acc_loss={:.3f}, last_frame_flow_loss={:.3f}".format(epoch, t-start, acc_meter.value()[0], flow_loss_meter.value()[0], last_frame_acc_meter.value()[0], last_frame_flow_meter.value()[0]))
         log_curve_file.write("epoch{}, acc_loss={:.3f}, flow_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}\n".format(epoch, acc_meter.value()[0], flow_loss_meter.value()[0], last_frame_acc_meter.value()[0], last_frame_flow_meter.value()[0]))
         print('saving model')
         torch.save({

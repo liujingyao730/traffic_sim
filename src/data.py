@@ -51,6 +51,20 @@ class traffic_data(Dataset):
         self.number = pd.DataFrame()
         self.edge_number = 0
         self.bucketlist = []
+        self.use_speed = args["use_speed"]
+
+        if self.use_speed:
+            self.speed_file = os.path.join(fold, data_prefix+'Speed.csv')
+            self.speed_in_file = os.path.join(fold, data_prefix+'SpeedIn.csv')
+            self.speed_out_file = os.path.join(fold, data_prefix+'SpeedOut.csv')
+
+            self.all_speed = pd.read_csv(self.speed_file, index_col=0).dropna(axis=0)
+            self.all_speed_in = pd.read_csv(self.speed_in_file, index_col=0).dropna(axis=0)
+            self.all_speed_out = pd.read_csv(self.speed_out_file, index_col=0).dropna(axis=0)
+
+            self.speed = pd.DataFrame()
+            self.speed_in = pd.DataFrame()
+            self.speed_out = pd.DataFrame()
 
         self.filter_data()
 
@@ -65,6 +79,11 @@ class traffic_data(Dataset):
             self.car_in = self.all_car_in[bucketlist].values
             self.car_out = self.all_car_out[bucketlist].values
             self.number = self.all_number[bucketlist].values
+            if self.use_speed:
+                self.speed = self.all_speed[bucketlist].values
+                self.speed_in = self.all_speed_in[bucketlist].values
+                self.speed_out = self.all_speed_out[bucketlist].values
+
         elif self.mod == 'inter':
             if not isinstance(self.topology, dict):
                 print("wrong type of topology for mod intersection!")
@@ -122,6 +141,15 @@ class traffic_data(Dataset):
             self.all_car_out = pd.read_csv(self.car_out_file, index_col=0).dropna(axis=0)
             self.all_number = pd.read_csv(self.number_file, index_col=0)
 
+            if self.use_speed:
+                self.speed_file = os.path.join(fold, data_prefix+'Speed.csv')
+                self.speed_in_file = os.path.join(fold, data_prefix+'SpeedIn.csv')
+                self.speed_out_file = os.path.join(fold, data_prefix+'SpeedOut.csv')
+
+                self.all_speed = pd.read_csv(self.speed_file, index_col=0).dropna(axis=0)
+                self.all_speed_in = pd.read_csv(self.speed_in_file, index_col=0).dropna(axis=0)
+                self.all_speed_out = pd.read_csv(self.speed_out_file, index_col=0).dropna(axis=0)
+
         self.filter_data()
 
     def __getitem__(self, index):
@@ -137,8 +165,14 @@ class traffic_data(Dataset):
             In = self.car_in[timelist][:, :, np.newaxis]
             out = self.car_out[timelist][:, :, np.newaxis]
             number = self.number[timelist][:, :, np.newaxis]
+            if self.use_speed:
+                Speed = self.speed[timelist][:, :, np.newaxis]
+                Speed_in = self.speed_in[timelist][:, :, np.newaxis]
+                Speed_out = self.speed_out[timelist][:, :, np.newaxis]
             
-            data = torch.Tensor(np.concatenate((out, In, number), axis=2)).float()
+                data = torch.Tensor(np.concatenate((out, In, number, Speed, Speed_in, Speed_out), axis=2)).float()
+            else:
+                data = torch.Tensor(np.concatenate((out, In, number), axis=2)).float()
 
             return data
             
@@ -165,14 +199,20 @@ class traffic_data(Dataset):
             In = self.car_in[time_list]
             out = self.car_out[time_list]
             number = self.number[time_list]
+            Speed = self.speed[time_list]
+            Speed_in = self.speed_in[time_list]
+            Speed_out = self.speed_out[time_list]
    
             #t3 = ttt.time()
             In = In[:, :, np.newaxis]
             out = out[:, :, np.newaxis]
             number = number[:, :, np.newaxis]
+            Speed = Speed[:, :, np.newaxis]
+            Speed_in = Speed_in[:, :, np.newaxis]
+            Speed_out = Speed_out[:, :, np.newaxis]
 
             #t4 = ttt.time()
-            data = np.concatenate((out, In, number), axis=2)
+            data = np.concatenate((out, In, number, Speed, Speed_in, Speed_out), axis=2)
             #t5 = ttt.time()
             data = torch.Tensor(data).float()
 
