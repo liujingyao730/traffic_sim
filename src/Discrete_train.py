@@ -22,8 +22,7 @@ from model import TP_lstm
 from model import loss_function
 from net_model import network_model
 from unit_net_model import uni_network_model as unlstm
-from separate_seg_model import sp_network_model as splstm
-from Discrete_model import discrete_net_model
+from seg_model import discrete_net_model
 from data import traffic_data
 import data as d
 import conf
@@ -86,53 +85,62 @@ def train(args):
         i = 0
 
         for prefix in args["prefix"]:
-            #break
-            data_set = traffic_data(args, data_prefix=prefix, mod="seg", topology=[args["seg"]])
+            break
+            data_set = traffic_data(args, data_prefix=prefix, mod="seg", topology=[args["seg"][0]])
             dataloader = torch.utils.data.DataLoader(data_set,
                                                     batch_size=args["batch_size"],
                                                     num_workers=args["num_workers"])
 
-            for ii, data in tqdm(enumerate(dataloader)):
+            for seg in args["seg"]:
+                data_set.reload(topology=[seg], mod='seg')
+                for ii, data in tqdm(enumerate(dataloader)):
 
-                model.zero_grad()
-                optimizer.zero_grad()
+                    model.zero_grad()
+                    optimizer.zero_grad()
 
-                data = Variable(data)
+                    data = Variable(data)
 
-                if args["use_cuda"]:
-                    data = data.cuda()
+                    if args["use_cuda"]:
+                        data = data.cuda()
 
-                target = data[:, args["t_predict"]+1:, :, :]
+                    target = data[:, args["t_predict"]+1:, :, :]
 
-                output_proba, delta_N_proba = model(data)
-                
-                output_target = target[:, :, :, 0].long()
-                N_target = target[:, :, :, 2].long()
-                N_former = data[:, args["t_predict"]:-1, :, :].long()
-                delta_N = N_target - N_target
-                delta_N += args["output_size"]-1
+                    output, delta_N_proba = model(data)
 
-                [batch_size, temporal, spatial, output_size] = output_proba.shape
-                output_proba = output_proba.view(batch_size*temporal*spatial, output_size)
-                output_target = output_target.view(batch_size*temporal*spatial)
-                delta_N_proba = delta_N_proba.view(batch_size*temporal*spatial, -1)
-                delta_N = delta_N.view(batch_size*temporal*spatial)
+                    output_proba = output[:, :, :, :model.number_output_size]
+                    speed_output = output[:, :, :, model.number_output_size:]
+            
+                    output_target = target[:, :, :, 0].long()
+                    N_target = target[:, :, :, 2].long()
+                    N_former = data[:, args["t_predict"]:-1, :, :].long()
+                    delta_N = N_target - N_target
+                    delta_N += args["number_output_size"]-1
 
-                output_loss = output_criterion(output_proba, output_target)
-                flow_loss = flow_criterion(delta_N_proba, delta_N)
+                    [batch_size, temporal, spatial, output_size] = output_proba.shape
+                    output_proba = output_proba.view(batch_size*temporal*spatial, output_size)
+                    output_target = output_target.view(batch_size*temporal*spatial)
+                    delta_N_proba = delta_N_proba.view(batch_size*temporal*spatial, -1)
+                    delta_N = delta_N.view(batch_size*temporal*spatial)
 
-                loss = args["output_loss_weight"] * output_loss + args["flow_loss_weight"] * flow_loss
+                    speed_target = target[:, :, :, 3:]
+                    speed_loss = criterion(speed_target, speed_output)
 
-                loss.backward()
-                torch.nn.utils.clip_grad_norm_(model.parameters(), args["grad_clip"])
-                optimizer.step()
+                    output_loss = output_criterion(output_proba, output_target)
+                    flow_loss = flow_criterion(delta_N_proba, delta_N)
 
-                acc_meter.add(loss.item())
+                    loss = args["output_loss_weight"] * output_loss + args["flow_loss_weight"] * flow_loss + args["speed_loss_weight"] * speed_loss
 
-                i += 1
+                    loss.backward()
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), args["grad_clip"])
+                    optimizer.step()
 
-            print("batch{}, train_loss = {:.3f} preifx {}".format(i, acc_meter.value()[0], prefix))
-            log_curve_file.write("batch{}, train_loss = {:.3f} preifx {}".format(ii, acc_meter.value()[0], prefix))
+                    acc_meter.add(loss.item())
+
+                    if i % args["show_every"] == 0:
+                        print("batch{}, train_loss = {:.3f} preifx {} seg {}".format(i, acc_meter.value()[0], prefix, seg))
+                        log_curve_file.write("batch{}, train_loss = {:.3f} preifx {} seg {}".format(i, acc_meter.value()[0], prefix, seg))
+
+                    i += 1
         
         t = time.time()
 
@@ -154,30 +162,32 @@ def train(args):
             dataloader = torch.utils.data.DataLoader(data_set, batch_size=args["batch_size"],
                                                     num_workers=args["num_workers"])
 
-            for ii, data in tqdm(enumerate(dataloader)):
+            for seg in args["seg"]:
+                data_set.reload(topology=[seg], mod="seg")
+                for ii, data in tqdm(enumerate(dataloader)):
 
-                data = Variable(data)
-                if args["use_cuda"]:
-                    data = data.cuda()
+                    data = Variable(data)
+                    if args["use_cuda"]:
+                        data = data.cuda()
 
-                target = data[:, args["t_predict"]+1:, :, :]
+                    target = data[:, args["t_predict"]+1:, :, :]
 
-                outputs = model.infer(data)
+                    outputs = model.infer(data)
 
-                acc_loss = criterion(target[:, :, :, 0], outputs[:, :, :, 0])
-                flow_loss = criterion(target[:, :, :, 2], outputs[:, :, :, 2])
-                last_frame_acc_loss = criterion(target[:, -1, :, 0], outputs[:, -1, :, 0])
-                last_frame_flow_loss = criterion(target[:, -1, :, 2], outputs[:, -1, :, 2])
+                    acc_loss = criterion(target[:, :, :, 0], outputs[:, :, :, 0])
+                    flow_loss = criterion(target[:, :, :, 2], outputs[:, :, :, 2])
+                    last_frame_acc_loss = criterion(target[:, -1, :, 0], outputs[:, -1, :, 0])
+                    last_frame_flow_loss = criterion(target[:, -1, :, 2], outputs[:, -1, :, 2])
 
-                acc_meter.add(acc_loss.item())
-                flow_loss_meter.add(flow_loss.item())
-                last_frame_acc_meter.add(last_frame_acc_loss.item())
-                last_frame_flow_meter.add(last_frame_flow_loss.item())
+                    acc_meter.add(acc_loss.item())
+                    flow_loss_meter.add(flow_loss.item())
+                    last_frame_acc_meter.add(last_frame_acc_loss.item())
+                    last_frame_flow_meter.add(last_frame_flow_loss.item())
 
-                if i % args["show_every"] == 0:
-                    print("batch{}, acc_loss={:.3f}, flow_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}".format(i, acc_meter.value()[0], flow_loss_meter.value()[0], last_frame_acc_meter.value()[0], last_frame_flow_meter.value()[0]))
-                    log_curve_file.write("batch{}, acc_loss={:.3f}, flow_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}\n".format(i, acc_meter.value()[0], flow_loss_meter.value()[0], last_frame_acc_meter.value()[0], last_frame_flow_meter.value()[0]))       
-                i += 1
+                    if i % args["show_every"] == 0:
+                        print("batch{}, acc_loss={:.3f}, flow_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}".format(i, acc_meter.value()[0], flow_loss_meter.value()[0], last_frame_acc_meter.value()[0], last_frame_flow_meter.value()[0]))
+                        log_curve_file.write("batch{}, acc_loss={:.3f}, flow_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}\n".format(i, acc_meter.value()[0], flow_loss_meter.value()[0], last_frame_acc_meter.value()[0], last_frame_flow_meter.value()[0]))       
+                    i += 1
 
         t = time.time()
         if acc_meter.value()[0] < best_acc :

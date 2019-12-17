@@ -81,7 +81,7 @@ def train(args):
         i = 0
 
         for prefix in args["prefix"]:
-            break
+            #break
             data_set = traffic_data(args, data_prefix=prefix, mod="seg", topology=[args["seg"][0]])
             dataloader = torch.utils.data.DataLoader(data_set,
                                                     batch_size=args["batch_size"],
@@ -138,7 +138,8 @@ def train(args):
                     
                         sim_error = torch.mean(sim_error)
                         flow_loss = criterion(target[:, :, :, 2], outputs[:, :, :, 2])
-                        loss = (2 - args["flow_loss_weight"]) * acc_loss + args["flow_loss_weight"]*flow_loss + args["gamma"] * sim_error
+                        speed_loss = criterion(target[:, :, :, 3], outputs[:, :, :, 3])
+                        loss = acc_loss + args["flow_loss_weight"]*flow_loss + args["gamma"] * sim_error + args["speed_loss_weight"]*speed_loss
 
                     loss.backward()
                     torch.nn.utils.clip_grad_norm_(model.parameters(), args["grad_clip"])
@@ -146,7 +147,7 @@ def train(args):
 
                     acc_meter.add(loss.item())
 
-                    if i % args["show_every"]:
+                    if i % args["show_every"] == 0:
                         print("batch{}, train_loss = {:.3f} for topology {}, preifx {}".format(i, acc_meter.value()[0], str(seg), prefix))
                     i += 1
             

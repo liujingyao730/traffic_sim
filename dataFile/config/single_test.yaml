@@ -1,30 +1,22 @@
 # test
 batch_size: 100
-use_epoch: 4
-model_prefix: disc_samll_weight
+use_epoch: 49
+model_prefix: with_speed_128
 t_predict: 4
-temporal_length: 204
+temporal_length: 304
 time: 0
 use_cuda: true
 rand_range: 0.2
 
 # eva
-hidden_size: 64
-input_size: 3
+hidden_size: 128
+output_hidden_size: 16
+input_size: 6
 lane_gate_size: 4
-output_size: 13
-eva_prefix: 
-  - test1
-  - test2
-  - test3
-  - test4
+output_size: 4
+eva_prefix: test
 spatial_length: 40
 current_time: 0
-topology_index: 
-  - 0
-  - 1
-  - 0
-  - 1
 n_units: 7
 
 #data
@@ -32,4 +24,5 @@ sim_step: 0.1
 delta_T: 10
 cycle: 100
 green_pass: 52
-seg: 2
+seg: 6
+use_speed: true

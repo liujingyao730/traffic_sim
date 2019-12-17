@@ -17,7 +17,8 @@ class discrete_net_model(nn.Module):
 
         self.input_size = args["input_size"]
         self.hidden_size = args["hidden_size"]
-        self.output_size = args["output_size"]
+        self.number_output_size = args["number_output_size"]
+        self.speed_output_size = args["speed_output_size"]
         self.t_predict = args["t_predict"]
         self.inter_place = [1, 3, 4, 6]
 
@@ -26,7 +27,8 @@ class discrete_net_model(nn.Module):
 
         self.cell = seg_model(args)
 
-        self.output_layer = torch.nn.Linear(self.hidden_size, self.output_size)
+        self.number_output_layer = torch.nn.Linear(self.hidden_size, self.number_output_size)
+        self.speed_output_layer = torch.nn.Linear(self.hidden_size, self.speed_output_size)
 
     def get_spatial_hidden(self, h):
 
@@ -45,7 +47,7 @@ class discrete_net_model(nn.Module):
         [batch_size, temporal, spatial, output_size] = output_proba.shape
         [batch_size, temporal, _] = init_input.shape
         
-        assert output_size == self.output_size
+        assert output_size == self.number_output_size
 
         input_proba = Variable(output_proba.data.new(output_proba.shape).fill_(0).float())
 
@@ -102,7 +104,7 @@ class discrete_net_model(nn.Module):
 
         h = Variable(input_data.data.new(batch_size, spatial, self.hidden_size).fill_(0).float())
         c = Variable(input_data.data.new(batch_size, spatial, self.hidden_size).fill_(0).float())
-        outputs = Variable(input_data.data.new(batch_size, temporal-self.t_predict-1, spatial, self.output_size).fill_(0).float())
+        outputs = Variable(input_data.data.new(batch_size, temporal-self.t_predict-1, spatial, self.number_output_size+self.speed_output_size).fill_(0).float())
 
         init_input = input_data[:, self.t_predict:-1, [0], 0].long()
 
@@ -122,9 +124,10 @@ class discrete_net_model(nn.Module):
             c = c.view(batch_size, spatial, self.hidden_size)
 
             if time >= self.t_predict:
-                outputs[:, time-self.t_predict, :, :] += self.output_layer(h)
+                outputs[:, time-self.t_predict, :, :self.number_output_size] += self.number_output_layer(h)
+                outputs[:, time-self.t_predict, :, self.number_output_size:] += self.speed_output_layer(h)
 
-        delta_N = self.caculate_delta_N(outputs, init_input)
+        delta_N = self.caculate_delta_N(outputs[:, :, :, :self.number_output_size], init_input)
 
         return outputs, delta_N
 
@@ -134,7 +137,7 @@ class discrete_net_model(nn.Module):
 
         h = input_data.data.new(batch_size, spatial, self.hidden_size).fill_(0).float()
         c = input_data.data.new(batch_size, spatial, self.hidden_size).fill_(0).float()
-        outputs = input_data.data.new(batch_size, temporal-self.t_predict-1, spatial, 3).fill_(0).float()
+        outputs = input_data.data.new(batch_size, temporal-self.t_predict-1, spatial, 3+self.speed_output_size).fill_(0).float()
 
         init_input = input_data[:, self.t_predict:-1, [0], 0].long()
 
@@ -145,19 +148,25 @@ class discrete_net_model(nn.Module):
             if time <= self.t_predict:
                 data = input_data[:, time, :, :]
             else:
-                proba = self.output_layer(h)
+                proba = self.number_output_layer(h)
+                speed = self.speed_output_layer(h)
+
                 if mod == "uni":
                     output = self.sample(proba)
                 elif mod == "random":
                     output = self.random_sample(proba)
                 else :
                     raise RuntimeError("wrong mod !!!")
-                data = self.caculate_next_input(
-                                                data,
-                                                input_data[:, time, :, :],
+                number_data = data[:, :, :3]
+                number_data = self.caculate_next_input(
+                                                number_data,
+                                                input_data[:, time, :, :3],
                                                 output
                                             )
-                outputs[:, time-self.t_predict-1, :, :] += data
+
+                outputs[:, time-self.t_predict-1, :, :3] += number_data
+                outputs[:, time-self.t_predict-1, :, 3:] += speed
+                data = outputs[:, time-self.t_predict-1, :, :]
             
             data = data.contiguous()
             h = h.view(batch_size*spatial, self.hidden_size)

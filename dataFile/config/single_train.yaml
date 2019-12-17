@@ -5,7 +5,7 @@ hidden_size: 64
 output_hidden_size: 16
 output_size: 4
 t_predict: 4
-temporal_length: 8
+temporal_length: 16
 
 # train
 batch_size: 500
@@ -47,7 +47,7 @@ prefix:
   - change
 
 test_prefix:
-  - change
+  - test
 
 mask:
   - 1

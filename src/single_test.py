@@ -22,11 +22,7 @@ import yaml
 
 from model import TP_lstm
 from model import loss_function
-from unit_net_model import uni_network_model 
-from net_model import network_model
-from separate_seg_model import sp_network_model
-from separate_seg_model import single_seg
-from Discrete_model import discrete_net_model
+from seg_model import continuous_seg
 from data import traffic_data
 import data as d
 import conf
@@ -55,13 +51,12 @@ def test(args):
     load_directory = os.path.join(conf.logPath, args["model_prefix"])
     file = os.path.join(load_directory, str(use_epoch)+'.tar')
     checkpoint = torch.load(file)
-    model = discrete_net_model(args)
+    model = continuous_seg(args)
     model.load_state_dict(checkpoint['state_dict'])
     
     eva_prefix = args["eva_prefix"]
-    topology_index = args["topology_index"]
 
-    data_set = traffic_data(args, data_prefix=args["eva_prefix"][test_index], 
+    data_set = traffic_data(args, data_prefix=args["eva_prefix"], 
                             mod='seg', topology=[args["seg"]])
 
     co_data = data_set[start_time].unsqueeze(0)
@@ -74,7 +69,7 @@ def test(args):
     target = co_data[:, args["t_predict"]+1:, :, :]
 
     tt = time.time()
-    outputs = model.infer(co_data, mod="random")
+    outputs = model.infer(co_data)
     ttt = time.time()
 
     output = outputs[0, :, :, 2].cpu().detach().numpy()
@@ -99,7 +94,7 @@ def test(args):
     plt.colorbar(im)
     plt.title("ground truth")
     heat = fig.add_subplot(312)
-    im = heat.imshow(output.T, cmap=plt.cm.hot_r)
+    im = heat.imshow(output.T, cmap=plt.cm.hot_r, vmax=15)
     plt.colorbar(im)
     plt.title("simulation result")
     heat = fig.add_subplot(313)
