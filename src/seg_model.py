@@ -131,7 +131,7 @@ class discrete_net_model(nn.Module):
 
         return outputs, delta_N
 
-    def infer(self, input_data, mod="random"):
+    def infer(self, input_data, mod="uni"):
 
         [batch_size, temporal, spatial, input_size] = input_data.shape
 
@@ -213,14 +213,16 @@ class continuous_seg(nn.Module):
 
     def caculate_next_input(self, former_input, next_input, output):
 
-        speed_output = output[:, :, 1:]
+        speed_output = output[:, 1:, 1:]
         number_output = output[:, :, [0]]
+        speed_input = next_input[:, 0:1, 3:]
 
         In = torch.cat((next_input[:, 0:1, 1:2], number_output[:, :-1, :]), dim=1)
         former_number = former_input[:, :, [2]]
         number_caculate = former_number + In - number_output
+        speed_next = torch.cat((speed_input, speed_output), dim=1)
 
-        next_data = torch.cat((number_output, In, number_caculate, speed_output), dim=2)
+        next_data = torch.cat((number_output, In, number_caculate, speed_next), dim=2)
 
         return next_data
 

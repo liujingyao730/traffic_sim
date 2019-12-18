@@ -203,10 +203,11 @@ def train(args):
                     last_frame_acc_meter.add(last_frame_acc_loss.item())
                     last_frame_flow_meter.add(last_frame_flow_loss.item())
 
-                    i += 1
                     if i % args["show_every"] == 0:
                         print("batch{}, acc_loss={:.3f}, flow_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}".format(i, acc_meter.value()[0], flow_loss_meter.value()[0], last_frame_acc_meter.value()[0], last_frame_flow_meter.value()[0]))
                         log_curve_file.write("batch{}, acc_loss={:.3f}, flow_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}\n".format(i, acc_meter.value()[0], flow_loss_meter.value()[0], last_frame_acc_meter.value()[0], last_frame_flow_meter.value()[0]))       
+                    
+                    i += 1
             
         
         if acc_meter.value()[0] < best_acc :
