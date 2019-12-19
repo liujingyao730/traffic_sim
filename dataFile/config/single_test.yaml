@@ -1,15 +1,15 @@
 # test
 batch_size: 100
 use_epoch: 49
-model_prefix: with_speed_128
+model_prefix: all_flow
 t_predict: 4
-temporal_length: 304
-time: 0
+temporal_length: 80
+time: 2000
 use_cuda: true
 rand_range: 0.2
 
 # eva
-hidden_size: 128
+hidden_size: 64
 output_hidden_size: 16
 input_size: 6
 lane_gate_size: 4

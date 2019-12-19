@@ -20,6 +20,7 @@ from tqdm import tqdm
 from model import loss_function
 from net_model import network_model
 from seg_model import continuous_seg
+from sn_model import sn_lstm
 from data import traffic_data
 import conf
 
@@ -49,7 +50,8 @@ def train(args):
     def checkpoint_path(x):
         return os.path.join(log_directory, str(x)+'.tar')
 
-    model = continuous_seg(args)
+    #model = continuous_seg(args)
+    model = sn_lstm(args)
 
     criterion = loss_function()
     sim_error_criterion = torch.nn.ReLU()
@@ -81,7 +83,7 @@ def train(args):
         i = 0
 
         for prefix in args["prefix"]:
-            #break
+            break
             data_set = traffic_data(args, data_prefix=prefix, mod="seg", topology=[args["seg"][0]])
             dataloader = torch.utils.data.DataLoader(data_set,
                                                     batch_size=args["batch_size"],
@@ -107,7 +109,7 @@ def train(args):
                         number_pred = outputs[:, :, :, 2]
                         speed_pred = outputs[:, :, :, 3]
 
-                        flow_loss = criterion(target[:, :, :, 2], number_pred)
+                        flow_loss = criterion(target[:, :, :, 2].sum(dim=2), number_pred.sum(dim=2))
                         speed_loss = criterion(target[:, :, :, 3], speed_pred)
 
                         if args["use_mask"]:
@@ -116,7 +118,7 @@ def train(args):
                         else:
                             acc_loss = criterion(target[:, :, :, 0], output_pred)
                     
-                        loss = args["flow_loss_weight"] * flow_loss + (2 - args["flow_loss_weight"]) * acc_loss + args['speed_loss_weight'] * speed_loss
+                        loss = args["flow_loss_weight"] * flow_loss + acc_loss + args['speed_loss_weight'] * speed_loss
 
                     else:
                     
@@ -137,7 +139,7 @@ def train(args):
                             acc_loss = criterion(target[:, :, :, 0], outputs[:, :, :, 0])
                     
                         sim_error = torch.mean(sim_error)
-                        flow_loss = criterion(target[:, :, :, 2], outputs[:, :, :, 2])
+                        flow_loss = criterion(target[:, :, :, 2].sum(dim=2), outputs[:, :, :, 2].sum(dim=2))
                         speed_loss = criterion(target[:, :, :, 3], outputs[:, :, :, 3])
                         loss = acc_loss + args["flow_loss_weight"]*flow_loss + args["gamma"] * sim_error + args["speed_loss_weight"]*speed_loss
 
@@ -149,6 +151,7 @@ def train(args):
 
                     if i % args["show_every"] == 0:
                         print("batch{}, train_loss = {:.3f} for topology {}, preifx {}".format(i, acc_meter.value()[0], str(seg), prefix))
+                        log_curve_file.write("batch{}, train_loss = {:.3f} for topology {}, preifx {}".format(i, acc_meter.value()[0], str(seg), prefix))
                     i += 1
             
             print("batch{}, train_loss = {:.3f} for topology {}, preifx {}".format(i, acc_meter.value()[0], str(seg), prefix))

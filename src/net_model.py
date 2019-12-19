@@ -141,10 +141,16 @@ class seg_model(nn.Module):
 
     def forward(self, inputs, h_s_t, c_s_t, h_after_t, h_before_t):
         
-        [batch_size, input_size] = inputs.shape
-        [batch_size, hidden_size] = h_s_t.shape
+        [batch_size, spatial, input_size] = inputs.shape
+        [batch_size, spatial, hidden_size] = h_s_t.shape
 
         assert input_size == self.input_size
+
+        inputs = inputs.view(batch_size*spatial, input_size)
+        h_s_t = h_s_t.view(batch_size*spatial, hidden_size)
+        c_s_t = c_s_t.view(batch_size*spatial, hidden_size)
+        h_after_t = h_after_t.view(batch_size*spatial, hidden_size)
+        h_before_t = h_before_t.view(batch_size*spatial, hidden_size)
 
         spatial_hidden_input = torch.cat((h_after_t, h_before_t), dim=1)
 
@@ -158,6 +164,9 @@ class seg_model(nn.Module):
 
         h_s_tp, c_s_tp = self.cell(inputs, (h, c))
 
+        h_s_tp = h_s_tp.view(batch_size, spatial, hidden_size)
+        c_s_tp = c_s_tp.view(batch_size, spatial, hidden_size)
+        
         return h_s_tp, c_s_tp
 
 

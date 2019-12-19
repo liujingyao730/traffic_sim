@@ -7,6 +7,14 @@ output_size: 4
 t_predict: 4
 temporal_length: 16
 
+speed_input_size: 3
+speed_output_size: 3
+speed_encoder_hidden: 64
+number_input_size: 3
+number_output_size: 1
+number_encoder_hidden: 64
+decoder_hidden: 64
+
 # train
 batch_size: 500
 num_epochs: 50
@@ -18,12 +26,13 @@ use_cuda: true
 flow_loss_weight: 1
 speed_loss_weight: 1
 grad_clip: 10
-sample_rate: 1
+sample_rate: 0
 sample_decay: 1
 use_mask: true
 use_simerror: true
 gamma: 0.5
 num_workers: 1
+rand_range: 0.1
 
 # data
 seg:

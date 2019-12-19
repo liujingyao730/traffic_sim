@@ -112,16 +112,9 @@ class discrete_net_model(nn.Module):
 
             h_after, h_before = self.get_spatial_hidden(h)
 
-            h = h.view(batch_size*spatial, self.hidden_size)
-            c = c.view(batch_size*spatial, self.hidden_size)
-            h_after = h_after.view(batch_size*spatial, self.hidden_size)
-            h_before = h_before.view(batch_size*spatial, self.hidden_size)
-            data = input_data[:, time, :, :].contiguous().view(batch_size*spatial, input_size)
+            data = input_data[:, time, :, :].contiguous()
 
             h, c = self.cell(data, h, c, h_after, h_before)
-
-            h = h.view(batch_size, spatial, self.hidden_size)
-            c = c.view(batch_size, spatial, self.hidden_size)
 
             if time >= self.t_predict:
                 outputs[:, time-self.t_predict, :, :self.number_output_size] += self.number_output_layer(h)
@@ -169,17 +162,8 @@ class discrete_net_model(nn.Module):
                 data = outputs[:, time-self.t_predict-1, :, :]
             
             data = data.contiguous()
-            h = h.view(batch_size*spatial, self.hidden_size)
-            c = c.view(batch_size*spatial, self.hidden_size)
-            h_after = h_after.view(batch_size*spatial, self.hidden_size)
-            h_before = h_before.view(batch_size*spatial, self.hidden_size)
-            data = data.view(batch_size*spatial, input_size)
 
             h, c = self.cell(data, h, c, h_after, h_before)
-
-            h = h.view(batch_size, spatial, self.hidden_size)
-            c = c.view(batch_size, spatial, self.hidden_size)
-            data = data.view(batch_size, spatial, input_size)
 
         return outputs
 
@@ -240,16 +224,9 @@ class continuous_seg(nn.Module):
 
             h_after, h_before = self.get_spatial_hidden(h)
 
-            h = h.view(batch_size*spatial, self.hidden_size)
-            c = c.view(batch_size*spatial, self.hidden_size)
-            h_after = h_after.view(batch_size*spatial, self.hidden_size)
-            h_before = h_before.view(batch_size*spatial, self.hidden_size)
-            data = input_data[:, time, :, :].contiguous().view(batch_size*spatial, input_size)
+            data = input_data[:, time, :, :].contiguous()
 
             h, c = self.cell(data, h, c, h_after, h_before)
-
-            h = h.view(batch_size, spatial, self.hidden_size)
-            c = c.view(batch_size, spatial, self.hidden_size)
 
             if time >= self.t_predict:
                 output = self.outputLayer(h)
@@ -287,17 +264,9 @@ class continuous_seg(nn.Module):
                                             )
                 outputs[:, time-self.t_predict-1, :, :] += data
 
-            data = data.contiguous().view(batch_size*spatial, input_size)
-            h = h.view(batch_size*spatial, self.hidden_size)
-            c = c.view(batch_size*spatial, self.hidden_size)
-            h_after = h_after.view(batch_size*spatial, self.hidden_size)
-            h_before = h_before.view(batch_size*spatial, self.hidden_size)
+            data = data.contiguous()
 
             h, c = self.cell(data, h, c, h_after, h_before)
-
-            h = h.view(batch_size, spatial, self.hidden_size)
-            c = c.view(batch_size, spatial, self.hidden_size)
-            data = data.view(batch_size, spatial, input_size)
 
         return outputs
 

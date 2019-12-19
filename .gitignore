@@ -131,3 +131,4 @@ dairy.md
 *.png
 *.gif
 *.jpg
+dataFile/real_data/*
