@@ -1,12 +1,20 @@
 # test
 batch_size: 100
 use_epoch: 49
-model_prefix: all_flow
+model_prefix: all_speed_sn
 t_predict: 4
-temporal_length: 80
-time: 2000
+temporal_length: 370
+time: 0
 use_cuda: true
 rand_range: 0.2
+
+speed_input_size: 3
+speed_output_size: 3
+speed_encoder_hidden: 64
+number_input_size: 3
+number_output_size: 1
+number_encoder_hidden: 64
+decoder_hidden: 64
 
 # eva
 hidden_size: 64
@@ -24,5 +32,5 @@ sim_step: 0.1
 delta_T: 10
 cycle: 100
 green_pass: 52
-seg: 6
+seg: 1
 use_speed: true
