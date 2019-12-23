@@ -1,7 +1,7 @@
 # test
 batch_size: 100
 use_epoch: 49
-model_prefix: all_speed_sn
+model_prefix: low_var_with_speed
 t_predict: 4
 temporal_length: 370
 time: 0
@@ -32,5 +32,5 @@ sim_step: 0.1
 delta_T: 10
 cycle: 100
 green_pass: 52
-seg: 1
+seg: 3
 use_speed: true

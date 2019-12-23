@@ -23,6 +23,8 @@ import yaml
 from model import TP_lstm
 from model import loss_function
 from seg_model import continuous_seg
+from sn_model import sn_lstm
+from seg_model import continuous_seg_nonspeed
 from data import traffic_data
 import data as d
 import conf
@@ -52,6 +54,8 @@ def test(args):
     file = os.path.join(load_directory, str(use_epoch)+'.tar')
     checkpoint = torch.load(file)
     model = continuous_seg(args)
+    #model = sn_lstm(args)
+    #model = continuous_seg_nonspeed(args)
     model.load_state_dict(checkpoint['state_dict'])
     
     eva_prefix = args["eva_prefix"]
@@ -72,8 +76,23 @@ def test(args):
     outputs = model.infer(co_data)
     ttt = time.time()
 
+    print(ttt - tt)
+
     output = outputs[0, :, :, 2].cpu().detach().numpy()
     target = target[0, :, :, 2].cpu().detach().numpy()
+
+    target_flow = target.sum(axis=1)
+    output_flow = output.sum(axis=1)
+
+    print("cell metrics ")
+    print("MAE ", metrics.mean_absolute_error(target, output))
+    print("R2 ", metrics.r2_score(target, output))
+    print("EVR ", metrics.explained_variance_score(target, output))
+
+    print("seg metrics")
+    print("MAE ", metrics.mean_absolute_error(target_flow, output_flow))
+    print("R2 ", metrics.r2_score(target_flow, output_flow))
+    print("EVR ", metrics.explained_variance_score(target_flow, output_flow))
 
     predict_flow = output.sum(axis=1)
     real_flow = target.sum(axis=1)
@@ -94,7 +113,7 @@ def test(args):
     plt.colorbar(im)
     plt.title("ground truth")
     heat = fig.add_subplot(312)
-    im = heat.imshow(output.T, cmap=plt.cm.hot_r, vmax=15)
+    im = heat.imshow(output.T, cmap=plt.cm.hot_r, vmin=0, vmax=15)
     plt.colorbar(im)
     plt.title("simulation result")
     heat = fig.add_subplot(313)
