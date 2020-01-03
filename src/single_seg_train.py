@@ -122,7 +122,7 @@ def train(args):
                             acc_loss = criterion(target[:, :, :, 0], output_pred)
                             flow_loss = criterion(target[:, :, :, 2], number_pred)
                     
-                        loss = args["flow_loss_weight"] * flow_loss + acc_loss+ args["seg_loss_weight"]*seg_flow_loss + args['speed_loss_weight'] * speed_loss
+                        loss = args["flow_loss_weight"] * flow_loss + args["output_loss_weight"] * acc_loss+ args["seg_loss_weight"]*seg_flow_loss + args['speed_loss_weight'] * speed_loss
 
                     else:
                     
@@ -147,7 +147,7 @@ def train(args):
                         sim_error = torch.mean(sim_error)
                         seg_flow_loss = criterion(target[:, :, :, 2].sum(dim=2), outputs[:, :, :, 2].sum(dim=2))
                         speed_loss = criterion(target[:, :, :, 3], outputs[:, :, :, 3])
-                        loss = acc_loss + args["flow_loss_weight"]*flow_loss + args["gamma"] * sim_error + args["seg_loss_weight"]*seg_flow_loss + args["speed_loss_weight"]*speed_loss
+                        loss = args["output_loss_weight"] * acc_loss + args["flow_loss_weight"]*flow_loss + args["gamma"] * sim_error + args["seg_loss_weight"]*seg_flow_loss + args["speed_loss_weight"]*speed_loss
 
                     loss.backward()
                     torch.nn.utils.clip_grad_norm_(model.parameters(), args["grad_clip"])

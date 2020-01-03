@@ -1,7 +1,7 @@
 # test
 batch_size: 100
 use_epoch: 49
-model_prefix: low_var_with_speed
+model_prefix: 6_lane_baseline
 t_predict: 4
 temporal_length: 370
 time: 0
@@ -19,10 +19,10 @@ decoder_hidden: 64
 # eva
 hidden_size: 64
 output_hidden_size: 16
-input_size: 6
+input_size: 3
 lane_gate_size: 4
-output_size: 4
-eva_prefix: test
+output_size: 1
+eva_prefix: change
 spatial_length: 40
 current_time: 0
 n_units: 7
@@ -32,5 +32,5 @@ sim_step: 0.1
 delta_T: 10
 cycle: 100
 green_pass: 52
-seg: 3
-use_speed: true
+seg: 2
+use_speed: false
