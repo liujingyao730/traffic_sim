@@ -278,21 +278,24 @@ class continuous_seg_nonspeed(nn.Module):
         super().__init__()
 
         self.input_size = args["input_size"]
-        self.hidden_size = args["hidden_size"]
-        self.output_hidden_size = args["output_hidden_size"]
+        self.encoder_hidden = args["encoder_hidden"]
+        self.decoder_input = args["decoder_input"]
+        self.decoder_hidden = args["decoder_hidden"]
         self.t_predict = args["t_predict"]
         self.output_size = args["output_size"]
 
-        self.cell = seg_model(args)
+        self.encoder = seg_model({"input_size":self.input_size, "hidden_size":self.encoder_hidden})
+        self.decoder = seg_model({"input_size":self.decoder_input, "hidden_size":self.decoder_hidden})
 
-        self.outputLayer = FCNet(layerSize=[self.hidden_size, self.output_hidden_size, self.output_size])
+        self.outputLayer = nn.Linear(self.decoder_hidden, self.output_size)
+        self.embedding_layer = nn.Linear(self.encoder_hidden, self.decoder_input)
+
+        self.sigma = nn.Sigmoid()
 
     def get_spatial_hidden(self, h):
 
-        [batch_size, spatial, _] = h.shape
-
-        h_after = Variable(h.data.new(batch_size, spatial, self.hidden_size).fill_(0).float())
-        h_before = Variable(h.data.new(batch_size, spatial, self.hidden_size).fill_(0).float())
+        h_after = Variable(h.data.new(h.shape).fill_(0).float())
+        h_before = Variable(h.data.new(h.shape).fill_(0).float())
 
         h_after[:, :-1, :] += h[:, 1:, :]
         h_before[:, 1:, :] += h[:, :-1, :]
@@ -313,21 +316,28 @@ class continuous_seg_nonspeed(nn.Module):
 
         [batch_size, temporal, spatial, input_size] = input_data.shape
 
-        h = Variable(input_data.data.new(batch_size, spatial, self.hidden_size).fill_(0).float())
-        c = Variable(input_data.data.new(batch_size, spatial, self.hidden_size).fill_(0).float())
+        encoder_h = Variable(input_data.data.new(batch_size, spatial, self.encoder_hidden).fill_(0).float())
+        encoder_c = Variable(input_data.data.new(batch_size, spatial, self.encoder_hidden).fill_(0).float())
+        decoder_h = Variable(input_data.data.new(batch_size, spatial, self.decoder_hidden).fill_(0).float())
+        decoder_c = Variable(input_data.data.new(batch_size, spatial, self.decoder_hidden).fill_(0).float())
 
         outputs = Variable(input_data.data.new(batch_size, temporal-self.t_predict-1, spatial, input_size).fill_(0).float())
 
         for time in range(temporal - 1):
 
-            h_after, h_before = self.get_spatial_hidden(h)
+            encoder_h_after, encoder_h_before = self.get_spatial_hidden(encoder_h)
+            decoder_h_after, decoder_h_before = self.get_spatial_hidden(decoder_h)
 
             data = input_data[:, time, :, :].contiguous()
 
-            h, c = self.cell(data, h, c, h_after, h_before)
+            encoder_h, encoder_c = self.encoder(data, encoder_h, encoder_c, encoder_h_after, encoder_h_before)
+
+            code = self.sigma(self.embedding_layer(encoder_h))
+
+            decoder_h, decoder_c = self.decoder(code, decoder_h, decoder_h, decoder_h_after, decoder_h_before)
 
             if time >= self.t_predict:
-                output = self.outputLayer(h)
+                output = self.outputLayer(decoder_h)
                 next_input = self.caculate_next_input(
                                                     input_data[:, time, :, :],
                                                     input_data[:, time+1, :, :],
@@ -342,19 +352,22 @@ class continuous_seg_nonspeed(nn.Module):
         [batch_size, temporal, spatial, input_size] = input_data.shape
         self.spatial = spatial
 
-        h = Variable(input_data.data.new(batch_size, spatial, self.hidden_size).fill_(0).float())
-        c = Variable(input_data.data.new(batch_size, spatial, self.hidden_size).fill_(0).float())
+        encoder_h = Variable(input_data.data.new(batch_size, spatial, self.encoder_hidden).fill_(0).float())
+        encoder_c = Variable(input_data.data.new(batch_size, spatial, self.encoder_hidden).fill_(0).float())
+        decoder_h = Variable(input_data.data.new(batch_size, spatial, self.decoder_hidden).fill_(0).float())
+        decoder_c = Variable(input_data.data.new(batch_size, spatial, self.decoder_hidden).fill_(0).float())
 
         outputs = Variable(input_data.data.new(batch_size, temporal-self.t_predict-1, spatial, input_size).fill_(0).float())
             
         for time in range(temporal):
 
-            h_after, h_before = self.get_spatial_hidden(h)
+            encoder_h_after, encoder_h_before = self.get_spatial_hidden(encoder_h)
+            decoder_h_after, decoder_h_before = self.get_spatial_hidden(decoder_h)
 
             if time <= self.t_predict:
                 data = input_data[:, time, :, :]
             else:
-                output = self.outputLayer(h)
+                output = self.outputLayer(decoder_h)
                 data = self.caculate_next_input(
                                                 data,
                                                 input_data[:, time, :, :],
@@ -364,7 +377,11 @@ class continuous_seg_nonspeed(nn.Module):
 
             data = data.contiguous()
 
-            h, c = self.cell(data, h, c, h_after, h_before)
+            encoder_h, encoder_c = self.encoder(data, encoder_h, encoder_c, encoder_h_after, encoder_h_before)
+
+            code = self.sigma(self.embedding_layer(encoder_h))
+
+            decoder_h, decoder_c = self.decoder(code, decoder_h, decoder_h, decoder_h_after, decoder_h_before)
 
         return outputs
 
