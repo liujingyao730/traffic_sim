@@ -202,6 +202,9 @@ def train(args):
 
                     outputs = model.infer(data)
 
+                    target = data_set.recover(target)
+                    outputs = data_set.recover(outputs)
+
                     acc_loss = criterion(target[:, :, :, 0], outputs[:, :, :, 0])
                     flow_loss = criterion(target[:, :, :, 2], outputs[:, :, :, 2])
                     last_frame_acc_loss = criterion(target[:, -1, :, 0], outputs[:, -1, :, 0])

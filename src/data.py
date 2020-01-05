@@ -53,6 +53,9 @@ class traffic_data(Dataset):
         self.bucketlist = []
         self.use_speed = args["use_speed"]
 
+        self.mean = -1
+        self.std = -1
+
         if self.use_speed:
             self.speed_file = os.path.join(fold, data_prefix+'Speed.csv')
             self.speed_in_file = os.path.join(fold, data_prefix+'SpeedIn.csv')
@@ -170,14 +173,22 @@ class traffic_data(Dataset):
                 Speed_in = self.speed_in[timelist][:, :, np.newaxis]
                 Speed_out = self.speed_out[timelist][:, :, np.newaxis]
             
-                data = torch.Tensor(np.concatenate((out, In, number, Speed, Speed_in, Speed_out), axis=2)).float()
+                data = np.concatenate((out, In, number, Speed, Speed_in, Speed_out), axis=2)
             else:
-                data = torch.Tensor(np.concatenate((out, In, number), axis=2)).float()
+                data = np.concatenate((out, In, number), axis=2)
+
+            self.mean = np.mean(data, axis=(0, 1))
+            data = data - self.mean
+            self.std = np.std(data, axis=(0, 1))
+            data = data / self.std
+
+            data = torch.Tensor(data)
 
             return data
             
         elif self.mod == "inter":
-        
+            
+            raise NotImplementedError
             time = index 
             timelist = [int(i*self.delta_T/self.sim_step + time) for i in range(self.temporal_length+1)]
 
@@ -191,7 +202,7 @@ class traffic_data(Dataset):
 
         elif self.mod == "cooperate":
 
-            #t1 = ttt.time()
+            raise NotImplementedError
             time = index
             time_list = [int(i*self.delta_T/self.sim_step) + time for i in range(self.temporal_length+1)]
 
@@ -223,6 +234,13 @@ class traffic_data(Dataset):
             print("wrong mod to generate data !")
             raise RuntimeError('MOD ERROR')
 
+    def recover(self, data):
+
+        data = data * self.std
+        data = data + self.mean
+
+        return data
+
     def __len__(self):
 
         if self.mod == 'seg':
@@ -245,8 +263,9 @@ if __name__ == "__main__":
     args["temporal_length"] = 8
     args["sim_step"] = 0.1
     args["delta_T"] = 10
+    args["use_speed"] = False
 
-    dataset = traffic_data(mod='cooperate', topology=co_topology[0], args=args)
+    dataset = traffic_data(mod='seg', topology=[1], args=args)
     t = ttt.time()
     a = dataset[0]
     a = dataset[0]
