@@ -52,7 +52,7 @@ class traffic_data(Dataset):
         self.edge_number = 0
         self.bucketlist = []
         self.use_speed = args["use_speed"]
-
+        
         self.mean = -1
         self.std = -1
 
@@ -79,15 +79,29 @@ class traffic_data(Dataset):
                 raise RuntimeError("TOPOLOGY TYPE ERROR")
             self.edge_number = len(self.topology)
             bucketlist = [item for item in self.all_car_in.columns if int(int(item)/100) in self.topology]
+            
             self.car_in = self.all_car_in[bucketlist].values
             self.car_out = self.all_car_out[bucketlist].values
             self.number = self.all_number[bucketlist].values
+
+            self.mean = np.array([np.mean(self.car_out), np.mean(self.car_in), np.mean(self.number)])
+            self.car_out = self.car_out - self.mean[0]
+            self.car_in = self.car_in - self.mean[1]
+            self.number = self.number - self.mean[2]
+
+            self.std = np.array([np.std(self.car_out), np.std(self.car_in), np.std(self.number)])
+            self.car_out = self.car_out / self.std[0]
+            self.car_in = self.car_in / self.std[1]
+            self.number = self.number /self.std[2]
+            
             if self.use_speed:
+                raise NotImplementedError
                 self.speed = self.all_speed[bucketlist].values
                 self.speed_in = self.all_speed_in[bucketlist].values
                 self.speed_out = self.all_speed_out[bucketlist].values
 
         elif self.mod == 'inter':
+            raise NotImplementedError
             if not isinstance(self.topology, dict):
                 print("wrong type of topology for mod intersection!")
                 raise RuntimeError("TOPOLOGY TYPE ERROR")
@@ -107,7 +121,7 @@ class traffic_data(Dataset):
             self.car_out = self.all_car_out[bucketlist].values
             self.number = self.all_number[bucketlist].values
         elif self.mod == 'cooperate':
-
+            raise NotImplementedError
             major_buckets = [item for item in self.all_car_in.columns if int(int(item)/100)==self.topology['major']]
             minor_buckets = [item for item in self.all_car_in.columns if int(int(item)/100)==self.topology['minor']]
             end_buckets = [item for item in self.all_car_in.columns if int(int(item)/100)==self.topology['end']]
@@ -177,12 +191,7 @@ class traffic_data(Dataset):
             else:
                 data = np.concatenate((out, In, number), axis=2)
 
-            self.mean = np.mean(data, axis=(0, 1))
-            data = data - self.mean
-            self.std = np.std(data, axis=(0, 1))
-            data = data / self.std
-
-            data = torch.Tensor(data)
+            #data = torch.Tensor(data)
 
             return data
             
@@ -234,13 +243,6 @@ class traffic_data(Dataset):
             print("wrong mod to generate data !")
             raise RuntimeError('MOD ERROR')
 
-    def recover(self, data):
-
-        data = data * self.std
-        data = data + self.mean
-
-        return data
-
     def __len__(self):
 
         if self.mod == 'seg':
@@ -268,13 +270,6 @@ if __name__ == "__main__":
     dataset = traffic_data(mod='seg', topology=[1], args=args)
     t = ttt.time()
     a = dataset[0]
-    a = dataset[0]
-    a = dataset[0]
-    a = dataset[0]
-    a = dataset[0]
-    a = dataset[0]
-    a = dataset[0]
-    a = dataset[0]
-    a = dataset[0]
+    b = dataset.recover(a)
     t2 = ttt.time()
     print(len(dataset))

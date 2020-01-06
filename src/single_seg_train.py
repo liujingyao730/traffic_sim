@@ -97,7 +97,7 @@ def train(args):
                     model.zero_grad()
                     optimizer.zero_grad()
 
-                    data = Variable(data)
+                    data = Variable(data).float()
 
                     if args["use_cuda"]:
                         data = data.cuda()
@@ -187,6 +187,12 @@ def train(args):
             
             for seg in args['seg']:
                 data_set.reload(topology=[seg], mod='seg')
+                
+                mean = Variable(torch.Tensor(data_set.mean).float())
+                std = Variable(torch.Tensor(data_set.std).float())
+                if args["use_cuda"]:
+                    mean = mean.cuda()
+                    std = std.cuda()
 
                 for ii, data in tqdm(enumerate(dataloader)):
 
@@ -202,8 +208,10 @@ def train(args):
 
                     outputs = model.infer(data)
 
-                    target = data_set.recover(target)
-                    outputs = data_set.recover(outputs)
+                    target = target * std
+                    target = target + mean
+                    outputs = outputs * std
+                    outputs = outputs + mean
 
                     acc_loss = criterion(target[:, :, :, 0], outputs[:, :, :, 0])
                     flow_loss = criterion(target[:, :, :, 2], outputs[:, :, :, 2])
