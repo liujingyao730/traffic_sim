@@ -18,10 +18,8 @@ import yaml
 from tqdm import tqdm
 
 from model import loss_function
-from net_model import network_model
-from seg_model import continuous_seg
-from seg_model import continuous_seg_nonspeed
-from sn_model import sn_lstm
+from seg_model import basic_model
+from seg_model import attn_model
 from data import traffic_data
 import conf
 
@@ -51,9 +49,8 @@ def train(args):
     def checkpoint_path(x):
         return os.path.join(log_directory, str(x)+'.tar')
 
-    #model = continuous_seg(args)
-    model = continuous_seg_nonspeed(args)
-    #model = sn_lstm(args)
+    #model = basic_model(args)
+    model = attn_model(args)
 
     criterion = loss_function()
     sim_error_criterion = torch.nn.ReLU()
@@ -199,7 +196,7 @@ def train(args):
                     model.zero_grad()
                     optimizer.zero_grad()
 
-                    data = Variable(data)
+                    data = Variable(data).float()
 
                     if args["use_cuda"]:
                         data = data.cuda()

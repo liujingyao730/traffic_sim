@@ -4,20 +4,14 @@ embedding_size: 8
 hidden_size: 64
 output_hidden_size: 16
 output_size: 1
-t_predict: 4
+t_predict: 8
 temporal_length: 16
-
-speed_input_size: 3
-speed_output_size: 3
-speed_encoder_hidden: 64
-number_input_size: 3
-number_output_size: 1
-number_encoder_hidden: 64
-decoder_hidden: 64
 
 encoder_hidden: 64
 decoder_input: 64
 decoder_hidden: 128
+
+n_head: 1
 
 # train
 batch_size: 500
