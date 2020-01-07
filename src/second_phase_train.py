@@ -18,9 +18,8 @@ import yaml
 from tqdm import tqdm
 
 from model import loss_function
-from net_model import network_model
-from seg_model import continuous_seg_nonspeed
-from sn_model import sn_lstm
+from seg_model import attn_model
+from seg_model import seg_model
 from data import traffic_data
 import conf
 
@@ -29,7 +28,7 @@ def main():
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--config", type=str, default="without_speed_train")
+    parser.add_argument("--config", type=str, default="second_phase_train")
 
     args = parser.parse_args()
     train(args)
@@ -40,8 +39,11 @@ def train(args):
     with open(os.path.join(conf.configPath, args.config+'.yaml'), encoding='UTF-8') as config:
         args = yaml.load(config)
 
-    log_directory = os.path.join(conf.logPath, args["model_prefix"])
+    model_path = os.path.join(conf.logPath, args["model_path"])
+    log_directory = os.path.join(conf.logPath, args["log_path"])
     log_curve_file = open(os.path.join(log_directory, "log_curve.txt"), "w+")
+
+    use_epoch = args["use_epoch"]
     
     for key in args.keys():
         print(key, "   ", args[key])
@@ -50,7 +52,10 @@ def train(args):
     def checkpoint_path(x):
         return os.path.join(log_directory, str(x)+'.tar')
 
-    model = continuous_seg_nonspeed(args)
+    file = os.path.join(model_path, str(use_epoch)+'.tar')
+    load_dict = torch.load(file)
+    model = attn_model(args)
+    model.load_state_dict(load_dict["state_dict"])
 
     criterion = loss_function()
     sim_error_criterion = torch.nn.ReLU()
@@ -87,71 +92,60 @@ def train(args):
             dataloader = torch.utils.data.DataLoader(data_set,
                                                     batch_size=args["batch_size"],
                                                     num_workers=args["num_workers"])
-            for seg in args["seg"]:
-                data_set.reload(topology=[seg], mod='seg')
-                for ii, data in tqdm(enumerate(dataloader)):
 
-                    model.zero_grad()
-                    optimizer.zero_grad()
+            for ii, data in tqdm(enumerate(dataloader)):
 
-                    data = Variable(data)
+                model.zero_grad()
+                optimizer.zero_grad()
 
-                    if args["use_cuda"]:
-                        data = data.cuda()
+                data = Variable(data).float()
 
-                    target = data[:, args["t_predict"]+1:, :, :]
+                if args["use_cuda"]:
+                    data = data.cuda()
 
-                    if random.random() < args["sample_rate"]:
+                target = data[:, args["t_predict"]+1:, :, :]
+
+                if random.random() < args["sample_rate"]:
                     
-                        outputs = model(data)
-                        output_pred = outputs[:, :, :, 0]
-                        number_pred = outputs[:, :, :, 2]
+                    outputs = model(data)
+                    output_pred = outputs[:, :, :, 0]
+                    number_pred = outputs[:, :, :, 2]
 
-                        flow_loss = criterion(target[:, :, :, 2].sum(dim=2), number_pred.sum(dim=2))
+                    flow_loss = criterion(target[:, :, :, 2].sum(dim=2), number_pred.sum(dim=2))
+                    seg_flow_loss = criterion(target[:, :, :, 2].sum(dim=2), number_pred.sum(dim=2))
+                    acc_loss = criterion(target[:, :, :, 0], output_pred)
 
-                        if args["use_mask"]:
-                            mask = get_mask(target[:, :, :, 0], args["mask"])
-                            acc_loss = criterion(target[:, :, :, 0], output_pred, mask)
-                        else:
-                            acc_loss = criterion(target[:, :, :, 0], output_pred)
+                    loss = args["flow_loss_weight"] * flow_loss + args["output_loss_weight"] * acc_loss + args["seg_loss_weight"]*seg_flow_loss
+
+                else:
                     
-                        loss = args["flow_loss_weight"] * flow_loss + acc_loss
+                    outputs = model.infer(data)
 
+                    if args["use_simerror"]:
+                        sim_error = outputs[:, :-1, :, 2] - target[:, :-1, :, 2]
+                        sim_error = sim_error * (target[:, 1:, :, 0] - outputs[:, 1:, :, 0])
+                        sim_error = sim_error_criterion(sim_error)
                     else:
+                        sim_error = Variable(data.data.new(1).fill_(0).float())
                     
-                        outputs = model.infer(data)
+                    acc_loss = criterion(target[:, :, :, 0], outputs[:, :, :, 0])    
+                    sim_error = torch.mean(sim_error)
+                    flow_loss = criterion(target[:, :, :, 2].sum(dim=2), outputs[:, :, :, 2].sum(dim=2))
+                    loss = args["output_loss_weight"]*acc_loss + args["flow_loss_weight"]*flow_loss + args["gamma"] * sim_error
 
-                        if args["use_simerror"]:
-                            sim_error = outputs[:, :-1, :, 2] - target[:, :-1, :, 2]
-                            sim_error = sim_error * (target[:, 1:, :, 0] - outputs[:, 1:, :, 0])
-                            sim_error = sim_error_criterion(sim_error)
-                        else:
-                            sim_error = Variable(data.data.new(1).fill_(0).float())
-                    
-                        if args["use_mask"]:
-                            mask = get_mask(target[:, :, :, 0], args["mask"])
-                            acc_loss = criterion(target[:, :, :, 0], outputs[:, :, :, 0], mask)
-                            sim_error = sim_error * mask[:, 1:, :]
-                        else:
-                            acc_loss = criterion(target[:, :, :, 0], outputs[:, :, :, 0])
-                    
-                        sim_error = torch.mean(sim_error)
-                        flow_loss = criterion(target[:, :, :, 2].sum(dim=2), outputs[:, :, :, 2].sum(dim=2))
-                        loss = acc_loss + args["flow_loss_weight"]*flow_loss + args["gamma"] * sim_error
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(model.parameters(), args["grad_clip"])
+                optimizer.step()
 
-                    loss.backward()
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), args["grad_clip"])
-                    optimizer.step()
+                acc_meter.add(loss.item())
 
-                    acc_meter.add(loss.item())
-
-                    if i % args["show_every"] == 0:
-                        print("batch{}, train_loss = {:.3f} for topology {}, preifx {}".format(i, acc_meter.value()[0], str(seg), prefix))
-                        log_curve_file.write("batch{}, train_loss = {:.3f} for topology {}, preifx {}".format(i, acc_meter.value()[0], str(seg), prefix))
-                    i += 1
+                if i % args["show_every"] == 0:
+                    print("batch{}, train_loss = {:.3f} for preifx {}".format(i, acc_meter.value()[0], prefix))
+                    log_curve_file.write("batch{}, train_loss = {:.3f} for preifx {}".format(i, acc_meter.value()[0], prefix))
+                i += 1
             
-            print("batch{}, train_loss = {:.3f} for topology {}, preifx {}".format(i, acc_meter.value()[0], str(seg), prefix))
-            log_curve_file.write("batch{}, train_loss = {:.3f} for topology {}, preifx {}".format(ii, acc_meter.value()[0], str(seg), prefix))
+            print("batch{}, train_loss = {:.3f} for preifx {}".format(i, acc_meter.value()[0], prefix))
+            log_curve_file.write("batch{}, train_loss = {:.3f} for preifx {}".format(ii, acc_meter.value()[0], prefix))
 
         t = time.time()
         args["sample_rate"] -= args["sample_decay"]
@@ -174,39 +168,45 @@ def train(args):
             dataloader = torch.utils.data.DataLoader(data_set,
                                                     batch_size=args["batch_size"],
                                                     num_workers=args["num_workers"])
-            
-            for seg in args['seg']:
-                data_set.reload(topology=[seg], mod='seg')
+            mean = Variable(torch.Tensor(data_set.mean).float())
+            std = Variable(torch.Tensor(data_set.std).float())
+            if args["use_cuda"]:
+                mean = mean.cuda()
+                std = std.cuda()
+            for ii, data in tqdm(enumerate(dataloader)):
 
-                for ii, data in tqdm(enumerate(dataloader)):
+                model.zero_grad()
+                optimizer.zero_grad()
 
-                    model.zero_grad()
-                    optimizer.zero_grad()
+                data = Variable(data).float()
 
-                    data = Variable(data)
+                if args["use_cuda"]:
+                    data = data.cuda()
 
-                    if args["use_cuda"]:
-                        data = data.cuda()
+                target = data[:, args["t_predict"]+1:, :, :]
 
-                    target = data[:, args["t_predict"]+1:, :, :]
+                outputs = model.infer(data)
 
-                    outputs = model.infer(data)
+                target = target * std
+                target = target + mean
+                outputs = outputs * std
+                outputs = outputs + mean
 
-                    acc_loss = criterion(target[:, :, :, 0], outputs[:, :, :, 0])
-                    flow_loss = criterion(target[:, :, :, 2], outputs[:, :, :, 2])
-                    last_frame_acc_loss = criterion(target[:, -1, :, 0], outputs[:, -1, :, 0])
-                    last_frame_flow_loss = criterion(target[:, -1, :, 2], outputs[:, -1, :, 2])
+                acc_loss = criterion(target[:, :, :, 0], outputs[:, :, :, 0])
+                flow_loss = criterion(target[:, :, :, 2], outputs[:, :, :, 2])
+                last_frame_acc_loss = criterion(target[:, -1, :, 0], outputs[:, -1, :, 0])
+                last_frame_flow_loss = criterion(target[:, -1, :, 2], outputs[:, -1, :, 2])
 
-                    acc_meter.add(acc_loss.item())
-                    flow_loss_meter.add(flow_loss.item())
-                    last_frame_acc_meter.add(last_frame_acc_loss.item())
-                    last_frame_flow_meter.add(last_frame_flow_loss.item())
+                acc_meter.add(acc_loss.item())
+                flow_loss_meter.add(flow_loss.item())
+                last_frame_acc_meter.add(last_frame_acc_loss.item())
+                last_frame_flow_meter.add(last_frame_flow_loss.item())
 
-                    if i % args["show_every"] == 0:
-                        print("batch{}, acc_loss={:.3f}, flow_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}".format(i, acc_meter.value()[0], flow_loss_meter.value()[0], last_frame_acc_meter.value()[0], last_frame_flow_meter.value()[0]))
-                        log_curve_file.write("batch{}, acc_loss={:.3f}, flow_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}\n".format(i, acc_meter.value()[0], flow_loss_meter.value()[0], last_frame_acc_meter.value()[0], last_frame_flow_meter.value()[0]))       
+                if i % args["show_every"] == 0:
+                    print("batch{}, acc_loss={:.3f}, flow_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}".format(i, acc_meter.value()[0], flow_loss_meter.value()[0], last_frame_acc_meter.value()[0], last_frame_flow_meter.value()[0]))
+                    log_curve_file.write("batch{}, acc_loss={:.3f}, flow_loss={:.3f}, last_frame_loss={:.3f}, last_frame_flow_loss={:.3f}\n".format(i, acc_meter.value()[0], flow_loss_meter.value()[0], last_frame_acc_meter.value()[0], last_frame_flow_meter.value()[0]))       
                     
-                    i += 1
+                i += 1
             
         
         if acc_meter.value()[0] < best_acc :

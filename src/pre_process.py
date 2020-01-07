@@ -146,32 +146,32 @@ def reset_data(prefix, fold=conf.midDataPath, deltaT=conf.args["deltaT"],
 
     car_in_file = os.path.join(fold, prefix+'CarIn.csv')
     car_out_file = os.path.join(fold, prefix+'CarOut.csv')
-    speed_in_file = os.path.join(fold, prefix+'SpeedIn.csv')
-    speed_out_file = os.path.join(fold, prefix+'SpeedOut.csv')
+    #speed_in_file = os.path.join(fold, prefix+'SpeedIn.csv')
+    #speed_out_file = os.path.join(fold, prefix+'SpeedOut.csv')
 
     car_in = pd.read_csv(car_in_file, index_col=0)
     car_out = pd.read_csv(car_out_file, index_col=0)
-    speed_in = pd.read_csv(speed_in_file, index_col=0)
-    speed_out = pd.read_csv(speed_out_file, index_col=0)
+    #speed_in = pd.read_csv(speed_in_file, index_col=0)
+    #speed_out = pd.read_csv(speed_out_file, index_col=0)
     max_time = len(car_in.index)
     max_time -= int(deltaT / sim_step)
 
     reset_car_in = pd.DataFrame(columns=car_in.columns, index=car_in.index)
     reset_car_out = pd.DataFrame(columns=car_out.columns, index=car_in.index)
-    reset_speed_in = pd.DataFrame(columns=speed_in.columns, index=speed_in.index)
-    reset_speed_out = pd.DataFrame(columns=speed_out.columns, index=speed_out.index)
+    #reset_speed_in = pd.DataFrame(columns=speed_in.columns, index=speed_in.index)
+    #reset_speed_out = pd.DataFrame(columns=speed_out.columns, index=speed_out.index)
 
     reset_car_in.loc[0] = 0
     reset_car_out.loc[0] = 0
-    reset_speed_in.loc[0] = 0
-    reset_speed_out.loc[0] = 0
+    #reset_speed_in.loc[0] = 0
+    #reset_speed_out.loc[0] = 0
     t = 0
 
     for i in range(int(deltaT / sim_step)):
         reset_car_in.loc[0] += car_in.loc[t]
         reset_car_out.loc[0] += car_out.loc[t]
-        reset_speed_in.loc[0] += car_in.loc[t] * speed_in.loc[t]
-        reset_speed_out.loc[0] += car_out.loc[t] * speed_out.loc[t]
+        #reset_speed_in.loc[0] += car_in.loc[t] * speed_in.loc[t]
+        #reset_speed_out.loc[0] += car_out.loc[t] * speed_out.loc[t]
         t = round(t+sim_step, 1)
     
     for i in range(1, max_time+1):
@@ -180,19 +180,19 @@ def reset_data(prefix, fold=conf.midDataPath, deltaT=conf.args["deltaT"],
         plus_time = round(time+deltaT-sim_step, 1)
         reset_car_in.loc[time] = reset_car_in.loc[minus_time] - car_in.loc[minus_time] + car_in.loc[plus_time]
         reset_car_out.loc[time] = reset_car_out.loc[minus_time] - car_out.loc[minus_time] + car_out.loc[plus_time]
-        reset_speed_in.loc[time] = reset_speed_in.loc[minus_time] - car_in.loc[minus_time]*speed_in.loc[minus_time] + car_in.loc[plus_time]*speed_in.loc[plus_time]
-        reset_speed_out.loc[time] = reset_speed_out.loc[minus_time] - car_out.loc[minus_time]*speed_out.loc[minus_time] + car_out.loc[plus_time]*speed_out.loc[plus_time]
+        #reset_speed_in.loc[time] = reset_speed_in.loc[minus_time] - car_in.loc[minus_time]*speed_in.loc[minus_time] + car_in.loc[plus_time]*speed_in.loc[plus_time]
+        #reset_speed_out.loc[time] = reset_speed_out.loc[minus_time] - car_out.loc[minus_time]*speed_out.loc[minus_time] + car_out.loc[plus_time]*speed_out.loc[plus_time]
 
-    reset_speed_in /= reset_car_in.replace(0, 1)
-    reset_speed_out /= reset_car_out.replace(0, 1)
+    #reset_speed_in /= reset_car_in.replace(0, 1)
+    #reset_speed_out /= reset_car_out.replace(0, 1)
 
-    reset_speed_in = reset_speed_in.round(decimals=2)
-    reset_speed_out = reset_speed_in.round(decimals=2)
+    #reset_speed_in = reset_speed_in.round(decimals=2)
+    #reset_speed_out = reset_speed_in.round(decimals=2)
 
     reset_car_in.to_csv(car_in_file)
     reset_car_out.to_csv(car_out_file)
-    reset_speed_in.to_csv(speed_in_file)
-    reset_speed_out.to_csv(speed_out_file)
+    #reset_speed_in.to_csv(speed_in_file)
+    #reset_speed_out.to_csv(speed_out_file)
     
     print(prefix + "car in and out file have been reset")
 
