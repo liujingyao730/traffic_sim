@@ -133,3 +133,4 @@ dairy.md
 *.jpg
 dataFile/real_data/*
 src/real_data_process.py
+*.rar
