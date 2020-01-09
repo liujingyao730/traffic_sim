@@ -130,6 +130,112 @@ class attn_model(nn.Module):
         super().__init__()
 
         self.input_size = args["input_size"]
+        self.hidden_size = args["hidden_size"]
+        self.n_head = args["n_head"]
+        self.t_predict = args["t_predict"]
+        self.output_size = args["output_size"]
+
+        self.cell = att_cell(args)
+
+        self.outputLayer = nn.Linear(self.hidden_size, self.output_size)
+
+        self.sigma = nn.Sigmoid()
+
+    def get_spatial_hidden(self, h):
+
+        [batch_size, spatial, hidden] = h.shape
+
+        h_after1 = Variable(h.data.new(batch_size, spatial, 1, hidden).fill_(0).float())
+        h_before1 = Variable(h.data.new(batch_size, spatial, 1, hidden).fill_(0).float())
+        h_after2 = Variable(h.data.new(batch_size, spatial, 1, hidden).fill_(0).float())
+        h_before2 = Variable(h.data.new(batch_size, spatial, 1, hidden).fill_(0).float())
+
+        h_after1[:, :-1, 0, :] += h[:, 1:, :]
+        h_before1[:, 1:, 0, :] += h[:, :-1, :]
+        h_after2[:, :-2, 0, :] += h[:, 2:, :]
+        h_before2[:, 2:, 0, :] += h[:, :-2, :]
+
+        h_spatial = torch.cat((h_after2, h_after1, h_before1, h_before2), dim=2)
+
+        return h_spatial
+
+    def caculate_next_input(self, former_input, next_input, output):
+
+        In = torch.cat((next_input[:, 0:1, 1:2], output[:, :-1, :]), dim=1)
+        former_number = former_input[:, :, [2]]
+        number_caculate = former_number + In - output
+
+        next_data = torch.cat((output, In, number_caculate), dim=2)
+
+        return next_data
+
+    def forward(self, input_data):
+
+        [batch_size, temporal, spatial, input_size] = input_data.shape
+
+        h = Variable(input_data.data.new(batch_size, spatial, self.hidden_size).fill_(0).float())
+        c = Variable(input_data.data.new(batch_size, spatial, self.hidden_size).fill_(0).float())
+
+        outputs = Variable(input_data.data.new(batch_size, temporal-self.t_predict-1, spatial, input_size).fill_(0).float())
+
+        for time in range(temporal - 1):
+
+            spatial_h = self.get_spatial_hidden(h)
+
+            data = input_data[:, time, :, :].contiguous()
+
+            h, c = self.cell(data, h, c, spatial_h)
+
+            if time >= self.t_predict:
+                output = self.outputLayer(h)
+                next_input = self.caculate_next_input(
+                                                    input_data[:, time, :, :],
+                                                    input_data[:, time+1, :, :],
+                                                    output
+                                                    )
+                outputs[:, time-self.t_predict, :, :] += next_input
+
+        return outputs
+
+    def infer(self, input_data):
+
+        [batch_size, temporal, spatial, input_size] = input_data.shape
+        self.spatial = spatial
+
+        h = Variable(input_data.data.new(batch_size, spatial, self.hidden_size).fill_(0).float())
+        c = Variable(input_data.data.new(batch_size, spatial, self.hidden_size).fill_(0).float())
+
+        outputs = Variable(input_data.data.new(batch_size, temporal-self.t_predict-1, spatial, input_size).fill_(0).float())
+            
+        for time in range(temporal):
+
+            spatial_h = self.get_spatial_hidden(h)
+
+            if time <= self.t_predict:
+                data = input_data[:, time, :, :]
+            else:
+                output = self.outputLayer(h)
+                data = self.caculate_next_input(
+                                                data,
+                                                input_data[:, time, :, :],
+                                                output
+                                            )
+                outputs[:, time-self.t_predict-1, :, :] += data
+
+            data = data.contiguous()
+
+            h, c = self.cell(data, h, c, spatial_h)
+
+        return outputs
+
+
+class attn_model_ad(nn.Module):
+
+    def __init__(self, args):
+
+        super().__init__()
+
+        self.input_size = args["input_size"]
         self.encoder_hidden = args["encoder_hidden"]
         self.decoder_input = args["decoder_input"]
         self.decoder_hidden = args["decoder_hidden"]

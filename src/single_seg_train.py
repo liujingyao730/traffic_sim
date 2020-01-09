@@ -20,6 +20,7 @@ from tqdm import tqdm
 from model import loss_function
 from seg_model import basic_model
 from seg_model import attn_model
+from seg_model import attn_model_ad
 from data import traffic_data
 import conf
 
@@ -50,6 +51,7 @@ def train(args):
         return os.path.join(log_directory, str(x)+'.tar')
 
     #model = basic_model(args)
+    #model = attn_model_ad(args)
     model = attn_model(args)
 
     criterion = loss_function()

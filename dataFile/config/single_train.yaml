@@ -9,12 +9,12 @@ temporal_length: 16
 
 encoder_hidden: 64
 decoder_input: 64
-decoder_hidden: 128
+decoder_hidden: 64
 
-n_head: 1
+n_head: 4
 
 # train
-batch_size: 500
+batch_size: 50
 num_epochs: 50
 show_every: 200
 learning_rate: 0.003
