@@ -123,7 +123,7 @@ def data_record(file, lane_edge=lane_edge, length=length, prefix='default',
     return True
 
 def two_type_data_record(file, lane_edge=lane_edge, length=length, prefix='default', 
-                special_edge=special_edge, fold=conf.midDataPath):
+                special_edge=special_edge, fold=conf.midDataPath, HOV=['HOV'], PV=['PV']):
 
     root = etree.iterparse(file, events=["start"])
 
@@ -197,7 +197,7 @@ def two_type_data_record(file, lane_edge=lane_edge, length=length, prefix='defau
             else:
                 bucket = edge*100 + 1
             
-            if vehicle_type == "PV": 
+            if vehicle_type in PV: 
 
                 pv_nowstep[vehicle_id] = bucket
                 if bucket not in pv_number.columns:
@@ -206,7 +206,7 @@ def two_type_data_record(file, lane_edge=lane_edge, length=length, prefix='defau
                     pv_car_out[bucket] = 0
                 pv_number.loc[time, bucket] += 1
             
-            elif vehicle_type == "HOV":
+            elif vehicle_type in HOV:
 
                 hov_nowstep[vehicle_id] = bucket
                 if bucket not in hov_number.columns:
@@ -220,7 +220,7 @@ def two_type_data_record(file, lane_edge=lane_edge, length=length, prefix='defau
     pv_car_in_file = os.path.join(fold, prefix+'PVCarIn.csv')
     pv_car_out_file = os.path.join(fold, prefix+'PVCarOut.csv')
     pv_number_file = os.path.join(fold, prefix+'PVNumber.csv')
-    hov_car_in_file = os.path.join(fold, prefix+'PVCarIn.csv')
+    hov_car_in_file = os.path.join(fold, prefix+'HOVCarIn.csv')
     hov_car_out_file = os.path.join(fold, prefix+'HOVCarOut.csv')
     hov_number_file = os.path.join(fold, prefix+'HOVNumber.csv')
 
@@ -308,6 +308,38 @@ def add_connection(prefix, fold=conf.midDataPath):
 
     print(prefix +" connection number file have been saved")
 
+def merge_data(prefix_list, target_prefix, fold=conf.midDataPath):
+
+    car_in_file = os.path.join(fold, target_prefix+'CarIn.csv')
+    car_out_file = os.path.join(fold, target_prefix+'CarOut.csv')
+    number_file = os.path.join(fold, target_prefix+'Number.csv')
+
+    resource_car_in_file = os.path.join(fold, prefix_list[0]+'CarIn.csv')
+    resource_car_out_file = os.path.join(fold, prefix_list[0]+'CarOut.csv')
+    resource_number_file = os.path.join(fold, prefix_list[0]+'Number.csv')
+
+    car_in = pd.read_csv(resource_car_in_file, index_col=0)
+    car_out = pd.read_csv(resource_car_out_file, index_col=0)
+    number = pd.read_csv(resource_number_file, index_col=0)
+
+    for i in range(1, len(prefix_list)):
+        temp_car_in_file = os.path.join(fold, prefix_list[i]+'CarIn.csv')
+        temp_car_out_file = os.path.join(fold, prefix_list[i]+'CarOut.csv')
+        temp_number_file = os.path.join(fold, prefix_list[i]+'Number.csv')
+
+        temp_car_in = pd.read_csv(temp_car_in_file, index_col=0)
+        temp_car_out = pd.read_csv(temp_car_out_file, index_col=0)
+        temp_number = pd.read_csv(temp_number_file, index_col=0)
+
+        car_in = car_in + temp_car_in
+        car_out = car_out + temp_car_out
+        number = number + temp_number
+
+    car_in.to_csv(car_in_file)
+    car_out.to_csv(car_out_file)
+    number.to_csv(number_file)
+
+    print(prefix_list, " have merged into ", target_prefix)
 
 if __name__ == "__main__":
 

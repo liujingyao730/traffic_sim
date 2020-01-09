@@ -72,7 +72,8 @@ class att_cell(nn.Module):
 
         self.a_src = Parameter(torch.Tensor(2*self.hidden_size, self.n_head))
 
-        self.embedding_layer = nn.Linear(self.n_head*self.hidden_size, self.hidden_size)
+        self.spatial_forget_gate = nn.Linear(self.n_head*self.hidden_size, self.hidden_size)
+        self.spatial_input_gate = nn.Linear(self.n_head*self.hidden_size, self.hidden_size)
 
         self.leaky_relu = nn.LeakyReLU(negative_slope=0.2)
         self.softmax = nn.Softmax(dim=1)
@@ -99,10 +100,13 @@ class att_cell(nn.Module):
         attn = attn.permute(0, 2, 1)
 
         h_spatial = torch.matmul(attn, h_spatial).view(batch_size*spatial, self.n_head*self.hidden_size)
-        h_spatial = self.embedding_layer(h_spatial)
-        spatial_i = self.sigma(h_spatial)
+        spatial_forget = self.spatial_forget_gate(h_spatial)
+        spatial_f = self.sigma(spatial_forget)
+        spatial_input = self.spatial_input_gate(h_spatial)
+        spatial_i = self.sigma(spatial_input)
 
-        h = h * (1 - spatial_i) + h_spatial * spatial_i
+        h = h * spatial_i
+        c = c * spatial_f
 
         h, c = self.cell(inputs, (h, c))
 
