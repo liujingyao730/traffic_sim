@@ -20,11 +20,10 @@ import time
 import pickle
 import yaml
 
-from model import TP_lstm
 from model import loss_function
-from seg_model import continuous_seg
-from sn_model import sn_lstm
-from seg_model import continuous_seg_nonspeed
+from seg_model import basic_model
+from seg_model import attn_model
+from seg_model import attn_model_ad
 from data import traffic_data
 import data as d
 import conf
@@ -53,9 +52,7 @@ def test(args):
     load_directory = os.path.join(conf.logPath, args["model_prefix"])
     file = os.path.join(load_directory, str(use_epoch)+'.tar')
     checkpoint = torch.load(file)
-    model = continuous_seg(args)
-    #model = sn_lstm(args)
-    #model = continuous_seg_nonspeed(args)
+    model = attn_model(args)
     model.load_state_dict(checkpoint['state_dict'])
     
     eva_prefix = args["eva_prefix"]
@@ -63,7 +60,7 @@ def test(args):
     data_set = traffic_data(args, data_prefix=args["eva_prefix"], 
                             mod='seg', topology=[args["seg"]])
 
-    co_data = data_set[start_time].unsqueeze(0)
+    co_data = torch.Tensor(data_set[start_time]).float().unsqueeze(0)
 
     if args["use_cuda"]:
         co_data = co_data.cuda()
@@ -78,8 +75,17 @@ def test(args):
 
     print(ttt - tt)
 
-    output = outputs[0, :, :, 2].cpu().detach().numpy()
-    target = target[0, :, :, 2].cpu().detach().numpy()
+    outputs = outputs.cpu().detach().numpy()
+    target = target.cpu().detach().numpy()
+    
+    outputs = outputs * data_set.std
+    outputs = outputs + data_set.mean
+    target = target * data_set.std
+    target = target + data_set.mean
+    
+    res = outputs[0, :, :, 0] - target[0, :, :, 0]
+    output = outputs[0, :, :, 2]
+    target = target[0, :, :, 2]
 
     target_flow = target.sum(axis=1)
     output_flow = output.sum(axis=1)
@@ -93,6 +99,12 @@ def test(args):
     print("MAE ", metrics.mean_absolute_error(target_flow, output_flow))
     print("R2 ", metrics.r2_score(target_flow, output_flow))
     print("EVR ", metrics.explained_variance_score(target_flow, output_flow))
+
+    print("res metrics")
+    print("mean ", np.mean(res))
+    print("median", np.median(res))
+    print("min", np.min(res))
+    print("max", np.max(res))
 
     predict_flow = output.sum(axis=1)
     real_flow = target.sum(axis=1)
@@ -113,7 +125,7 @@ def test(args):
     plt.colorbar(im)
     plt.title("ground truth")
     heat = fig.add_subplot(312)
-    im = heat.imshow(output.T, cmap=plt.cm.hot_r, vmin=0, vmax=15)
+    im = heat.imshow(output.T, cmap=plt.cm.hot_r, vmin=0)
     plt.colorbar(im)
     plt.title("simulation result")
     heat = fig.add_subplot(313)

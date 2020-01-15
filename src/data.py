@@ -258,6 +258,125 @@ class traffic_data(Dataset):
         return int(length)
 
 
+class two_type_data(Dataset):
+
+    '''每次读取进来一个场景下的文件，通过输入的参数指定是读取路段的数据样本还是读取路口数据样本
+    '''
+
+    def __init__(self, args, data_prefix="defualt", fold=fold, topology=seg_topology):
+
+        super().__init__()
+
+        self.sim_step = args["sim_step"]
+        self.delta_T = args["delta_T"]
+        self.temporal_length = args["temporal_length"]
+        self.seqPredict = args["t_predict"]
+
+        self.topology = topology
+
+        self.pv_car_in_file = os.path.join(fold, data_prefix+'PVCarIn.csv')
+        self.pv_car_out_file = os.path.join(fold, data_prefix+'PVCarOut.csv')
+        self.pv_number_file = os.path.join(fold, data_prefix+'PVNumber.csv')
+        self.hov_car_in_file = os.path.join(fold, data_prefix+'HOVCarIn.csv')
+        self.hov_car_out_file = os.path.join(fold, data_prefix+'HOVCarOut.csv')
+        self.hov_number_file = os.path.join(fold, data_prefix+'HOVNumber.csv')
+
+        self.pv_all_car_in = pd.read_csv(self.pv_car_in_file, index_col=0).dropna(axis=0)
+        self.pv_all_car_out = pd.read_csv(self.pv_car_out_file, index_col=0).dropna(axis=0)
+        self.pv_all_number = pd.read_csv(self.pv_number_file, index_col=0)
+        self.hov_all_car_in = pd.read_csv(self.hov_car_in_file, index_col=0).dropna(axis=0)
+        self.hov_all_car_out = pd.read_csv(self.hov_car_out_file, index_col=0).dropna(axis=0)
+        self.hov_all_number = pd.read_csv(self.hov_number_file, index_col=0)
+        self.index = min(len(self.pv_all_car_in.index), len(self.hov_all_car_in.index))
+        self.time_number = int(self.index - (self.temporal_length + 1)* self.delta_T / self.sim_step)
+
+        self.car_in = pd.DataFrame()
+        self.car_out = pd.DataFrame()
+        self.number = pd.DataFrame()
+        self.car_in = pd.DataFrame()
+        self.car_out = pd.DataFrame()
+        self.number = pd.DataFrame()
+        self.bucketlist = []
+        
+        self.mean = -1
+        self.std = -1
+
+        self.filter_data()
+
+    def filter_data(self):
+
+        
+        bucketlist = [item for item in self.pv_all_car_in.columns if int(int(item)/100) == self.topology]
+            
+        self.pv_car_in = self.pv_all_car_in[bucketlist].values
+        self.pv_car_out = self.pv_all_car_out[bucketlist].values
+        self.pv_number = self.pv_all_number[bucketlist].values
+        self.hov_car_in = self.hov_all_car_in[bucketlist].values
+        self.hov_car_out = self.hov_all_car_out[bucketlist].values
+        self.hov_number = self.hov_all_number[bucketlist].values
+
+        self.mean = np.array([np.mean(self.pv_car_out), np.mean(self.pv_car_in), np.mean(self.pv_number), 
+                            np.mean(self.hov_car_out), np.mean(self.hov_car_in), np.mean(self.hov_number)])
+        self.pv_car_out = self.pv_car_out - self.mean[0]
+        self.pv_car_in = self.pv_car_in - self.mean[1]
+        self.pv_number = self.pv_number - self.mean[2]
+        self.hov_car_out = self.hov_car_out - self.mean[3]
+        self.hov_car_in = self.hov_car_in - self.mean[4]
+        self.hov_number = self.hov_number - self.mean[5]
+
+        self.std = np.array([np.std(self.pv_car_out), np.std(self.pv_car_in), np.std(self.pv_number),
+                            np.std(self.hov_car_out), np.std(self.hov_car_in), np.std(self.hov_number)])
+        self.pv_car_out = self.pv_car_out / self.std[0]
+        self.pv_car_in = self.pv_car_in / self.std[1]
+        self.pv_number = self.pv_number /self.std[2]
+        self.hov_car_out = self.hov_car_out / self.std[3]
+        self.hov_car_in = self.hov_car_in / self.std[4]
+        self.hov_number = self.hov_number /self.std[5]
+
+
+    def reload(self, data_prefix=None, fold=fold, topology=seg_topology):
+
+        self.topology = topology
+
+        if data_prefix is not None:
+            self.pv_car_in_file = os.path.join(fold, data_prefix[0]+'CarIn.csv')
+            self.pv_car_out_file = os.path.join(fold, data_prefix[0]+'CarOut.csv')
+            self.pv_number_file = os.path.join(fold, data_prefix[0]+'Number.csv')
+            self.hov_car_in_file = os.path.join(fold, data_prefix[1]+'CarIn.csv')
+            self.hov_car_out_file = os.path.join(fold, data_prefix[1]+'CarOut.csv')
+            self.hov_number_file = os.path.join(fold, data_prefix[1]+'Number.csv')
+
+            self.pv_all_car_in = pd.read_csv(self.pv_car_in_file, index_col=0).dropna(axis=0)
+            self.pv_all_car_out = pd.read_csv(self.pv_car_out_file, index_col=0).dropna(axis=0)
+            self.pv_all_number = pd.read_csv(self.pv_number_file, index_col=0)
+            self.hov_all_car_in = pd.read_csv(self.hov_car_in_file, index_col=0).dropna(axis=0)
+            self.hov_all_car_out = pd.read_csv(self.hov_car_out_file, index_col=0).dropna(axis=0)
+            self.hov_all_number = pd.read_csv(self.hov_number_file, index_col=0)
+            self.time_number = len(self.pv_all_car_in.index) - (self.temporal_length + 1)* self.delta_T / self.sim_step
+
+        self.filter_data()
+
+    def __getitem__(self, index):
+            
+        time = index
+            
+        timelist = [int(i*self.delta_T/self.sim_step + time) for i in range(self.temporal_length+1)]
+
+        pv_In = self.pv_car_in[timelist][:, :, np.newaxis]
+        pv_out = self.pv_car_out[timelist][:, :, np.newaxis]
+        pv_number = self.pv_number[timelist][:, :, np.newaxis]
+        hov_In = self.hov_car_in[timelist][:, :, np.newaxis]
+        hov_out = self.hov_car_out[timelist][:, :, np.newaxis]
+        hov_number = self.hov_number[timelist][:, :, np.newaxis]
+       
+        data = np.concatenate((pv_out, pv_In, pv_number, hov_out, hov_In, hov_number), axis=2)
+
+        return data
+
+    def __len__(self):
+
+        return self.time_number
+
 if __name__ == "__main__":
     
     args = {}
@@ -267,9 +386,7 @@ if __name__ == "__main__":
     args["delta_T"] = 10
     args["use_speed"] = False
 
-    dataset = traffic_data(mod='seg', topology=[1], args=args)
-    t = ttt.time()
-    a = dataset[0]
-    b = dataset.recover(a)
-    t2 = ttt.time()
+    dataset = two_type_data(args, data_prefix=["basePV", "baseHOV"], topology=1)
+    a = dataset[37889]
+    print(a.shape)
     print(len(dataset))

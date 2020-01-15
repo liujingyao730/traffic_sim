@@ -21,7 +21,9 @@ from model import loss_function
 from seg_model import basic_model
 from seg_model import attn_model
 from seg_model import attn_model_ad
+from seg_model import two_type_attn_model
 from data import traffic_data
+from data import two_type_data
 import conf
 
 
@@ -29,7 +31,7 @@ def main():
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--config", type=str, default="single_train")
+    parser.add_argument("--config", type=str, default="two_type_train")
 
     args = parser.parse_args()
     train(args)
@@ -50,9 +52,7 @@ def train(args):
     def checkpoint_path(x):
         return os.path.join(log_directory, str(x)+'.tar')
 
-    #model = basic_model(args)
-    #model = attn_model_ad(args)
-    model = attn_model(args)
+    model = two_type_attn_model(args)
 
     criterion = loss_function()
     sim_error_criterion = torch.nn.ReLU()
@@ -84,13 +84,13 @@ def train(args):
         i = 0
 
         for prefix in args["prefix"]:
-            #break
-            data_set = traffic_data(args, data_prefix=prefix, mod="seg", topology=[args["seg"][0]])
+            break
+            data_set = two_type_data(args, data_prefix=prefix, topology=args["seg"][0])
             dataloader = torch.utils.data.DataLoader(data_set,
                                                     batch_size=args["batch_size"],
                                                     num_workers=args["num_workers"])
             for seg in args["seg"]:
-                data_set.reload(topology=[seg], mod='seg')
+                data_set.reload(topology=seg)
                 for ii, data in tqdm(enumerate(dataloader)):
 
                     model.zero_grad()
@@ -106,20 +106,13 @@ def train(args):
                     if random.random() < args["sample_rate"]:
                     
                         outputs = model(data)
-                        output_pred = outputs[:, :, :, 0]
-                        number_pred = outputs[:, :, :, 2]
-                        #speed_pred = outputs[:, :, :, 3]
+                        output_pred = outputs[:, :, :, [0, 3]]
+                        number_pred = outputs[:, :, :, [2, 5]]
 
-                        seg_flow_loss = criterion(target[:, :, :, 2].sum(dim=2), number_pred.sum(dim=2))
-                        #speed_loss = criterion(target[:, :, :, 3], speed_pred)
+                        seg_flow_loss = criterion(target[:, :, :, [2, 5]].sum(dim=2), number_pred.sum(dim=2))
 
-                        if args["use_mask"]:
-                            mask = get_mask(target[:, :, :, 0], args["mask"])
-                            acc_loss = criterion(target[:, :, :, 0], output_pred, mask)
-                            flow_loss = criterion(target[:, :, :, 2], number_pred, mask)
-                        else:
-                            acc_loss = criterion(target[:, :, :, 0], output_pred)
-                            flow_loss = criterion(target[:, :, :, 2], number_pred)
+                        acc_loss = criterion(target[:, :, :, [0, 3]], output_pred)
+                        flow_loss = criterion(target[:, :, :, [2, 5]], number_pred)
                     
                         loss = args["flow_loss_weight"] * flow_loss + args["output_loss_weight"] * acc_loss+ args["seg_loss_weight"]*seg_flow_loss #+ args['speed_loss_weight'] * speed_loss
 
@@ -133,19 +126,12 @@ def train(args):
                             sim_error = sim_error_criterion(sim_error)
                         else:
                             sim_error = Variable(data.data.new(1).fill_(0).float())
-                    
-                        if args["use_mask"]:
-                            mask = get_mask(target[:, :, :, 0], args["mask"])
-                            acc_loss = criterion(target[:, :, :, 0], outputs[:, :, :, 0], mask)
-                            sim_error = sim_error * mask[:, 1:, :]
-                            flow_loss = criterion(target[:, :, :, 2], outputs[:, :, :, 2], mask)
-                        else:
-                            acc_loss = criterion(target[:, :, :, 0], outputs[:, :, :, 0])
-                            flow_loss = criterion(target[:, :, :, 2], outputs[:, :, :, 2])
+
+                        acc_loss = criterion(target[:, :, :, [0, 3]], outputs[:, :, :, [0, 3]])
+                        flow_loss = criterion(target[:, :, :, [2, 5]], outputs[:, :, :, [2, 5]])
+                        seg_flow_loss = criterion(target[:, :, :, [2, 5]].sum(dim=2), outputs[:, :, :, [2, 5]].sum(dim=2))
                     
                         sim_error = torch.mean(sim_error)
-                        seg_flow_loss = criterion(target[:, :, :, 2].sum(dim=2), outputs[:, :, :, 2].sum(dim=2))
-                        #speed_loss = criterion(target[:, :, :, 3], outputs[:, :, :, 3])
                         loss = args["output_loss_weight"] * acc_loss + args["flow_loss_weight"]*flow_loss + args["gamma"] * sim_error + args["seg_loss_weight"]*seg_flow_loss #+ args["speed_loss_weight"]*speed_loss
 
                     loss.backward()
@@ -179,13 +165,13 @@ def train(args):
 
         for prefix in args["test_prefix"]:
 
-            data_set = traffic_data(args, data_prefix=prefix, mod="seg", topology=[args["seg"][0]])
+            data_set = two_type_data(args, data_prefix=prefix, topology=[args["seg"][0]])
             dataloader = torch.utils.data.DataLoader(data_set,
                                                     batch_size=args["batch_size"],
                                                     num_workers=args["num_workers"])
             
             for seg in args['seg']:
-                data_set.reload(topology=[seg], mod='seg')
+                data_set.reload(topology=seg)
                 
                 mean = Variable(torch.Tensor(data_set.mean).float())
                 std = Variable(torch.Tensor(data_set.std).float())
@@ -212,10 +198,10 @@ def train(args):
                     outputs = outputs * std
                     outputs = outputs + mean
 
-                    acc_loss = criterion(target[:, :, :, 0], outputs[:, :, :, 0])
-                    flow_loss = criterion(target[:, :, :, 2], outputs[:, :, :, 2])
-                    last_frame_acc_loss = criterion(target[:, -1, :, 0], outputs[:, -1, :, 0])
-                    last_frame_flow_loss = criterion(target[:, -1, :, 2], outputs[:, -1, :, 2])
+                    acc_loss = criterion(target[:, :, :, [0, 3]], outputs[:, :, :, [0, 3]])
+                    flow_loss = criterion(target[:, :, :, [2, 5]], outputs[:, :, :, [2, 5]])
+                    last_frame_acc_loss = criterion(target[:, -1, :, [0, 3]], outputs[:, -1, :, [0, 3]])
+                    last_frame_flow_loss = criterion(target[:, -1, :, [2, 5]], outputs[:, -1, :, [2, 5]])
 
                     acc_meter.add(acc_loss.item())
                     flow_loss_meter.add(flow_loss.item())

@@ -322,6 +322,8 @@ def merge_data(prefix_list, target_prefix, fold=conf.midDataPath):
     car_out = pd.read_csv(resource_car_out_file, index_col=0)
     number = pd.read_csv(resource_number_file, index_col=0)
 
+    columns = list(car_in.columns)
+
     for i in range(1, len(prefix_list)):
         temp_car_in_file = os.path.join(fold, prefix_list[i]+'CarIn.csv')
         temp_car_out_file = os.path.join(fold, prefix_list[i]+'CarOut.csv')
@@ -331,9 +333,9 @@ def merge_data(prefix_list, target_prefix, fold=conf.midDataPath):
         temp_car_out = pd.read_csv(temp_car_out_file, index_col=0)
         temp_number = pd.read_csv(temp_number_file, index_col=0)
 
-        car_in = car_in + temp_car_in
-        car_out = car_out + temp_car_out
-        number = number + temp_number
+        car_in[columns] += temp_car_in[columns]
+        car_out[columns] += temp_car_out[columns]
+        number[columns] +=  temp_number[columns]
 
     car_in.to_csv(car_in_file)
     car_out.to_csv(car_out_file)
@@ -354,9 +356,16 @@ if __name__ == "__main__":
     special_edge_real = list(range(13, 25))
     lane_edge_real, length_real = generate_lane_edge(edges, lane_number)
     file = os.path.join(conf.fcdOutputPath, 'two_type.xml')
-    t = ttt.time()
-    two_type_data_record(file, lane_edge=lane_edge_real, length=length_real, 
-                        prefix="two_type", special_edge=special_edge_real)
-    t2 = ttt.time()
-    print(t2 - t)
+    #t = ttt.time()
+    #two_type_data_record(file, lane_edge=lane_edge_real, length=length_real, 
+    #                    prefix="two_type", special_edge=special_edge_real)
+    
+    #t2 = ttt.time()
+    #print(t2 - t)
+    #reset_data("basePV")
+    #reset_data("baseHOV")
+    #reset_data("changePV")
+    #reset_data("changeHOV")
+    #merge_data(["basePV", "baseHOV"], "two_type_base")
+    merge_data(["changePV", "changeHOV"], "two_type_change")
     
