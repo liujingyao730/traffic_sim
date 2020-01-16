@@ -84,7 +84,7 @@ def train(args):
         i = 0
 
         for prefix in args["prefix"]:
-            break
+            #break
             data_set = two_type_data(args, data_prefix=prefix, topology=args["seg"][0])
             dataloader = torch.utils.data.DataLoader(data_set,
                                                     batch_size=args["batch_size"],
