@@ -1,0 +1,25 @@
+# test
+batch_size: 100
+use_epoch: 49
+model_prefix: two_type_base
+t_predict: 8
+temporal_length: 370
+time: 0
+use_cuda: true
+n_head: 4
+
+# eva
+hidden_size: 64
+output_hidden_size: 16
+input_size: 6
+lane_gate_size: 4
+output_size: 2
+eva_prefix: base
+spatial_length: 40
+current_time: 0
+n_units: 7
+
+#data
+sim_step: 0.1
+delta_T: 10
+seg: 4

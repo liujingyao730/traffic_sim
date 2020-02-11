@@ -343,6 +343,60 @@ def merge_data(prefix_list, target_prefix, fold=conf.midDataPath):
 
     print(prefix_list, " have merged into ", target_prefix)
 
+def merge_seg(prefix, length=3, fold=conf.midDataPath):
+
+    car_in_file = os.path.join(fold, prefix+'CarIn.csv')
+    car_out_file = os.path.join(fold, prefix+'CarOut.csv')
+    number_file = os.path.join(fold, prefix+'Number.csv')
+
+    car_in = pd.read_csv(car_in_file, index_col=0).dropna(axis=0)
+    car_out = pd.read_csv(car_out_file, index_col=0).dropna(axis=0)
+    number = pd.read_csv(number_file, index_col=0).dropna(axis=0)
+
+    columns = sorted(list(car_in.columns))
+
+    car_in = car_in[columns]
+    car_out = car_out[columns]
+    number = number[columns]
+
+    merge_car_in = pd.DataFrame(columns=columns)
+    merge_car_out = pd.DataFrame(columns=columns)
+    merge_number = pd.DataFrame(columns=columns)
+
+    if len(columns) % 3 != 0:
+        raise RuntimeError("length must be a multiple of ", 3)
+    
+    clock = 0
+
+    while clock < len(columns):
+
+        column = columns[clock]
+
+        i = int(int(column) % 100)
+        j = int(int(column) / 100)
+        merge_column = str(j * 100 + int(i / 3) + 1)
+        mid_column = str(j * 100 + int(i / 3) + 2)
+        end_column = str(j * 100 + int(i / 3) + 3)
+
+        merge_car_in[merge_column] = car_in[column]
+        merge_car_out[merge_column] = car_out[mid_column]
+        merge_number[merge_column] = number[column] + number[mid_column] + number[end_column]
+
+        clock += 3
+
+    merge_car_in = merge_car_in.dropna(axis=1)
+    merge_car_out = merge_car_out.dropna(axis=1)
+    merge_number = merge_number.dropna(axis=1)
+
+    merge_car_in.to_csv(car_in_file)
+    merge_car_out.to_csv(car_out_file)
+    merge_number.to_csv(number_file)
+
+    print(prefix, " have been merged to 3")
+
+    return 
+
+
 if __name__ == "__main__":
 
     edges = ['1', '2', '3', '4', '5', '6', 
@@ -356,6 +410,20 @@ if __name__ == "__main__":
     special_edge_real = list(range(13, 25))
     lane_edge_real, length_real = generate_lane_edge(edges, lane_number)
     file = os.path.join(conf.fcdOutputPath, 'two_type.xml')
+    merge_seg(prefix="basePV")
+    merge_seg(prefix="baseHOV")
+    merge_seg(prefix="changePV")
+    merge_seg(prefix="changeHOV")
+    merge_seg(prefix="testPV")
+    merge_seg(prefix="testHOV")
+    #reset_data("testPV", deltaT=5)
+    #reset_data("testHov", deltaT=5)
+    #reset_data("basePV", deltaT=5)
+    #reset_data("baseHov", deltaT=5)
+    #reset_data("changePV", deltaT=5)
+    #reset_data("changeHov", deltaT=5)
+    #reset_data("testPV")
+    #reset_data("testHOV")
     #t = ttt.time()
     #two_type_data_record(file, lane_edge=lane_edge_real, length=length_real, 
     #                    prefix="two_type", special_edge=special_edge_real)
@@ -367,5 +435,5 @@ if __name__ == "__main__":
     #reset_data("changePV")
     #reset_data("changeHOV")
     #merge_data(["basePV", "baseHOV"], "two_type_base")
-    merge_data(["changePV", "changeHOV"], "two_type_change")
-    
+    #merge_data(["changePV", "changeHOV"], "two_type_change")
+    #merge_data(["testPV", "testHOV"], "two_type_test")

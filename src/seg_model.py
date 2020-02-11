@@ -379,17 +379,17 @@ class two_type_attn_model(nn.Module):
         h_before1 = Variable(h.data.new(batch_size, spatial, 1, hidden).fill_(0).float())
         h_after2 = Variable(h.data.new(batch_size, spatial, 1, hidden).fill_(0).float())
         h_before2 = Variable(h.data.new(batch_size, spatial, 1, hidden).fill_(0).float())
-        h_after3 = Variable(h.data.new(batch_size, spatial, 1, hidden).fill_(0).float())
-        h_before3 = Variable(h.data.new(batch_size, spatial, 1, hidden).fill_(0).float())
+        #h_after3 = Variable(h.data.new(batch_size, spatial, 1, hidden).fill_(0).float())
+        #h_before3 = Variable(h.data.new(batch_size, spatial, 1, hidden).fill_(0).float())
 
         h_after1[:, :-1, 0, :] += h[:, 1:, :]
         h_before1[:, 1:, 0, :] += h[:, :-1, :]
         h_after2[:, :-2, 0, :] += h[:, 2:, :]
         h_before2[:, 2:, 0, :] += h[:, :-2, :]
-        h_after3[:, :-3, 0, :] += h[:, 3:, :]
-        h_before3[:, 3:, 0, :] += h[:, :-3, :]
+        #h_after3[:, :-3, 0, :] += h[:, 3:, :]
+        #h_before3[:, 3:, 0, :] += h[:, :-3, :]
 
-        h_spatial = torch.cat((h_after3, h_after2, h_after1, h_before1, h_before2, h_before3), dim=2)
+        h_spatial = torch.cat((h_after2, h_after1, h_before1, h_before2), dim=2)
 
         return h_spatial
 
