@@ -41,6 +41,11 @@ def caclutation_error(args, data_set):
     target = test_data[:, :, [2, 5]].sum(axis=2)
     outputs = model.eva(test_input_flow)
 
+    print("seg")
+    print("MAE ", metrics.mean_absolute_error(target, outputs))
+    print("R2 ", metrics.r2_score(target, outputs))
+    print("EVR ", metrics.explained_variance_score(target, outputs))
+
     predict_flow = outputs.sum(axis=1)
     real_flow = target.sum(axis=1)
     x = range(len(real_flow))
@@ -69,6 +74,7 @@ def caclutation_error(args, data_set):
     plt.title("error")
     plt.subplots_adjust(left=0.05, right=0.95, top=0.9, bottom=0.1)
     plt.show()
+    print("seg")
     print("MAE ", metrics.mean_absolute_error(real_flow, predict_flow))
     print("R2 ", metrics.r2_score(real_flow, predict_flow))
     print("EVR ", metrics.explained_variance_score(real_flow, predict_flow))
@@ -88,7 +94,7 @@ def parameter_calibration(prefix, seg, epoch, data_args):
     args["lane_number"] = 6
     args["vlength"] = [4.5, 13]
     args["vspeed"] = [13.8, 10]
-    args["cell_number"] = 30
+    args["cell_number"] = 10
 
     args["phi"] = [1, 0.5]
     args["sigma"] = 0.8
@@ -188,8 +194,8 @@ def parameter_calibration(prefix, seg, epoch, data_args):
     
 
 if __name__ == "__main__":
-    prefix = "change"
-    seg = 3
+    prefix = "_US101_2"
+    seg = 0
     args = {}
     args["number_vclass"] = 2
     args["cell_length"] = 50
@@ -197,7 +203,7 @@ if __name__ == "__main__":
     args["lane_number"] = 6
     args["vlength"] = [4.5, 13]
     args["vspeed"] = [13.8, 10]
-    args["cell_number"] = 30
+    args["cell_number"] = 10
 
     args["phi"] = [1, 1]
     args["sigma"] = 0.7
@@ -205,8 +211,8 @@ if __name__ == "__main__":
     args["congest_factor"] = [1, 0.8]
     args["q"] = 18
 
-    data_args = {"sim_step":0.1, "delta_T":5, "temporal_length":750, "t_predict":4}
+    data_args = {"sim_step":0.1, "delta_T":5, "temporal_length":100, "t_predict":4}
 
     data_set = two_type_data(data_args, prefix, topology=seg)
     print(caclutation_error(args, data_set))
-    #parameter_calibration(prefix="change", seg=1, epoch=1, data_args=data_args)
+    #parameter_calibration(prefix="I-80_1", seg=0, epoch=1, data_args=data_args)

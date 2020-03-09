@@ -116,7 +116,50 @@ class att_cell(nn.Module):
         return h, c 
 
 
+class non_att_cell(nn.Module):
 
+    def __init__(self, args):
+
+        super(non_att_cell, self).__init__()
+
+        self.input_size = args["input_size"]
+        self.hidden_size = args["hidden_size"]
+        self.spatial_size = 6
+
+        self.cell = nn.LSTMCell(self.input_size, self.hidden_size)
+
+        self.input_layer = nn.Linear(self.hidden_size*self.spatial_size, self.hidden_size)
+        self.spatial_forget_gate = nn.Linear(self.hidden_size, self.hidden_size)
+        self.spatial_input_gate = nn.Linear(self.hidden_size, self.hidden_size)
+
+        self.sigma = nn.Sigmoid()
+
+    def forward(self, inputs, h, c, h_spatial):
+
+        [batch_size, spatial, _] = inputs.shape
+        spatial_n = h_spatial.shape[2]
+
+        inputs = inputs.view(batch_size*spatial, self.input_size)
+        h = h.view(batch_size*spatial, self.hidden_size)
+        c = c.view(batch_size*spatial, self.hidden_size)
+        h_spatial = h_spatial.view(batch_size*spatial, spatial_n*self.hidden_size)
+
+        h_spatial = self.input_layer(h_spatial)
+        h_spatial = self.sigma(h_spatial)
+        spatial_forget = self.spatial_forget_gate(h_spatial)
+        spatial_f = self.sigma(spatial_forget)
+        spatial_input = self.spatial_input_gate(h_spatial)
+        spatial_i = self.sigma(spatial_input)
+
+        h = h * spatial_i
+        c = c * spatial_f
+
+        h, c = self.cell(inputs, (h, c))
+
+        h = h.view(batch_size, spatial, self.hidden_size)
+        c = c.view(batch_size, spatial, self.hidden_size)
+
+        return h, c 
 
 
 if __name__ == "__main__":

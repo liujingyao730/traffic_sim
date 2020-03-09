@@ -6,8 +6,8 @@ from torch.autograd import Variable
 import conf
 from model import FCNet
 from net_model import seg_model
-from net_model import att_cell
-
+#from net_model import att_cell as cell_model
+from net_model import non_att_cell as cell_model
 
 class basic_model(nn.Module):
 
@@ -135,7 +135,7 @@ class attn_model(nn.Module):
         self.t_predict = args["t_predict"]
         self.output_size = args["output_size"]
 
-        self.cell = att_cell(args)
+        self.cell = cell_model(args)
 
         self.outputLayer = nn.Linear(self.hidden_size, self.output_size)
 
@@ -243,8 +243,8 @@ class attn_model_ad(nn.Module):
         self.t_predict = args["t_predict"]
         self.output_size = args["output_size"]
 
-        self.encoder = att_cell({"input_size":self.input_size, "hidden_size":self.encoder_hidden, "n_head":self.n_head})
-        self.decoder = att_cell({"input_size":self.decoder_input, "hidden_size":self.decoder_hidden, "n_head":self.n_head})
+        self.encoder = cell_model({"input_size":self.input_size, "hidden_size":self.encoder_hidden, "n_head":self.n_head})
+        self.decoder = cell_model({"input_size":self.decoder_input, "hidden_size":self.decoder_hidden, "n_head":self.n_head})
 
         self.outputLayer = nn.Linear(self.decoder_hidden, self.output_size)
         self.embedding_layer = nn.Linear(self.encoder_hidden, self.decoder_input)
@@ -353,7 +353,7 @@ class attn_model_ad(nn.Module):
         return outputs
 
 
-class two_type_attn_model(nn.Module):
+class two_type_attn_model_1(nn.Module):
 
     def __init__(self, args):
 
@@ -365,7 +365,7 @@ class two_type_attn_model(nn.Module):
         self.t_predict = args["t_predict"]
         self.output_size = args["output_size"]
 
-        self.cell = att_cell(args)
+        self.cell = cell_model(args)
 
         self.outputLayer = nn.Linear(self.hidden_size, self.output_size)
 
@@ -379,8 +379,8 @@ class two_type_attn_model(nn.Module):
         h_before1 = Variable(h.data.new(batch_size, spatial, 1, hidden).fill_(0).float())
         h_after2 = Variable(h.data.new(batch_size, spatial, 1, hidden).fill_(0).float())
         h_before2 = Variable(h.data.new(batch_size, spatial, 1, hidden).fill_(0).float())
-        #h_after3 = Variable(h.data.new(batch_size, spatial, 1, hidden).fill_(0).float())
-        #h_before3 = Variable(h.data.new(batch_size, spatial, 1, hidden).fill_(0).float())
+        h_after3 = Variable(h.data.new(batch_size, spatial, 1, hidden).fill_(0).float())
+        h_before3 = Variable(h.data.new(batch_size, spatial, 1, hidden).fill_(0).float())
 
         h_after1[:, :-1, 0, :] += h[:, 1:, :]
         h_before1[:, 1:, 0, :] += h[:, :-1, :]
@@ -467,7 +467,7 @@ class two_type_attn_model(nn.Module):
 
         return outputs
 
-class two_type_attn_model_1(nn.Module):
+class two_type_attn_model(nn.Module):
 
     def __init__(self, args):
 
@@ -486,7 +486,7 @@ class two_type_attn_model_1(nn.Module):
         nn.init.xavier_uniform_(self.after_para, gain=self.gain)
         nn.init.xavier_uniform_(self.before_para, gain=self.gain)
 
-        self.cell = att_cell(args)
+        self.cell = cell_model(args)
 
         self.outputLayer = nn.Linear(self.hidden_size, self.output_size)
 

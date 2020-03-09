@@ -34,15 +34,11 @@ def bucketid(pos, length):
     
     bucketNumber = int(length / 50)
 
-    if pos >= bucketNumber * 50 or pos < 0:
-        print("there must be something wrong !!!!!!! pos ", pos)
-        return False
-
     for i in range(bucketNumber):
         if pos < (i+1)*50:
             return i+1
 
-    return bucketNumber + 1
+    return bucketNumber +1
 
 def data_record(file, lane_edge=lane_edge, length=length, prefix='default', 
                 special_edge=special_edge, fold=conf.midDataPath):
@@ -87,6 +83,8 @@ def data_record(file, lane_edge=lane_edge, length=length, prefix='default',
         elif elem.tag == "vehicle":
             vehicle_id = elem.attrib["id"]
             lane = elem.attrib['lane']
+            if lane not in lane_edge.keys():
+                continue
             edge = lane_edge[lane]
 
             if edge not in special_edge.keys():
@@ -187,6 +185,8 @@ def two_type_data_record(file, lane_edge=lane_edge, length=length, prefix='defau
         elif elem.tag == "vehicle":
             vehicle_id = elem.attrib["id"]
             lane = elem.attrib['lane']
+            if lane not in lane_edge.keys():
+                continue
             edge = lane_edge[lane]
             vehicle_speed = float(elem.attrib['speed'])
             vehicle_type = elem.attrib['type']
@@ -396,44 +396,49 @@ def merge_seg(prefix, length=3, fold=conf.midDataPath):
 
     return 
 
+def change_columns(prefix, sources, target):
+
+    assert len(sources) == len(target)
+
+    car_in_file = os.path.join(conf.midDataPath, prefix+"CarIn.csv")
+    car_out_file = os.path.join(conf.midDataPath, prefix+"CarOut.csv")
+    number_file = os.path.join(conf.midDataPath, prefix+'Number.csv')
+    _car_in_file = os.path.join(conf.midDataPath, "_"+prefix+"CarIn.csv")
+    _car_out_file = os.path.join(conf.midDataPath, "_"+prefix+"CarOut.csv")
+    _number_file = os.path.join(conf.midDataPath, "_"+prefix+'Number.csv')
+
+    source_in = pd.read_csv(car_in_file, index_col=0)
+    source_out = pd.read_csv(car_out_file, index_col=0)
+    source_number = pd.read_csv(number_file, index_col=0)
+
+    target_in = pd.DataFrame(columns=target)
+    target_out = pd.DataFrame(columns=target)
+    target_number = pd.DataFrame(columns=target)
+
+    for i in range(len(sources)):
+        target_in[target[i]] = source_in[sources[i]]
+        target_out[target[i]] = source_out[sources[i]]
+        target_number[target[i]] = source_number[sources[i]]
+
+    target_in.to_csv(_car_in_file)
+    target_out.to_csv(_car_out_file)
+    target_number.to_csv(_number_file)
+
+    print(prefix, " prefix has been changed ")
+
+    return
+
 
 if __name__ == "__main__":
 
-    edges = ['1', '2', '3', '4', '5', '6', 
-            '1_t', '2_t', '3_t', '4_t', '5_t', '6_t',
-            ':1_j_7', ':1_j_21', ':2_j_7', ':2_j_21', ':3_j_7', ':3_j_21',
-            ':4_j_7', ':4_j_21', ':5_j_7', ':5_j_21', ':6_j_0', ':6_j_6']
-    lane_number = [6, 6, 6, 6, 6, 6, 6, 6,
-                6, 6, 6, 6, 6, 6, 6, 6,
-                6, 6, 6, 6, 6, 6, 6, 6]
+    lane_edge_ = {'E10_0':1, 'E10_1':1, 'E10_2':1, 'E10_3':1, 'E10_4':1,
+                'E12_0':2, 'E12_1':2, 'E12_3':2, 'E12_3':2, 'E12_4':2,
+                'E14_0':3, 'E14_1':3, 'E14_3':3, 'E14_3':3, 'E14_4':3,
+                'E15_0':4, 'E15_1':4, 'E15_2':4, 'E15_3':4, 'E15_4':4,
+                'E16_0':5, 'E16_1':5, 'E16_2':5, 'E16_3':5, 'E16_3':4}
+    length_ = {1:1010.58, 2:401.29, 3:678.34, 4:905.29, 5:505.29}
+    special_edge_ = {}
+    pv_ = ["CarA"]
+    file = "E:\\gitplace\\real_data\\Mobility_Routing\\fcd.xml"
 
-    special_edge_real = list(range(13, 25))
-    lane_edge_real, length_real = generate_lane_edge(edges, lane_number)
-    file = os.path.join(conf.fcdOutputPath, 'two_type.xml')
-    merge_seg(prefix="basePV")
-    merge_seg(prefix="baseHOV")
-    merge_seg(prefix="changePV")
-    merge_seg(prefix="changeHOV")
-    merge_seg(prefix="testPV")
-    merge_seg(prefix="testHOV")
-    #reset_data("testPV", deltaT=5)
-    #reset_data("testHov", deltaT=5)
-    #reset_data("basePV", deltaT=5)
-    #reset_data("baseHov", deltaT=5)
-    #reset_data("changePV", deltaT=5)
-    #reset_data("changeHov", deltaT=5)
-    #reset_data("testPV")
-    #reset_data("testHOV")
-    #t = ttt.time()
-    #two_type_data_record(file, lane_edge=lane_edge_real, length=length_real, 
-    #                    prefix="two_type", special_edge=special_edge_real)
-    
-    #t2 = ttt.time()
-    #print(t2 - t)
-    #reset_data("basePV")
-    #reset_data("baseHOV")
-    #reset_data("changePV")
-    #reset_data("changeHOV")
-    #merge_data(["basePV", "baseHOV"], "two_type_base")
-    #merge_data(["changePV", "changeHOV"], "two_type_change")
-    #merge_data(["testPV", "testHOV"], "two_type_test")
+    data_record(file, lane_edge_, length_, "real_sim", special_edge_)
