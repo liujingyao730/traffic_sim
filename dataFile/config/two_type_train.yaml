@@ -6,10 +6,11 @@ output_size: 2
 t_predict: 8
 temporal_length: 16
 n_head: 4
+gain: 1
 
 # train
-batch_size: 500
-num_epochs: 50
+batch_size: 100
+num_epochs: 5
 show_every: 200
 learning_rate: 0.003
 decay_rate: 0.95
@@ -17,30 +18,28 @@ lambda_param: 0.0005
 use_cuda: true
 output_loss_weight: 1
 flow_loss_weight: 1
-seg_loss_weight: 1
+seg_loss_weight: 0
 grad_clip: 10
 sample_rate: 1
 sample_decay: 0.1
-use_simerror: true
+use_simerror: false
 gamma: 0.5
 num_workers: 1
 
 # data
 seg:
-  - 1
-  - 2
-  - 3
-  - 4
-  - 5
-  - 6
+  - 0
 sim_step: 0.1
-delta_T: 10
+delta_T: 5
 
 model_prefix: multi_dimension
 
 prefix:
-  - base
-  - change
+  - _I-80_1
+  - _I-80_2
+  - _US101_1
+  - _US101_2
 
 test_prefix:
-  - change
+  - _I-80_3
+  - _US101_3
