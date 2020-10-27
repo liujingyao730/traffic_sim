@@ -8,36 +8,39 @@ import torch.nn.init as init
 import conf
 from model import FCNet
 
+
 class seg_model(nn.Module):
     '''使用到的路段模型
     '''
 
     def __init__(self, args):
-        
+
         super().__init__()
 
         self.input_size = args["input_size"]
         self.hidden_size = args["hidden_size"]
 
         self.cell = torch.nn.LSTMCell(self.input_size, self.hidden_size)
-        
+
         self.sigma = torch.nn.Sigmoid()
 
-        self.spatial_forget = torch.nn.Linear(2*self.hidden_size, self.hidden_size)
-        self.spatial_input = torch.nn.Linear(2*self.hidden_size, self.hidden_size)
+        self.spatial_forget = torch.nn.Linear(2 * self.hidden_size,
+                                              self.hidden_size)
+        self.spatial_input = torch.nn.Linear(2 * self.hidden_size,
+                                             self.hidden_size)
 
     def forward(self, inputs, h_s_t, c_s_t, h_after_t, h_before_t):
-        
+
         [batch_size, spatial, input_size] = inputs.shape
         [batch_size, spatial, hidden_size] = h_s_t.shape
 
         assert input_size == self.input_size
 
-        inputs = inputs.view(batch_size*spatial, input_size)
-        h_s_t = h_s_t.view(batch_size*spatial, hidden_size)
-        c_s_t = c_s_t.view(batch_size*spatial, hidden_size)
-        h_after_t = h_after_t.view(batch_size*spatial, hidden_size)
-        h_before_t = h_before_t.view(batch_size*spatial, hidden_size)
+        inputs = inputs.view(batch_size * spatial, input_size)
+        h_s_t = h_s_t.view(batch_size * spatial, hidden_size)
+        c_s_t = c_s_t.view(batch_size * spatial, hidden_size)
+        h_after_t = h_after_t.view(batch_size * spatial, hidden_size)
+        h_before_t = h_before_t.view(batch_size * spatial, hidden_size)
 
         spatial_hidden_input = torch.cat((h_after_t, h_before_t), dim=1)
 
@@ -53,13 +56,11 @@ class seg_model(nn.Module):
 
         h_s_tp = h_s_tp.view(batch_size, spatial, hidden_size)
         c_s_tp = c_s_tp.view(batch_size, spatial, hidden_size)
-        
+
         return h_s_tp, c_s_tp
 
 
-
 class att_cell(nn.Module):
-
     def __init__(self, args):
 
         super(att_cell, self).__init__()
@@ -70,10 +71,12 @@ class att_cell(nn.Module):
 
         self.cell = nn.LSTMCell(self.input_size, self.hidden_size)
 
-        self.a_src = Parameter(torch.Tensor(2*self.hidden_size, self.n_head))
+        self.a_src = Parameter(torch.Tensor(2 * self.hidden_size, self.n_head))
 
-        self.spatial_forget_gate = nn.Linear(self.n_head*self.hidden_size, self.hidden_size)
-        self.spatial_input_gate = nn.Linear(self.n_head*self.hidden_size, self.hidden_size)
+        self.spatial_forget_gate = nn.Linear(self.n_head * self.hidden_size,
+                                             self.hidden_size)
+        self.spatial_input_gate = nn.Linear(self.n_head * self.hidden_size,
+                                            self.hidden_size)
 
         self.leaky_relu = nn.LeakyReLU(negative_slope=0.2)
         self.softmax = nn.Softmax(dim=1)
@@ -86,20 +89,22 @@ class att_cell(nn.Module):
         [batch_size, spatial, _] = inputs.shape
         spatial_n = h_spatial.shape[2]
 
-        inputs = inputs.view(batch_size*spatial, self.input_size)
-        h = h.view(batch_size*spatial, self.hidden_size)
-        c = c.view(batch_size*spatial, self.hidden_size)
-        h_spatial = h_spatial.view(batch_size*spatial, spatial_n, self.hidden_size)
+        inputs = inputs.view(batch_size * spatial, self.input_size)
+        h = h.view(batch_size * spatial, self.hidden_size)
+        c = c.view(batch_size * spatial, self.hidden_size)
+        h_spatial = h_spatial.view(batch_size * spatial, spatial_n,
+                                   self.hidden_size)
 
         h_prime = h.unsqueeze(1).expand(-1, spatial_n, -1)
         h_prime = torch.cat((h_prime, h_spatial), dim=2)
-        
+
         attn = torch.matmul(h_prime, self.a_src)
         attn = self.leaky_relu(attn)
         attn = self.softmax(attn)
         attn = attn.permute(0, 2, 1)
 
-        h_spatial = torch.matmul(attn, h_spatial).view(batch_size*spatial, self.n_head*self.hidden_size)
+        h_spatial = torch.matmul(attn, h_spatial).view(
+            batch_size * spatial, self.n_head * self.hidden_size)
         spatial_forget = self.spatial_forget_gate(h_spatial)
         spatial_f = self.sigma(spatial_forget)
         spatial_input = self.spatial_input_gate(h_spatial)
@@ -113,11 +118,10 @@ class att_cell(nn.Module):
         h = h.view(batch_size, spatial, self.hidden_size)
         c = c.view(batch_size, spatial, self.hidden_size)
 
-        return h, c 
+        return h, c
 
 
 class non_att_cell(nn.Module):
-
     def __init__(self, args):
 
         super(non_att_cell, self).__init__()
@@ -128,8 +132,10 @@ class non_att_cell(nn.Module):
 
         self.cell = nn.LSTMCell(self.input_size, self.hidden_size)
 
-        self.input_layer = nn.Linear(self.hidden_size*self.spatial_size, self.hidden_size)
-        self.spatial_forget_gate = nn.Linear(self.hidden_size, self.hidden_size)
+        self.input_layer = nn.Linear(self.hidden_size * self.spatial_size,
+                                     self.hidden_size)
+        self.spatial_forget_gate = nn.Linear(self.hidden_size,
+                                             self.hidden_size)
         self.spatial_input_gate = nn.Linear(self.hidden_size, self.hidden_size)
 
         self.sigma = nn.Sigmoid()
@@ -139,10 +145,11 @@ class non_att_cell(nn.Module):
         [batch_size, spatial, _] = inputs.shape
         spatial_n = h_spatial.shape[2]
 
-        inputs = inputs.view(batch_size*spatial, self.input_size)
-        h = h.view(batch_size*spatial, self.hidden_size)
-        c = c.view(batch_size*spatial, self.hidden_size)
-        h_spatial = h_spatial.view(batch_size*spatial, spatial_n*self.hidden_size)
+        inputs = inputs.view(batch_size * spatial, self.input_size)
+        h = h.view(batch_size * spatial, self.hidden_size)
+        c = c.view(batch_size * spatial, self.hidden_size)
+        h_spatial = h_spatial.view(batch_size * spatial,
+                                   spatial_n * self.hidden_size)
 
         h_spatial = self.input_layer(h_spatial)
         h_spatial = self.sigma(h_spatial)
@@ -159,13 +166,13 @@ class non_att_cell(nn.Module):
         h = h.view(batch_size, spatial, self.hidden_size)
         c = c.view(batch_size, spatial, self.hidden_size)
 
-        return h, c 
+        return h, c
 
 
 if __name__ == "__main__":
-    
+
     args = {}
-    
+
     args["n_unit"] = 7
     args["input_size"] = 3
     args["hidden_size"] = 64
@@ -184,4 +191,3 @@ if __name__ == "__main__":
 
     loss = torch.mean(h)
     loss.backward()
-    

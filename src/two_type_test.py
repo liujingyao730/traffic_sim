@@ -29,6 +29,7 @@ from data import traffic_data
 from data import two_type_data
 import data as d
 import conf
+import CTM_utils as ctm
 
 def main():
     parser = argparse.ArgumentParser()
@@ -58,7 +59,7 @@ def test(args):
 
     data_set = two_type_data(args, data_prefix=args["eva_prefix"], topology=args["seg"])
 
-    co_data = torch.Tensor(data_set[start_time]).float().unsqueeze(0)
+    co_data = torch.Tensor(data_set[start_time]).float().unsqueeze(0)[:, :, :10, :]
 
     if args["use_cuda"]:
         co_data = co_data.cuda()
@@ -85,6 +86,25 @@ def test(args):
     output = outputs[:, :, :, [2, 5]].squeeze(0).sum(axis=2)
     target = target[:, :, :, [2, 5]].squeeze(0).sum(axis=2)
 
+    prefix = "change"
+    seg = 1
+    cargs = {}
+    cargs["number_vclass"] = 2
+    cargs["cell_length"] = 50
+    cargs["time_slot"] = 5
+    cargs["lane_number"] = 6
+    cargs["vlength"] = [4.5, 13]
+    cargs["vspeed"] = [13.8, 10]
+    cargs["cell_number"] = 30
+
+    cargs["phi"] = [1, 1]
+    cargs["sigma"] = 0.7
+    cargs["over_take_factor"] = [1, 0.8]
+    cargs["congest_factor"] = [1, 0.8]
+    cargs["q"] = 18
+
+    ctm_output, _ = ctm.caclutation_error(cargs, data_set)
+
     target_flow = target.sum(axis=1)
     output_flow = output.sum(axis=1)
 
@@ -109,27 +129,32 @@ def test(args):
     x = range(len(real_flow))
 
     plt.figure(13, figsize=(6, 4))
-    plt.plot(x, real_flow, 's-', color='r', label='real')
-    plt.plot(x, predict_flow, 'o-', color='g', label='predict')
+    plt.plot(x, real_flow, '-', color='k', label='ground truth')
+    plt.plot(x, predict_flow, '-', color='r', label='R-CTM')
+    plt.plot(x, ctm_output[:755, ].sum(axis=1), '-', color='g', label="FM-CTM")
     plt.xlabel('time')
     plt.ylabel('num_vehicle')
     plt.legend(loc='best')
-    plt.title('flow with time')
+    plt.title('5% HV rate')
     plt.show()
 
-    fig = plt.figure(figsize=(10, 6))
+    np.save("with_all.npy", output)
+    #np.save("targe.npy", target)
+
+    fig = plt.figure(figsize=(15, 10))
     heat = fig.add_subplot(311)
-    im = heat.imshow(target.T, cmap=plt.cm.hot_r)
+    im = heat.imshow(target[190:300, 2:-2].T, cmap=plt.cm.hot_r)
     plt.colorbar(im)
-    plt.title("ground truth")
+    plt.title("ground truth", fontsize=20)
     heat = fig.add_subplot(312)
-    im = heat.imshow(output.T, cmap=plt.cm.hot_r, vmin=0)
+    im = heat.imshow(output[190:300, 2:-2].T, cmap=plt.cm.hot_r, vmin=0, vmax=20)
     plt.colorbar(im)
-    plt.title("simulation result")
+    plt.title("R-CTM", fontsize=20)
     heat = fig.add_subplot(313)
     im = heat.imshow(output.T-target.T, cmap=plt.cm.hot_r)
+    im = heat.imshow(ctm_output[190:300, 2:-2].T, cmap=plt.cm.hot_r, vmin=0, vmax=20)
     plt.colorbar(im)
-    plt.title("error")
+    plt.title("FM-CTM", fontsize=20)
     plt.subplots_adjust(left=0.05, right=0.95, top=0.9, bottom=0.1)
     plt.show()
 

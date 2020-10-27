@@ -58,7 +58,7 @@ class f_mctm_cell(object):
         send_cap = self.a + ka * self.b
         s = np.sum(send_cap)
 
-        if s > self.q and s < np.sum(self.c * self.congest_factor):
+        if s > self.q and s < self.c * self.congest_factor:
 
             v_bar = np.sum(self.vspeed * send_cap) / s
             v = np.where(self.vspeed < v_bar, self.vspeed, v_bar)
