@@ -47,6 +47,8 @@ class f_mctm_cell(object):
             output_flow = self.a
         else:
             over_take_flow = self.over_take_factor * self.a
+            if np.sum(over_take_flow * self.vlength) == 0:
+                a = 1
             factor = r / np.sum(over_take_flow * self.vlength)
             output_flow = over_take_flow * factor
 
@@ -105,6 +107,7 @@ class seg_f_ctm(object):
     def __init__(self, args):
 
         self.length = args["cell_number"]
+        self.number_vclass = args["number_vclass"]
         self.cell_list = []
         self.revice_cap = []
         for i in range(args["cell_number"]):
@@ -122,7 +125,7 @@ class seg_f_ctm(object):
 
     def eva(self, input_flows):
 
-        outputs = np.zeros([len(input_flows), self.length])
+        outputs = np.zeros([len(input_flows), self.length, self.number_vclass])
 
         for i in range(len(input_flows)):
             self.single_iter(input_flows[i])
@@ -133,11 +136,11 @@ class seg_f_ctm(object):
 
     def show(self):
 
-        result = np.array([])
+        result = []
         for i in range(self.length):
-            result = np.append(result, np.sum(self.cell_list[i].number))
+            result.append(self.cell_list[i].number)
 
-        return result 
+        return np.array(result) 
 
 if __name__ == "__main__":
     args = {}

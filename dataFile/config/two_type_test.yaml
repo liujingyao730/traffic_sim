@@ -3,7 +3,7 @@ batch_size: 100
 use_epoch: 49
 model_prefix: 50m_5s
 t_predict: 0
-temporal_length: 100
+temporal_length: 755
 time: 0
 use_cuda: true
 n_head: 4
@@ -15,7 +15,7 @@ output_hidden_size: 16
 input_size: 6
 lane_gate_size: 4
 output_size: 2
-eva_prefix: _US101_2
+eva_prefix: change
 spatial_length: 40
 current_time: 0
 n_units: 7
@@ -23,4 +23,4 @@ n_units: 7
 #data
 sim_step: 0.1
 delta_T: 5
-seg: 0
+seg: 3

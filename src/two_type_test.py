@@ -7,7 +7,6 @@ import numpy as np
 import sklearn.metrics as metrics
 from tqdm import tqdm
 import torchvision.models as models
-import pyecharts as pe
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.animation as anim
@@ -30,6 +29,7 @@ from data import two_type_data
 import data as d
 import conf
 import CTM_utils as ctm
+from CTM import seg_f_ctm
 
 def main():
     parser = argparse.ArgumentParser()
@@ -42,7 +42,7 @@ def main():
 def test(args):
 
     with open(os.path.join(conf.configPath, args.config+'.yaml'), encoding='UTF-8') as config:
-        args = yaml.load(config)
+        args = yaml.load(config, Loader=yaml.FullLoader)
 
     model_prefix = args["model_prefix"]
     use_epoch = args["use_epoch"]
@@ -59,14 +59,14 @@ def test(args):
 
     data_set = two_type_data(args, data_prefix=args["eva_prefix"], topology=args["seg"])
 
-    co_data = torch.Tensor(data_set[start_time]).float().unsqueeze(0)[:, :, :10, :]
+    co_data = torch.Tensor(data_set[start_time]).float().unsqueeze(0)
 
     if args["use_cuda"]:
         co_data = co_data.cuda()
         model = model.cuda()
 
     [_, temporal, spatial, input_size] = co_data.shape
-    target = co_data[:, args["t_predict"]+1:, :, :]
+    targets = co_data[:, args["t_predict"]+1:, :, :]
 
     tt = time.time()
     outputs = model.infer(co_data)
@@ -75,16 +75,16 @@ def test(args):
     print(ttt - tt)
 
     outputs = outputs.cpu().detach().numpy()
-    target = target.cpu().detach().numpy()
+    targets = targets.cpu().detach().numpy()
     
     outputs = outputs * data_set.std
     outputs = outputs + data_set.mean
-    target = target * data_set.std
-    target = target + data_set.mean
+    targets = targets * data_set.std
+    targets = targets + data_set.mean
     
-    res = outputs[:, :, :, [0, 3]] - target[:, :, :, [0, 3]]
+    res = outputs[:, :, :, [0, 3]] - targets[:, :, :, [0, 3]]
     output = outputs[:, :, :, [2, 5]].squeeze(0).sum(axis=2)
-    target = target[:, :, :, [2, 5]].squeeze(0).sum(axis=2)
+    target = targets[:, :, :, [2, 5]].squeeze(0).sum(axis=2)
 
     prefix = "change"
     seg = 1
@@ -99,11 +99,19 @@ def test(args):
 
     cargs["phi"] = [1, 1]
     cargs["sigma"] = 0.7
-    cargs["over_take_factor"] = [1, 0.8]
-    cargs["congest_factor"] = [1, 0.8]
-    cargs["q"] = 18
+    cargs["over_take_factor"] = [0.8, 0.2]
+    cargs["congest_factor"] = 0.1
+    cargs["q"] = 20.5
 
-    ctm_output, _ = ctm.caclutation_error(cargs, data_set)
+    test_data = data_set[start_time]
+    test_data = test_data * data_set.std
+    test_data = test_data + data_set.mean
+    fm_ctm = seg_f_ctm(cargs)
+    t1 = time.time()
+    ctm_output = fm_ctm.eva(test_data[:, 0, [1, 4]])
+    t2 = time.time()
+    print(t2 - t1)
+    #ctm_output,_ = ctm.caclutation_error(cargs, data_set)
 
     target_flow = target.sum(axis=1)
     output_flow = output.sum(axis=1)
@@ -131,16 +139,16 @@ def test(args):
     plt.figure(13, figsize=(6, 4))
     plt.plot(x, real_flow, '-', color='k', label='ground truth')
     plt.plot(x, predict_flow, '-', color='r', label='R-CTM')
-    plt.plot(x, ctm_output[:755, ].sum(axis=1), '-', color='g', label="FM-CTM")
+    plt.plot(x, ctm_output[:755, :, :].sum(axis=2).sum(axis=1), '-', color='g', label="FM-CTM")
     plt.xlabel('time')
     plt.ylabel('num_vehicle')
     plt.legend(loc='best')
-    plt.title('5% HV rate')
+    plt.title('30% HV rate')
     plt.show()
 
     np.save("with_all.npy", output)
     #np.save("targe.npy", target)
-
+    '''
     fig = plt.figure(figsize=(15, 10))
     heat = fig.add_subplot(311)
     im = heat.imshow(target[190:300, 2:-2].T, cmap=plt.cm.hot_r)
@@ -156,6 +164,24 @@ def test(args):
     plt.colorbar(im)
     plt.title("FM-CTM", fontsize=20)
     plt.subplots_adjust(left=0.05, right=0.95, top=0.9, bottom=0.1)
+    plt.show()
+    '''
+    plt.figure(13, figsize=(6, 4))
+    plt.plot(x, targets[0, :, :, 5].sum(axis=1), '-', color='k', label='ground truth')
+    plt.plot(x, outputs[0, :, :, 5].sum(axis=1), '-', color='r', label='R-CTM')
+    plt.plot(x, ctm_output[:755, :, 1].sum(axis=1), '-', color='g', label="FM-CTM")
+    plt.xlabel('time')
+    plt.ylabel('num_vehicle')
+    plt.legend(loc='best')
+    plt.show()
+
+    plt.figure(13, figsize=(6, 4))
+    plt.plot(x, targets[0, :, :, 2].sum(axis=1), '-', color='k', label='ground truth')
+    plt.plot(x, outputs[0, :, :, 2].sum(axis=1), '-', color='r', label='R-CTM')
+    plt.plot(x, ctm_output[:755, :, 0].sum(axis=1), '-', color='g', label="FM-CTM")
+    plt.xlabel('time')
+    plt.ylabel('num_vehicle')
+    plt.legend(loc='best')
     plt.show()
 
 if __name__ == "__main__":

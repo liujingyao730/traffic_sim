@@ -41,7 +41,7 @@ def caclutation_error(args, data_set):
     test_input_flow = test_data[:, 0, [1,4]]
     target = test_data[:, :, [2, 5]].sum(axis=2)
     t1 = time.time()
-    outputs = model.eva(test_input_flow)
+    outputs = model.eva(test_input_flow).sum(axis=2)
     t2 = time.time()
     print(t2 - t1)
 
@@ -114,13 +114,13 @@ def parameter_calibration(prefix, seg, epoch, data_args):
 
     args["phi"] = [1, 0.5]
     args["sigma"] = 0.8
-    args["over_take_factor"] = [1, 1]
+    args["over_take_factor"] = [0.8, 0.2]
     args["congest_factor"] = 1
     args["q"] = 30
     best_q = 30
     best_sigma = 0.8
     best_phi = [1, 0.5]
-    best_over_take_factor = [1, 0]
+    best_over_take_factor = [0.8, 0.2]
     best_congest_factor = 1
     min_error = np.float('inf')
 
@@ -164,13 +164,14 @@ def parameter_calibration(prefix, seg, epoch, data_args):
                 min_error = error
         args["phi"] = best_phi.copy()
 
-        for over_take in [i/10 for i in range(1, 11, 1)]:
+        for over_take in [i/10 for i in range(1, 10, 1)]:
             args["over_take_factor"][0] = over_take
             args["over_take_factor"][1] = 1 - over_take
             error = caclutation_error_num(args, data_set)
             if error < min_error:
                 print("best error changed by over_take_factor ", over_take, " from ", min_error, " to ", error)
                 best_over_take_factor[0] = over_take
+                best_over_take_factor[1] = 1 - over_take
                 min_error = error
         args["over_take_factor"] = best_over_take_factor.copy()
 
@@ -215,4 +216,4 @@ if __name__ == "__main__":
 
     data_set = two_type_data(data_args, prefix, topology=seg)
     #print(caclutation_error(args, data_set))
-    parameter_calibration(prefix="change", seg=6, epoch=1, data_args=data_args)
+    parameter_calibration(prefix="test", seg=6, epoch=3, data_args=data_args)
